@@ -37,10 +37,10 @@ Typical durations:
 Use these signatures unless the user explicitly overrides them:
 
 ```go
-CreateResource(ctx context.Context, data *model.Resource) error
-SearchResource(ctx context.Context, param model.SearchResourceParam) ([]*model.Resource, int64, error)
-UpdateResource(ctx context.Context, id int64, data *model.Resource) error
-DeleteResource(ctx context.Context, id int64) error
+CreateXxx(ctx context.Context, data *model.Xxx) error
+SearchXxx(ctx context.Context, param model.SearchXxxParam) ([]*model.Xxx, int64, error)
+UpdateXxx(ctx context.Context, id int64, data *model.Xxx) error
+DeleteXxx(ctx context.Context, id int64) error
 ```
 
 Rules:
@@ -58,42 +58,57 @@ Define all param types at the same package/directory layer as the data model:
 
 ```go
 // model package
-type SearchResourceParam struct {
-    Filed  []string
-    Type   string
-    Enable string
-    Filter Filter
+type SearchXxxParam struct {
+    Filed     []string
+    Status    string
+    ProjectID string
+    UserID    string
+    Filter    Filter
 }
 ```
 
 DAL code imports and uses model params:
 
 ```go
-SearchResource(ctx context.Context, param model.SearchResourceParam) ([]*model.Resource, int64, error)
+SearchXxx(ctx context.Context, param model.SearchXxxParam) ([]*model.Xxx, int64, error)
 ```
 
-Do not define `SearchResourceParam`, `UpdateResourceParam`, filter structs, sort structs, or pagination structs in the DAL package.
+Do not define `SearchXxxParam`, `UpdateXxxParam`, filter structs, sort structs, or pagination structs in the DAL package.
+
+## Param Semantic Naming
+
+Name query param fields after the model or related model concept they filter.
+
+Good:
+
+- `ProjectID`: filters by related project.
+- `UserID`: filters by related user.
+- `PolicyID`: filters by related policy.
+- `Status`: filters the primary model status when the param only targets one model.
+- `RelatedName`: filters a related object name.
+
+Avoid vague fields such as `ID`, `Type`, `Name`, or `Keyword` when the query spans multiple models or associations. Use the vague form only when the param has a single obvious model context.
 
 ## Search Pattern
 
 Template:
 
 ```go
-func (dal *ResourceDao) SearchResource(ctx context.Context, param model.SearchResourceParam) (
-    []*model.Resource, int64, error) {
+func (dal *XxxDao) SearchXxx(ctx context.Context, param model.SearchXxxParam) (
+    []*model.Xxx, int64, error) {
     if err := param.Check(); err != nil {
         return nil, 0, err
     }
     cancelCtx, cancelFunc := context.WithTimeout(ctx, time.Second*3)
     defer cancelFunc()
-    res := make([]*model.Resource, 0)
+    res := make([]*model.Xxx, 0)
 
-    db := dal.db.Get().WithContext(cancelCtx).Table(new(model.Resource).TableName())
+    db := dal.db.Get().WithContext(cancelCtx).Table(new(model.Xxx).TableName())
     if len(param.Filed) > 0 {
         db = db.Select(param.Filed)
     }
-    if param.Type != "" {
-        db = db.Where("type = ? ", param.Type)
+    if param.Status != "" {
+        db = db.Where("status = ? ", param.Status)
     }
     if param.Enable == consts.TrueString {
         db = db.Where("enable = ? ", consts.TrueString)
@@ -132,7 +147,10 @@ Rules:
 - Build GORM queries step by step with assignments like `db = db.Where(...)`; avoid long chained calls.
 - Add `Where` clauses only when the param field is non-zero.
 - If a zero value intentionally means "query all" or another special case, add a short comment at that branch.
-- Apply sorting and pagination only through the model-layer `AddFilter(db, param.Filter)` after `Count`.
+- Do not apply calculations, SQL functions, or type casts to indexed columns in query conditions. Prefer comparing raw columns to normalized param values, such as `created_at >= ? AND created_at < ?`, `name = ?`, or `id = ?`.
+- Avoid conditions such as `DATE(created_at) = ?`, `LOWER(name) = ?`, `CAST(id AS text) = ?`, or `amount + fee > ?` because they can make normal indexes unusable. If such a condition is unavoidable, add a detailed comment explaining why, the expected index impact, data size assumption, and why a normalized field, generated column, expression index, or param-side transformation is not used.
+- Apply caller-provided sorting and pagination only through the model-layer `AddFilter(db, param.Filter)` after `Count`.
+- DAL does not choose default ordering; callers decide ordering through `param.Filter`.
 - Do not write `Order`, `Limit`, or `Offset` directly in DAL methods.
 - Return `nil, 0, err` on query errors.
 - Keep `Filed` spelling if the existing param uses it.
@@ -141,7 +159,7 @@ Rules:
 ## Create Pattern
 
 ```go
-func (dal *ResourceDao) CreateResource(ctx context.Context, data *model.Resource) error {
+func (dal *XxxDao) CreateXxx(ctx context.Context, data *model.Xxx) error {
     if err := data.Check(); err != nil {
         return err
     }
@@ -158,7 +176,7 @@ If the domain requires version/cache maintenance after creation, call a private 
 ## Update Pattern
 
 ```go
-func (dal *ResourceDao) UpdateResource(ctx context.Context, id int64, data *model.Resource) error {
+func (dal *XxxDao) UpdateXxx(ctx context.Context, id int64, data *model.Xxx) error {
     if id <= 0 {
         return fmt.Errorf("not get id")
     }
@@ -170,7 +188,7 @@ func (dal *ResourceDao) UpdateResource(ctx context.Context, id int64, data *mode
     cancelCtx, cancelFunc := context.WithTimeout(ctx, time.Second*3)
     defer cancelFunc()
 
-    pre := &model.Resource{}
+    pre := &model.Xxx{}
     tb := pre.TableName()
     db := dal.db.Get().WithContext(cancelCtx).Table(tb)
     db = db.Where("id = ?", id)
@@ -197,14 +215,14 @@ Rules:
 ## Delete Pattern
 
 ```go
-func (dal *ResourceDao) DeleteResource(ctx context.Context, id int64) error {
+func (dal *XxxDao) DeleteXxx(ctx context.Context, id int64) error {
     if id <= 0 {
         return fmt.Errorf("not get id")
     }
     cancelCtx, cancelFunc := context.WithTimeout(ctx, time.Second*3)
     defer cancelFunc()
 
-    pre := &model.Resource{}
+    pre := &model.Xxx{}
     tb := pre.TableName()
     db := dal.db.Get().WithContext(cancelCtx).Table(tb)
     db = db.Where("id = ?", id)
@@ -217,7 +235,7 @@ func (dal *ResourceDao) DeleteResource(ctx context.Context, id int64) error {
 
     db = dal.db.Get().WithContext(cancelCtx).Table(tb)
     db = db.Where("id = ?", id)
-    return db.Delete(&model.Resource{}).Error
+    return db.Delete(&model.Xxx{}).Error
 }
 ```
 
@@ -225,7 +243,7 @@ func (dal *ResourceDao) DeleteResource(ctx context.Context, id int64) error {
 
 Use private helpers for derived cache/version records:
 
-- Name them with lower camel case, such as `createResourceDBVersion`.
+- Name them with lower camel case, such as `createXxxDBVersion`.
 - Reuse existing DAL search methods when possible.
 - Build update maps explicitly.
 - Use a fresh timeout context for helper DB writes.
