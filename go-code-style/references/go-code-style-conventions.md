@@ -68,6 +68,8 @@ Split a function when it mixes validation, data access, transformation, and resp
 - Types and functions use business meaning: `SearchPolicyParam`, `BuildSummary`, `ValidateOwner`.
 - Local variables should describe role: `ownerByID`, `enabledItems`, `pendingIDs`.
 - Avoid broad names like `data`, `tmp`, `obj`, `res` when the scope is not tiny.
+- Names should be concise and expressive. Do not repeat context already clear from the function, receiver, type, or package name.
+- Avoid overlong local names such as `currentProcessingProjectWorldviewVersionList` when `versions` or `worldviewVersions` is clear in scope.
 - Keep common Go abbreviations consistent: `ID`, `URL`, `HTTP`, `JSON`.
 
 ## Types And Interfaces
