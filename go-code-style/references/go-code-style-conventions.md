@@ -179,6 +179,22 @@ return err
 
 ## Formatting And Tests
 
+- Use grouped import syntax even when there is only one import.
+
+Good:
+
+```go
+import (
+    "strings"
+)
+```
+
+Avoid:
+
+```go
+import "strings"
+```
+
 - Always run `goimport` after editing Go files.
 - Prefer targeted tests first: `go test ./path/to/pkg`.
 - If a refactor changes behavior or touches shared code, broaden the test scope.
