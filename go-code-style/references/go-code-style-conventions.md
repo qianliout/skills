@@ -67,6 +67,9 @@ Split a function when it mixes validation, data access, transformation, and resp
 
 - A single file should not become too long or carry too many responsibilities.
 - Split files by type group, responsibility, route group, method family, or established local convention.
+- Public structs that are not model-layer types may live in a shared `structs` directory.
+- Keep those non-model shared structs in one consistent place instead of scattering them across service, API, DAL, or helper files.
+- If a struct belongs to model semantics, param validation, serialization, database mapping, or model constants, keep it in the model layer rather than moving it to `structs`.
 - Do not create tiny fragmented files only to reduce line count; split when it improves navigation and ownership.
 - A single line should not be too long.
 - Wrap long function calls, chained calls, struct literals, slices/maps, and complex conditions at natural boundaries.
@@ -98,6 +101,12 @@ Split a function when it mixes validation, data access, transformation, and resp
 - If data has a stable shape, define a struct even when only a few fields are currently used.
 - Keep `any` for unavoidable boundaries such as generic helpers, JSON/raw dynamic payloads, logging fields, or third-party APIs; convert to typed structs as soon as practical.
 - Keep common Go return shapes such as `(value, error)` or `(list, count, error)` when they match local conventions.
+
+## Tags
+
+- Do not use `omitempty` directly in JSON tags.
+- Avoid tags such as `json:"name,omitempty"` or `json:",omitempty"`.
+- Prefer explicit zero values in API responses and serialized data so callers can distinguish absent fields from empty values by contract, not by implicit tag behavior.
 
 ## Error Handling
 
@@ -131,12 +140,12 @@ go func() {
 
 ## Comments
 
-Write comments for intent, constraints, and surprising behavior. Do not narrate obvious code.
+Write code comments in Chinese. Use comments for intent, constraints, and surprising behavior. Do not narrate obvious code.
 
 Good:
 
 ```go
-// Zero project ID means querying global templates.
+// ProjectID 为 0 表示查询全局模板。
 if param.ProjectID != 0 {
     db = db.Where("project_id = ?", param.ProjectID)
 }
@@ -145,9 +154,15 @@ if param.ProjectID != 0 {
 Avoid:
 
 ```go
-// Return the error.
+// 返回错误。
 return err
 ```
+
+## Log Language
+
+- Log messages use English, especially `Msg(...)` text and stable operation names.
+- Code comments use Chinese.
+- Keep structured log field names consistent with project conventions, such as `projectID`.
 
 ## Formatting And Tests
 

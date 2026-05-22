@@ -151,7 +151,9 @@ When needed, log only masked values, hashes, length, count, type, or IDs.
 
 ## Format
 
+- Logs use English.
 - `Msg` should be short, stable English text.
+- Operation names in logs should also be stable English text.
 - Put structured values in fields, not inside `Msg`.
 - Keep field names consistent, such as always using `projectID`.
 - `module` / `subModule` names should be stable and map to business domain or code layer.
