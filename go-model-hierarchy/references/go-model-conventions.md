@@ -148,7 +148,7 @@ func (m *Resource) TableName() string {
 }
 ```
 
-`ToUpdater()` returns a map of explicitly updateable columns and updates `updated_at` with `time.Now().UTC().UnixMilli()`.
+`ToUpdater()` returns an initialized map of explicitly updateable columns and updates `updated_at` with `time.Now().UTC().UnixMilli()`. Any model method returning a slice or map must return an initialized empty value instead of nil on every path.
 
 ## Layering Examples
 

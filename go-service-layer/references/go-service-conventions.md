@@ -56,7 +56,7 @@ func (s *XxxSrv) SearchXxx(ctx context.Context, param model.SearchXxxParam) (
     data, cnt, err := s.primaryDal.SearchXxx(ctx, dalParam)
     if err != nil {
         s.log.Err(err).Str("param", dalParam.LogStr()).Msg("SearchXxx.SearchXxx")
-        return nil, 0, wrapSearchXxxErr(err)
+        return res, 0, wrapSearchXxxErr(err)
     }
     if len(data) == 0 {
         return res, 0, nil
@@ -73,11 +73,12 @@ func (s *XxxSrv) SearchXxx(ctx context.Context, param model.SearchXxxParam) (
 Rules:
 
 - Initialize result slices before validation.
+- If a slice or map is part of the return values, initialize it before validation and return that initialized value on every path, including errors.
 - Call `param.Check()` at the public service boundary when the param type provides it.
 - Use param conversion methods only when API and DAL params differ or the mapping is non-trivial.
 - Passing the original param through is fine when it already matches the DAL contract.
 - Log DAL errors with operation context according to project logging conventions.
-- Return empty slices on successful empty list results.
+- Return empty slices/maps instead of nil whenever slice/map values are returned.
 
 ## Update Pattern
 
@@ -136,7 +137,7 @@ func (s *XxxSrv) GetXxxDetail(ctx context.Context, param model.XxxDetailParam) (
 
 Rules:
 
-- Initialize slice/map fields that may be returned to callers.
+- Initialize slice/map fields that may be returned to callers; never leave returned slice/map fields nil unless the field is explicitly pointer-optional by contract.
 - Use `addXxxData` helpers when a detail method spans multiple data domains.
 - Return partial `ans` with aggregated error only when that is the established project behavior.
 - Keep helper names private and specific.

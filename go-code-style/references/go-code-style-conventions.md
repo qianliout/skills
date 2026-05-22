@@ -102,11 +102,13 @@ Prefer methods with receivers for behavior that belongs to a struct. Except for 
 - Prefer declaration with initialization: `in := Hello{}`.
 - Avoid empty declarations followed by later assignment, such as `var in Hello`, when the value can be initialized immediately.
 - Use `var` only when it improves clarity, such as declaring a nil pointer/interface intentionally, accumulating a zero value across branches, or sharing a variable outside a narrow inner scope.
+- When a function returns a slice or map, instantiate it before any return path and never return a nil slice/map. Use `res := make([]*model.Xxx, 0)` or `ans := make(map[string]*model.Xxx)` and return that value on both success and error paths.
 
 ## Types And Interfaces
 
 - Function inputs and outputs should prefer defined structs or concrete types.
 - Function inputs and outputs should each usually stay within 3 values. If a signature needs more, prefer a named param struct, result struct, or option pattern.
+- Slice/map return values must be non-nil by contract. This includes error paths such as `(items, 0, err)` instead of `(nil, 0, err)` when `items` is a slice return value.
 - Numeric fields in structs should use `int64` by default.
 - Use other numeric types only for clear exceptions, such as external API contracts, third-party library signatures, byte-size data, proven memory/performance needs, or a local project convention.
 - Avoid `any`, `interface{}`, `map[string]any`, and broad data interfaces for request params, response values, and business data.
@@ -128,6 +130,7 @@ Prefer methods with receivers for behavior that belongs to a struct. Except for 
 - Include useful context in logs or wrapping, but avoid leaking sensitive values.
 - If a secondary cleanup/maintenance error is intentionally ignored, make that explicit.
 - Use `errors.Is` / `errors.As` when comparing wrapped errors if the project uses standard wrapping.
+- For functions that return `(value, error)` and whose contract says `value` is usable when `err == nil`, do not add repetitive defensive `if value == nil` checks at call sites. The callee should return an error when it cannot provide a usable value; only keep a nil check when the function explicitly allows `(nil, nil)`.
 
 ## Context And Concurrency
 

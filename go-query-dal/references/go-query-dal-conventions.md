@@ -96,12 +96,12 @@ Template:
 ```go
 func (dal *XxxDao) SearchXxx(ctx context.Context, param model.SearchXxxParam) (
     []*model.Xxx, int64, error) {
+    res := make([]*model.Xxx, 0)
     if err := param.Check(); err != nil {
-        return nil, 0, err
+        return res, 0, err
     }
     cancelCtx, cancelFunc := context.WithTimeout(ctx, time.Second*3)
     defer cancelFunc()
-    res := make([]*model.Xxx, 0)
 
     db := dal.db.Get().WithContext(cancelCtx).Table(new(model.Xxx).TableName())
     if len(param.Filed) > 0 {
@@ -121,13 +121,13 @@ func (dal *XxxDao) SearchXxx(ctx context.Context, param model.SearchXxxParam) (
 
     var cnt int64
     if err := db.Count(&cnt).Error; err != nil {
-        return nil, 0, err
+        return res, 0, err
     }
 
     db = model.AddFilter(db, param.Filter)
     err := db.Find(&res).Error
     if err != nil {
-        return nil, 0, err
+        return res, 0, err
     }
     for i := range res {
         res[i].Deserialize()
@@ -140,6 +140,7 @@ func (dal *XxxDao) SearchXxx(ctx context.Context, param model.SearchXxxParam) (
 Rules:
 
 - Call `param.Check()` before creating query conditions.
+- Initialize result slices before validation and return the initialized empty slice on every path.
 - Put trim, format validation, ID normalization, optional-resource validation, default values, and derived query fields in `param.Check()` or param methods.
 - Do not repeat parameter normalization or validation in DAL; DAL should only consume checked param fields.
 - Do not check `dal == nil` or `dal.db == nil` inside DAL methods; initialization owns that guarantee.
@@ -154,7 +155,7 @@ Rules:
 - Apply caller-provided sorting and pagination only through the model-layer `AddFilter(db, param.Filter)` after `Count`.
 - DAL does not choose default ordering; callers decide ordering through `param.Filter`.
 - Do not write `Order`, `Limit`, or `Offset` directly in DAL methods.
-- Return `nil, 0, err` on query errors.
+- Return the initialized empty result slice on query errors, such as `return res, 0, err`; do not return `nil` for slice results.
 - Keep `Filed` spelling if the existing param uses it.
 - Use string `"true"` / `"false"` status values; do not introduce `bool`.
 
