@@ -73,8 +73,10 @@ If a source type intentionally has no generated ID, document it.
 
 Type rules:
 
+- Numeric fields in structs use `int64` by default unless there is a clear exception.
 - `int64`: PostgreSQL `bigint`, timestamps in milliseconds, counts, signed flags, numeric IDs inside signed range.
 - `string`: UUID, snowflake IDs, unsigned hash output, external IDs, compound unique keys, and serialized text. These are opaque identifiers or text payloads, not numeric fields.
+- Other numeric types require an explicit reason, such as external protocol compatibility, third-party library signatures, byte-size data, or an established local convention.
 - never `uint64` / `uint`: avoid PostgreSQL incompatibility and silent overflow risks.
 - never numeric types larger than `int64`: no `big.Int`, decimal big integer, custom large-number type, or unsigned 64-bit type in models.
 - never database JSON/JSONB, arrays, maps, or complex object columns as persistent fields.
@@ -159,6 +161,7 @@ func (m *Resource) TableName() string {
 ## Constants And Dependencies
 
 - Define model-related constants, enum values, default values, and field value constraints in the model layer.
-- Keep constants close to the model or param that owns them.
+- Keep constants close to the model or param that owns them, and manage them in one consistent place by responsibility.
+- Do not scatter model-related constants across API, service, DAL, helper files, or function bodies.
 - Upper layers may reference model constants; model should not import upper layers.
 - If a helper needs service, DAL, request context, or framework types, it does not belong in the model layer.

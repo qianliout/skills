@@ -63,6 +63,8 @@ A good Go function usually has guard clauses, small setup, ordered operation ste
 
 Split a function when it mixes validation, data access, transformation, and response assembly; when a block has a clear purpose and name; or when the reader must scroll to understand one branch. Do not split when the helper name would be vague or the extracted code is clearer inline.
 
+Prefer methods with receivers for behavior that belongs to a struct. Except for real shared utilities such as `utils` helpers, avoid loose functions with no owner. Put business behavior on the service/API/model/param/helper struct that owns the state or responsibility.
+
 ## File And Line Length
 
 - A single file should not become too long or carry too many responsibilities.
@@ -75,6 +77,14 @@ Split a function when it mixes validation, data access, transformation, and resp
 - Wrap long function calls, chained calls, struct literals, slices/maps, and complex conditions at natural boundaries.
 - Prefer readable multi-line formatting over dense one-line expressions.
 
+## Constants
+
+- Manage constants in a unified place by responsibility.
+- Do not scatter constants across functions, handlers, service files, DAL files, or helper files.
+- Model-related constants, enum values, defaults, and field constraints belong in the model layer.
+- Shared non-model constants may live in the project’s established constants package or another unified location.
+- Prefer named constants over repeated magic strings or numbers.
+
 ## Naming
 
 - Types and functions use business meaning: `SearchPolicyParam`, `BuildSummary`, `ValidateOwner`.
@@ -82,6 +92,7 @@ Split a function when it mixes validation, data access, transformation, and resp
 - Avoid broad names like `data`, `tmp`, `obj`, `res` when the scope is not tiny.
 - Names should be concise and expressive. Do not repeat context already clear from the function, receiver, type, or package name.
 - Avoid overlong local names such as `currentProcessingProjectWorldviewVersionList` when `versions` or `worldviewVersions` is clear in scope.
+- Avoid redundant `Is` prefixes for binary/status semantics when the core name is already clear. Prefer `FirstShot` over `IsFirstShot`.
 - Do not over-design long local variable names for readability. Short-lived variables may use concise names such as `res`, `ans`, `input`, `output`, and `cnt`.
 - Do not use Go built-ins or common package names as variable names, such as `max`, `min`, `len`, `cap`, `error`, `slices`, `maps`, or `strings`.
 - Keep common Go abbreviations consistent: `ID`, `URL`, `HTTP`, `JSON`.
@@ -96,6 +107,8 @@ Split a function when it mixes validation, data access, transformation, and resp
 
 - Function inputs and outputs should prefer defined structs or concrete types.
 - Function inputs and outputs should each usually stay within 3 values. If a signature needs more, prefer a named param struct, result struct, or option pattern.
+- Numeric fields in structs should use `int64` by default.
+- Use other numeric types only for clear exceptions, such as external API contracts, third-party library signatures, byte-size data, proven memory/performance needs, or a local project convention.
 - Avoid `any`, `interface{}`, `map[string]any`, and broad data interfaces for request params, response values, and business data.
 - Use small behavior interfaces only when callers truly vary by behavior, such as `io.Reader`, `context.Context`, or a narrow project interface.
 - If data has a stable shape, define a struct even when only a few fields are currently used.
