@@ -72,6 +72,12 @@ Split a function when it mixes validation, data access, transformation, and resp
 - Avoid overlong local names such as `currentProcessingProjectWorldviewVersionList` when `versions` or `worldviewVersions` is clear in scope.
 - Keep common Go abbreviations consistent: `ID`, `URL`, `HTTP`, `JSON`.
 
+## Variable Declarations
+
+- Prefer declaration with initialization: `in := Hello{}`.
+- Avoid empty declarations followed by later assignment, such as `var in Hello`, when the value can be initialized immediately.
+- Use `var` only when it improves clarity, such as declaring a nil pointer/interface intentionally, accumulating a zero value across branches, or sharing a variable outside a narrow inner scope.
+
 ## Types And Interfaces
 
 - Function inputs and outputs should prefer defined structs or concrete types.
@@ -96,7 +102,21 @@ Split a function when it mixes validation, data access, transformation, and resp
 - Do not replace an upstream ctx with `context.Background()` inside request or job flows.
 - Create child contexts only when adding timeout/cancel scope, and always call `cancel`.
 - Goroutines need an exit condition, ctx cancellation, bounded work, or a documented lifecycle.
+- Every goroutine must guard with `recover`; log the panic and stack or convert it to the project’s observable error path.
 - Protect shared mutable state with the project’s established synchronization pattern.
+
+Example:
+
+```go
+go func() {
+    defer func() {
+        if r := recover(); r != nil {
+            log.Err(fmt.Errorf("panic: %v", r)).Msg("worker panic")
+        }
+    }()
+    runWorker(ctx)
+}()
+```
 
 ## Comments
 

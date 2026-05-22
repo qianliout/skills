@@ -13,6 +13,10 @@ The sample models use rich domain structs rather than passive DTOs. A persistent
 - Lifecycle methods: `Serialize`, `Deserialize`, `Check`, `TableName`.
 - Derived identity methods such as `GenUniqueID`, `GenUUID`, `GenCheckSum`.
 
+Model-layer ownership includes model structs, param structs, model-related constants, validation, serialization, deserialization, derived fields, and update field selection. These behaviors should usually be methods on the specific model type, such as `(m *Xxx) Check()` or `(m *Xxx) Serialize()`, rather than loose helpers with no owner.
+
+The model package should stay low-level. It may depend on the standard library, external foundational libraries, and project `utils`; it should not depend on API, service, DAL, or other business-layer packages.
+
 ## Field Pair Pattern
 
 When a complex field must be stored in one DB column:
@@ -91,6 +95,8 @@ Rules:
 4. Require common identity fields such as name/code/type/version.
 5. Require context-specific fields such as tenant ID, project ID, parent ID, or external ID.
 
+`Check()` belongs with the model or param it validates. Do not repeat the same validation in API, service, or DAL.
+
 ## Serialization Pattern
 
 `Serialize()` is the single place to normalize and derive:
@@ -102,6 +108,8 @@ Rules:
 - Unique ID and compact UUID.
 - Denormalized grouping fields.
 - Checksum.
+
+Do not generate these model-derived values in API, service, or DAL. Upper layers should call the model method and consume the normalized result.
 
 ## Deserialization Compatibility
 
@@ -133,3 +141,10 @@ func (m *Resource) TableName() string {
 - Detail/value object: `ResourceDetail`, `ConfigItem`, `ExternalRef`.
 - Statistic/view: `ResourceStatistic`, `ResourceOverview`, `IssueStatic`, `Suggest`.
 - Cache snapshot: `PrepareData`, `CacheInfo`.
+
+## Constants And Dependencies
+
+- Define model-related constants, enum values, default values, and field value constraints in the model layer.
+- Keep constants close to the model or param that owns them.
+- Upper layers may reference model constants; model should not import upper layers.
+- If a helper needs service, DAL, request context, or framework types, it does not belong in the model layer.

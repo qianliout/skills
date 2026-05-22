@@ -5,7 +5,7 @@ description: "通用 Go API/handler/controller 层专家，生成、重构、评
 
 # Go API Layer
 
-核心约束：API 层只负责 HTTP 入参解析、基础校验入口、调用 service、统一响应；不直接访问数据库，不承载复杂业务编排，不把 service/DAL/model 的职责搬到 handler。
+核心约束：API 层只负责 HTTP 入参解析、基础校验入口、调用 service、统一响应；API 逻辑要尽量简单，复杂逻辑组装、关联聚合和业务编排放到 service 层；不直接访问数据库，不把 service/DAL/model 的职责搬到 handler。
 
 ## Workflow
 
@@ -24,6 +24,7 @@ description: "通用 Go API/handler/controller 层专家，生成、重构、评
   - [ ] param 提供 `Check()` 时在调用 service 前执行；复杂清洗、默认值、派生字段放 param 层。
 - [ ] Step 4: 调用 service 并响应
   - [ ] handler 只调用 service，不直接访问 DB/GORM/DAL。
+  - [ ] handler 内只保留简单响应 shaping；复杂参数组装、响应组装、关联聚合和多步业务流程放到 service。
   - [ ] service 错误通过统一错误响应返回；需要业务语义转换时使用项目既有 i18n/wrap helper。
   - [ ] 列表响应返回 items、total、itemsPerPage、startIndex；空列表返回空切片。
   - [ ] 单对象响应使用统一 item/target response。
@@ -103,7 +104,8 @@ func (api *XxxAPI) CreateXxx(ctx *gin.Context) {
 ## Anti-Patterns
 
 - 不要在 API 层直接访问 DB/GORM/DAL。
-- 不要在 handler 内写复杂业务编排、批量关联查询、循环调用 service 拼详情；复杂逻辑放 service。
+- 不要在 handler 内写复杂业务编排、复杂逻辑组装、批量关联查询、循环调用 service 拼详情；复杂逻辑放 service。
+- 不要在 API 层做复杂响应组装；只保留 HTTP 适配和轻量 response shaping。
 - 不要在 handler 内临时定义 body/response struct；请求和响应类型应放在 model/API 类型层。
 - 不要散落解析大量 query 变量后直接传下去；字段多时组装为语义化 param。
 - 不要重复参数清洗、ID 规范化、默认值和派生字段计算；放到 `param.Check()` 或 param 方法。
@@ -122,7 +124,7 @@ func (api *XxxAPI) CreateXxx(ctx *gin.Context) {
 - [ ] 字段较多的入参已收敛为语义化 param struct。
 - [ ] 有 param 校验方法时，调用 service 前执行 `param.Check()`。
 - [ ] API 层没有 DB/GORM/DAL 操作。
-- [ ] 复杂业务编排留在 service，handler 只做解析、调用、响应。
+- [ ] 复杂逻辑组装、关联聚合和业务编排留在 service，handler 只做解析、调用、响应。
 - [ ] 错误通过统一 response 返回，业务错误包装遵循项目约定。
 - [ ] 列表响应包含 items、total、itemsPerPage、startIndex，空列表使用空切片。
 - [ ] 没有新增 `uint64`、`uint`、`bool` 或大于 `int64` 的数值类型。

@@ -13,7 +13,7 @@ API layer owns HTTP adaptation:
 - Convert service errors with project wrappers/i18n when needed.
 - Return data through project response helpers.
 
-API layer does not own database access, cross-DAL aggregation, long business workflows, or model serialization.
+API layer should stay thin. It does not own database access, cross-DAL aggregation, complex parameter assembly, complex response assembly, long business workflows, or model serialization.
 
 ## Structure
 
@@ -97,15 +97,17 @@ Rules:
 
 ## Handler Complexity
 
-Keep handlers short. Move logic to service when the handler:
+Keep handlers short. API logic should be simple: parse request, build typed param, call service, return response. Move logic to service when the handler:
 
 - Calls multiple services or repeatedly calls one service in a loop.
+- Builds complex service params from many intermediate values.
+- Builds complex response objects from multiple data sources.
 - Builds association maps or performs cross-resource aggregation.
 - Contains complex branch rules.
 - Mutates persistence data.
 - Needs retries, transactions, async work, or cache coordination.
 
-Small response shaping is acceptable, but domain decisions belong in service.
+Small response shaping is acceptable, but complex assembly and domain decisions belong in service.
 
 ## Type Rules
 
