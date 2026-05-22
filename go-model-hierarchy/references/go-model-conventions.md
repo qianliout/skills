@@ -9,7 +9,7 @@ The sample models use rich domain structs rather than passive DTOs. A persistent
 - DB tags with explicit columns.
 - JSON tags for API compatibility.
 - Runtime-only fields marked `gorm:"-"`.
-- Serialized backing fields marked `json:"-"`.
+- Serialized text backing fields marked `json:"-"` when a runtime complex structure is stored in a string text column.
 - Lifecycle methods: `Serialize`, `Deserialize`, `Check`, `TableName`.
 - Derived identity methods such as `GenUniqueID`, `GenUUID`, `GenCheckSum`.
 
@@ -17,9 +17,21 @@ Model-layer ownership includes model structs, param structs, model-related const
 
 The model package should stay low-level. It may depend on the standard library, external foundational libraries, and project `utils`; it should not depend on API, service, DAL, or other business-layer packages.
 
-## Field Pair Pattern
+## Database Compatibility
 
-When a complex field must be stored in one DB column:
+Model design must consider database compatibility first.
+
+Rules:
+
+- Do not use database complex types such as JSON/JSONB, arrays, maps, or object columns as persistent model fields.
+- Persistent fields should use broadly compatible primitive database types: signed integers, strings/text, timestamps, and simple status strings.
+- Complex structures may be stored in `string` text columns with `Serialize()` / `Deserialize()`.
+- Split complex structures into normal columns or relation tables when they need frequent filtering, indexing, partial update, or database constraints.
+- Runtime complex fields must be marked `gorm:"-"`.
+
+## Serialized Text Pattern
+
+When a complex runtime field is stored in one text column:
 
 ```go
 Config     Config `gorm:"-" json:"config"`
@@ -29,15 +41,17 @@ ConfigJSON string `gorm:"column:config" json:"-"`
 Rules:
 
 - Public runtime object gets `gorm:"-"` and normal `json`.
-- DB string gets `gorm:"column:..."` and `json:"-"`.
+- DB text string gets `gorm:"column:..."` and `json:"-"`; the field may be named `ConfigJSON` by project convention, but the database type is still string/text.
+- Do not map the backing field to a database JSON/JSONB type.
 - `Serialize()` marshals runtime object into DB string.
 - `Deserialize()` unmarshals DB string into runtime object.
+- Use split columns or relation tables instead when the data must be filtered, indexed, partially updated, or constrained by the database.
 
 ## ID Pattern
 
 Do not use `uint64` in persistent models. PostgreSQL has no native unsigned 64-bit integer type.
 
-Use `int64` for database-backed IDs and business identities that fit PostgreSQL `bigint`. Return `int64` to the frontend as a JSON number; do not add `,string` to the JSON tag:
+Use `int64` for database-backed IDs and business identities that fit PostgreSQL `bigint`:
 
 ```go
 UniqueID int64 `gorm:"column:unique_id" json:"uniqueID"`
@@ -60,10 +74,10 @@ If a source type intentionally has no generated ID, document it.
 Type rules:
 
 - `int64`: PostgreSQL `bigint`, timestamps in milliseconds, counts, signed flags, numeric IDs inside signed range.
-- `string`: UUID, snowflake IDs, unsigned hash output, external IDs, compound unique keys. These are opaque identifiers, not numeric fields.
+- `string`: UUID, snowflake IDs, unsigned hash output, external IDs, compound unique keys, and serialized text. These are opaque identifiers or text payloads, not numeric fields.
 - never `uint64` / `uint`: avoid PostgreSQL incompatibility and silent overflow risks.
 - never numeric types larger than `int64`: no `big.Int`, decimal big integer, custom large-number type, or unsigned 64-bit type in models.
-- never `json:",string"` on `int64`: signed integers are returned as JSON numbers.
+- never database JSON/JSONB, arrays, maps, or complex object columns as persistent fields.
 - never `bool`: binary status fields use `string` with values `"true"` / `"false"`.
 
 ## Boolean Status Pattern
@@ -103,7 +117,7 @@ Rules:
 
 - Default flag.
 - Historical timestamp units.
-- JSON backing fields.
+- Serialized text backing fields.
 - Display/search name.
 - Unique ID and compact UUID.
 - Denormalized grouping fields.
@@ -118,7 +132,7 @@ Do not generate these model-derived values in API, service, or DAL. Upper layers
 - Normalize legacy enum values.
 - Convert second-level timestamps to milliseconds.
 - Fill historical default values for fields added after old records were created.
-- Rebuild runtime-only fields from JSON backing columns.
+- Rebuild runtime-only fields from serialized text backing columns.
 
 Keep these rules close to the model because they define stored-data compatibility.
 

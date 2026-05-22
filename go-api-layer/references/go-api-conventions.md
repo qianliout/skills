@@ -6,7 +6,7 @@ Use this reference when generating, refactoring, or reviewing general Go API/han
 
 API layer owns HTTP adaptation:
 
-- Read query/path/header/body from the framework context.
+- Read query/header/body from the framework context.
 - Build typed API params.
 - Run request validation when the param provides `Check()`.
 - Call service methods.
@@ -37,12 +37,24 @@ Rules:
 
 ## Request Parsing
 
-- Use project helpers for query/path/header parsing.
+- Use query params for all request parameters; do not use path params.
+- Use project helpers for query/header parsing.
 - Use `ShouldBindJSON`, `BindJSON`, or the project wrapper for JSON body binding.
 - Convert raw HTTP strings into a typed param before calling service.
 - Prefer one param struct over many positional arguments.
 - Put params and response DTOs at the model/API type layer, not inside handler functions.
 - Put trim, enum validation, ID normalization, default values, and derived fields in `param.Check()` or param methods.
+
+## HTTP Methods
+
+Use only these methods by default:
+
+- `GET`: read-only list/detail.
+- `POST`: create, submit action, non-idempotent operation.
+- `PUT`: full update.
+- `DELETE`: delete.
+
+Do not introduce `PATCH`, `HEAD`, `OPTIONS`, or other HTTP methods unless the user explicitly confirms the exception.
 
 Example:
 
@@ -55,6 +67,31 @@ param := model.SearchXxxAPIParam{
 if err := param.Check(); err != nil {
     response.JSONError(ctx, err)
     return
+}
+```
+
+## Update Pattern
+
+PUT updates must be full updates:
+
+- The update ID is required in query, such as `?id=123`.
+- The body contains the full update content.
+- Do not use path params for the ID.
+- Do not treat PUT as partial update.
+
+Example:
+
+```go
+id := util.GetInt64FromQuery(ctx, "id")
+body := model.UpdateXxxBody{}
+if err := ctx.ShouldBindJSON(&body); err != nil {
+    response.JSONError(ctx, response.NewHttpError(http.StatusBadRequest, err))
+    return
+}
+
+param := model.UpdateXxxAPIParam{
+    ID:   id,
+    Data: body,
 }
 ```
 

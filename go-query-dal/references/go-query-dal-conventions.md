@@ -147,6 +147,8 @@ Rules:
 - Build GORM queries step by step with assignments like `db = db.Where(...)`; avoid long chained calls.
 - Add `Where` clauses only when the param field is non-zero.
 - If a zero value intentionally means "query all" or another special case, add a short comment at that branch.
+- Keep queries database-compatible. Prefer simple equality, range, and `IN` conditions over advanced SQL.
+- Avoid window functions, CTEs, complex subqueries, database-specific functions, JSON operators, array operators, full-text-search syntax, and custom SQL functions in DAL queries. If unavoidable, add a detailed comment explaining why, compatibility impact, alternatives considered, and the target database.
 - Do not apply calculations, SQL functions, or type casts to indexed columns in query conditions. Prefer comparing raw columns to normalized param values, such as `created_at >= ? AND created_at < ?`, `name = ?`, or `id = ?`.
 - Avoid conditions such as `DATE(created_at) = ?`, `LOWER(name) = ?`, `CAST(id AS text) = ?`, or `amount + fee > ?` because they can make normal indexes unusable. If such a condition is unavoidable, add a detailed comment explaining why, the expected index impact, data size assumption, and why a normalized field, generated column, expression index, or param-side transformation is not used.
 - Apply caller-provided sorting and pagination only through the model-layer `AddFilter(db, param.Filter)` after `Count`.

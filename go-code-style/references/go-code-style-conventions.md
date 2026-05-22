@@ -63,6 +63,15 @@ A good Go function usually has guard clauses, small setup, ordered operation ste
 
 Split a function when it mixes validation, data access, transformation, and response assembly; when a block has a clear purpose and name; or when the reader must scroll to understand one branch. Do not split when the helper name would be vague or the extracted code is clearer inline.
 
+## File And Line Length
+
+- A single file should not become too long or carry too many responsibilities.
+- Split files by type group, responsibility, route group, method family, or established local convention.
+- Do not create tiny fragmented files only to reduce line count; split when it improves navigation and ownership.
+- A single line should not be too long.
+- Wrap long function calls, chained calls, struct literals, slices/maps, and complex conditions at natural boundaries.
+- Prefer readable multi-line formatting over dense one-line expressions.
+
 ## Naming
 
 - Types and functions use business meaning: `SearchPolicyParam`, `BuildSummary`, `ValidateOwner`.
@@ -70,6 +79,8 @@ Split a function when it mixes validation, data access, transformation, and resp
 - Avoid broad names like `data`, `tmp`, `obj`, `res` when the scope is not tiny.
 - Names should be concise and expressive. Do not repeat context already clear from the function, receiver, type, or package name.
 - Avoid overlong local names such as `currentProcessingProjectWorldviewVersionList` when `versions` or `worldviewVersions` is clear in scope.
+- Do not over-design long local variable names for readability. Short-lived variables may use concise names such as `res`, `ans`, `input`, `output`, and `cnt`.
+- Do not use Go built-ins or common package names as variable names, such as `max`, `min`, `len`, `cap`, `error`, `slices`, `maps`, or `strings`.
 - Keep common Go abbreviations consistent: `ID`, `URL`, `HTTP`, `JSON`.
 
 ## Variable Declarations

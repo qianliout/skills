@@ -49,13 +49,13 @@ func (s *XxxSrv) SearchXxx(ctx context.Context, param model.SearchXxxParam) (
         return res, 0, err
     }
 
-    s.log.Trace().Interface("param", param).Msg("SearchXxx")
+    s.log.Trace().Str("param", param.LogStr()).Msg("SearchXxx")
 
     dalParam := param
     // Use param.ToXxxDalParam() instead when API fields need non-trivial mapping.
     data, cnt, err := s.primaryDal.SearchXxx(ctx, dalParam)
     if err != nil {
-        s.log.Err(err).Interface("param", dalParam).Msg("SearchXxx.SearchXxx")
+        s.log.Err(err).Str("param", dalParam.LogStr()).Msg("SearchXxx.SearchXxx")
         return nil, 0, wrapSearchXxxErr(err)
     }
     if len(data) == 0 {
@@ -87,7 +87,7 @@ func (s *XxxSrv) UpdateXxx(ctx context.Context, param model.UpdateXxxParam) erro
         return err
     }
     if err := s.primaryDal.UpdateXxx(ctx, param.ID, param.Data); err != nil {
-        s.log.Err(err).Interface("param", param).Msg("UpdateXxx")
+        s.log.Err(err).Str("param", param.LogStr()).Msg("UpdateXxx")
         return wrapUpdateXxxErr(err)
     }
     return nil
@@ -155,7 +155,7 @@ Avoid querying related DAL inside each item loop when the data can be batched.
 
 ## Logging And Errors
 
-- Trace log public method input when useful.
+- Trace log public method input when useful; prefer safe `LogStr()` summaries over full struct logging.
 - Error logs should include operation name and relevant param/ID context when available.
 - Return user/API/service-level errors rather than leaking raw low-level wording when wrappers exist.
 - Keep the original error visible in logs.
