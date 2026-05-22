@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go Model Hierarchy"
+  short_description: "Go model hierarchy and data contracts"
+  default_prompt: "Use $go-model-hierarchy to design or review Go model structs."

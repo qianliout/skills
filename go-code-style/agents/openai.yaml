@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go Code Style"
+  short_description: "Go readability and maintainability guidance"
+  default_prompt: "Use $go-code-style to refactor or review Go code style."

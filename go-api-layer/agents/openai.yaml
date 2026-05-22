@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go API Layer"
+  short_description: "Gin handler and API layer conventions"
+  default_prompt: "Use $go-api-layer to implement or review a Go HTTP handler."

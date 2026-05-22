@@ -1,6 +1,6 @@
 ---
 name: go-query-dal
-description: "通用 Go 数据查询 DAL/DAO 层专家，生成、重构、评审数据库访问层。Use when user asks 写 DAL、写 DAO、数据查询、GORM query、Search 方法、Create/Update/Delete、分页查询、Count + Find、context timeout、TableName、Serialize/Deserialize、ToUpdater、AddFilter、查询参数、更新参数、PostgreSQL 数据访问层。Actions: design, create, refactor, review, implement data access layer."
+description: "Go DAL/DAO 数据访问层专家。Use when writing, refactoring, or reviewing GORM queries, Search/Create/Update/Delete methods, pagination, Count + Find, context timeout, TableName, Serialize/Deserialize, ToUpdater, AddFilter, query params, update params, or PostgreSQL-compatible data access."
 ---
 
 # Go Query DAL
@@ -9,28 +9,13 @@ DAL 只编排数据库访问，不承载业务规则。每个 DB 方法必须有
 
 ## Workflow
 
-- [ ] Step 1: 识别 DAL 边界
-  - 确认实体 model、model 层 param、目标表名、依赖 DAL、方法类型。
-  - 加载 `references/go-query-dal-conventions.md`，按项目约定落地。
-  - 不在 DAL 文件定义 param；param 与 model 同层。
-- [ ] Step 2: 定义接口
-  - 公开方法第一个参数是 `ctx context.Context`。
-  - 默认方法签名：`Create(ctx, *Model) error`、`Search(ctx, SearchParam) ([]*Model, int64, error)`、`Update(ctx, id, *Model) error`、`Delete(ctx, id) error`。
-  - 默认不提供 `Get`，除非用户明确要求。
-- [ ] Step 3: 实现查询
-  - 开头调用 `param.Check()`；trim、格式校验、ID 规范化、默认值、派生查询字段都在 param 层完成。
-  - 创建 `context.WithTimeout`，并用 `WithContext(cancelCtx)`。
-  - 初始化空结果切片，表名来自 `TableName()`。
-  - GORM 链路逐步拆开；param 字段非零值才追加 where，零值特殊语义必须注释。
-  - 先业务过滤，再 `Count`，再 `AddFilter(db, param.Filter)`，最后 `Find` 和 `Deserialize()`。
-  - 查询尽量简单、跨数据库兼容、可索引；避免函数、计算、类型转换和复杂 SQL。
-- [ ] Step 4: 实现写操作
-  - `Create`: `Check()` -> `Serialize()` -> `Create()`。
-  - `Update`: 校验 ID/data -> 查原记录 -> 不可变字段校验 -> `Serialize()` -> `ToUpdater()` -> `Updates()`。
-  - `Delete`: 只按主键 ID 删除；删除前按需要查原记录和校验保护条件。
-- [ ] Step 5: 交付
-  - 缺少 model 方法或 param 字段时列出假设，不临时把类型写进 DAL。
-  - 运行 Pre-Delivery Checklist。
+1. 识别 DAL 边界：确认实体 model、model 层 param、目标表名、依赖 DAL 和方法类型。
+2. 加载 `references/go-query-dal-conventions.md`，按项目约定处理 DB timeout、GORM 链路、过滤分页和序列化。
+3. 定义接口：公开方法第一个参数是 `ctx context.Context`；默认提供 `Create`、`Search`、`Update`、`Delete`。
+4. 实现查询：开头调用 `param.Check()`；创建 `context.WithTimeout` 并使用 `WithContext(cancelCtx)`。
+5. 组织 GORM 链路：初始化空结果切片，表名来自 `TableName()`；先业务过滤，再 `Count`，再 `AddFilter`，最后 `Find` 和 `Deserialize()`。
+6. 实现写操作：`Create` 执行 `Check`/`Serialize`；`Update` 校验 ID/data、查原记录、校验不可变字段、`Serialize`、`ToUpdater`；`Delete` 只按主键 ID 删除。
+7. 交付：缺少 model 方法或 param 字段时列出假设，不临时把类型写进 DAL。
 
 ## Reference Loading
 

@@ -1,6 +1,6 @@
 ---
 name: go-service-layer
-description: "通用 Go service/service layer 业务编排层专家，生成、重构、评审服务层代码。Use when user asks 写 service、写业务服务层、service interface、service struct、依赖注入、构造函数、调用 DAL/DAO、参数校验、param.Check、DTO 转换、聚合响应、private helper、日志、错误包装、缓存读取、列表查询、详情聚合、Create/Update/Delete service。Actions: design, create, refactor, review, implement service layer."
+description: "Go service 层业务编排专家。Use when writing, refactoring, or reviewing service interfaces/structs, dependency injection, constructors, DAL/DAO calls, param.Check, DTO conversion, aggregation, helpers, logging, error wrapping, cache reads, list/detail/create/update/delete services."
 ---
 
 # Go Service Layer
@@ -9,27 +9,13 @@ service 层负责业务编排、参数校验入口、必要模型转换、结果
 
 ## Workflow
 
-- [ ] Step 1: 识别 service 边界
-  - 确认公开方法、param、response、依赖 DAL/service/cache/logger。
-  - 判断方法类型：列表、详情聚合、创建、更新、删除、缓存、外部调用、异步维护。
-  - 加载 `references/go-service-conventions.md`，按项目约定落地。
-- [ ] Step 2: 定义结构
-  - 项目使用 interface 时同步更新 interface 和实现 struct。
-  - 涉及 DAL/cache/外部 I/O 的公开方法，第一个参数使用 `ctx context.Context`。
-  - 依赖通过构造函数注入；需要日志/cache 状态时在构造函数初始化。
-  - 依赖有效性通常由构造/初始化保证，方法体不重复写 nil 防御判断。
-- [ ] Step 3: 实现公开方法
-  - param 有 `Check()` 时在入口调用；清洗、默认值、派生查询字段放 param 层。
-  - 成功空结果返回空切片/map。
-  - 只有在 API param 与 DAL param 不一致、映射复杂或复用价值明确时才抽转换方法。
-  - 调用 DAL/service/cache，错误按项目约定记录上下文并返回上层语义错误。
-- [ ] Step 4: 拆分 helper
-  - 复杂详情或跨资源聚合按数据域拆成私有 helper。
-  - helper 只补充一个清晰数据域，错误向上返回；是否记录日志遵循日志规范。
-  - 可批量获取的关联数据先收集 ID、去重、批量查，再用 map 回填。
-- [ ] Step 5: 交付
-  - 缺少 DAL/model/param 方法时列出假设，不编造外部类型。
-  - 运行 Pre-Delivery Checklist。
+1. 识别 service 边界：确认公开方法、param、response、依赖 DAL/service/cache/logger 和方法类型。
+2. 加载 `references/go-service-conventions.md`，按项目约定处理 interface、struct、constructor 和错误语义。
+3. 定义结构：项目使用 interface 时同步更新 interface 和实现；依赖通过构造函数注入。
+4. 实现公开方法：涉及 I/O 的公开方法第一个参数使用 `ctx context.Context`；入口调用 `param.Check()`。
+5. 编排依赖：调用 DAL/service/cache，成功空结果返回空切片/map；错误按项目约定记录和包装。
+6. 拆分 helper：复杂详情或跨资源聚合按数据域拆成私有 helper；批量取数先收集 ID、去重、批量查、map 回填。
+7. 交付：缺少 DAL/model/param 方法时列出假设，不编造外部类型。
 
 ## Reference Loading
 

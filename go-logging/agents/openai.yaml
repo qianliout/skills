@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go Logging"
+  short_description: "Go logging boundaries and field guidance"
+  default_prompt: "Use $go-logging to add or review Go logging."
