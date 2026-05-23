@@ -11,7 +11,7 @@ DAL 只编排数据库访问，不承载业务规则。每个 DB 方法必须有
 
 1. 识别 DAL 边界：确认实体 model、model 层 param、目标表名、依赖 DAL 和方法类型。
 2. 加载 `references/go-query-dal-conventions.md`，按项目约定处理 DB timeout、GORM 链路、过滤分页和序列化。
-3. 定义接口：公开方法第一个参数是 `ctx context.Context`；默认提供 `Create`、`Search`、`Update`、`Delete`。
+3. 定义接口：公开方法第一个参数是 `ctx context.Context`；DAO 实现方法统一使用指针接收者；默认提供 `Create`、`Search`、`Update`、`Delete`。
 4. 实现查询：开头调用 `param.Check()`；创建 `context.WithTimeout` 并使用 `WithContext(cancelCtx)`。
 5. 组织 GORM 链路：先初始化空结果切片，所有返回路径都不能返回 nil slice；表名来自 `TableName()`；先业务过滤，再 `Count`，再 `AddFilter`，最后 `Find` 和 `Deserialize()`。
 6. 实现写操作：`Create` 执行 `Check`/`Serialize`；`Update` 校验 ID/data、查原记录、校验不可变字段、`Serialize`、`ToUpdater`；`Delete` 只按主键 ID 删除。
@@ -24,6 +24,7 @@ DAL 只编排数据库访问，不承载业务规则。每个 DB 方法必须有
 ## Pre-Delivery Checklist
 
 - [ ] DAO 依赖有效性由构造/初始化保证，方法体没有 `dal == nil` 或 `dal.db == nil` 判断。
+- [ ] DAO 实现方法都使用指针接收者，例如 `func (dal *XxxDao) SearchXxx(...)`，没有值接收者。
 - [ ] 每个 DB 操作都使用 `context.WithTimeout` 和 `WithContext(cancelCtx)`。
 - [ ] `Create/Search/Update/Delete` 签名符合约定；没有主动新增 `Get`。
 - [ ] 所有 param 定义在 model 同层；字段命名语义化，能看出主 model 或关联 model 含义。

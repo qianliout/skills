@@ -13,7 +13,7 @@ description: "Go 日志规范专家。Use when writing, refactoring, or reviewin
 2. 加载 `references/go-logging-conventions.md`，按项目约定处理 logger、日志字段、敏感信息和重复日志。
 3. 设置 logger：需要记录日志的 struct 自己持有 logger；在构造函数中初始化并设置稳定 module/subModule。
 4. 设计内容：日志 Msg 和操作名使用英文；错误日志包含操作名、错误对象、关键业务 ID 和必要 param 摘要。
-5. 控制信息量：记录 struct 时优先提供 `LogStr() string`；禁止记录 token、secret、password、Authorization、Cookie、原始敏感 body 和大 payload。
+5. 控制信息量：记录 struct 时优先提供 pointer receiver 的 `LogStr() string`；所有日志相关方法都使用指针接收者；禁止记录 token、secret、password、Authorization、Cookie、原始敏感 body 和大 payload。
 6. 放置日志：谁拥有业务上下文谁记录；私有 helper 默认返回错误给上层记录；goroutine panic 必须 recover 并记录日志。
 7. 交付：修改 Go 文件后遵循 `go-code-style`，运行 `goimport` 和相关测试。
 
@@ -28,6 +28,7 @@ description: "Go 日志规范专家。Use when writing, refactoring, or reviewin
 - [ ] 没有直接使用全局日志对象打日志，也没有在每个方法里临时创建 logger。
 - [ ] 错误日志包含操作名、错误对象和关键业务 ID。
 - [ ] struct 摘要日志使用 `LogStr()`；`LogStr()` 只做字符串拼装，不含敏感字段。
+- [ ] logger、service/API 日志方法和 `LogStr()` 都使用指针接收者，没有值接收者。
 - [ ] 私有 helper 默认不记录错误日志，由上层调用方记录。
 - [ ] 没有只打日志不返回错误；没有每层重复打印同一个错误。
 - [ ] goroutine panic 有 recover 日志。

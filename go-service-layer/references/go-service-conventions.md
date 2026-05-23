@@ -15,6 +15,8 @@ A service file contains:
 
 Service does not talk to the database directly. Persistence goes through DAL interfaces or established repository abstractions.
 
+All service implementation methods use pointer receivers, such as `func (s *XxxSrv) SearchXxx(...)`. Do not use value receivers for service structs.
+
 ## Constructor Pattern
 
 Constructor owns dependency wiring and logger/cache initialization:

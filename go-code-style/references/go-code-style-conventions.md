@@ -65,6 +65,76 @@ Split a function when it mixes validation, data access, transformation, and resp
 
 Prefer methods with receivers for behavior that belongs to a struct. Except for real shared utilities such as `utils` helpers, avoid loose functions with no owner. Put business behavior on the service/API/model/param/helper struct that owns the state or responsibility.
 
+All methods must use pointer receivers. Do not use value receivers, even for read-only methods or small structs. This keeps method sets consistent and avoids accidental struct copies.
+
+Good:
+
+```go
+func (m *Xxx) Check() error {
+    return nil
+}
+```
+
+Avoid:
+
+```go
+func (m Xxx) Check() error {
+    return nil
+}
+```
+
+## Self-Returning Mutation Methods
+
+- `Normalize()`、`FillDefault()`、`WithXxx()` 等会修改 receiver 并返回自身的方法，必须是 pointer receiver，并且返回同一个对象的指针，例如 `func (r *Request) Normalize() *Request`。
+- 这类方法直接规整或补全 receiver 字段并返回自身；nil receiver 场景在方法内初始化为空对象后继续处理。
+- 只要这类方法有返回值，调用方必须用原变量接收返回值，例如 `req = req.Normalize()`、`input.Prompt = input.Prompt.Normalize()`、`opts = opts.FillDefault()`。
+- 不区分调用方当前变量是否为 nil；统一使用原变量接收返回值。原因是 nil receiver 场景下，方法内的 `r = &Request{}` 只改变局部 receiver 变量，不会修改调用方手里的 nil 指针。
+- 调用侧不要裸调这类有返回值的方法，也不要另起变量承接规整结果，例如不要写 `req.Normalize()`、`opts.FillDefault()`、`normalized := req.Normalize()`、`prompt := input.Prompt.Normalize()`、`modelInfo := llmModel.Normalize()`。
+
+Good:
+
+```go
+func (r *Request) Normalize() *Request {
+    if r == nil {
+        r = &Request{}
+    }
+    r.Name = strings.TrimSpace(r.Name)
+    return r
+}
+
+req = req.Normalize()
+req.Check()
+
+existingReq = existingReq.Normalize()
+existingReq.Check()
+
+opts = opts.FillDefault()
+```
+
+Avoid:
+
+```go
+func (r *Request) Normalize() Request {
+    if r == nil {
+        return Request{}
+    }
+    r.Name = strings.TrimSpace(r.Name)
+    return *r
+}
+
+normalized := req.Normalize()
+normalized.Check()
+
+var req *Request
+req.Normalize()
+req.Check()
+
+existingReq.Normalize()
+existingReq.Check()
+
+defaults := opts.FillDefault()
+```
+
 ## File And Line Length
 
 - A single file should not become too long or carry too many responsibilities.

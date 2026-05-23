@@ -11,7 +11,7 @@ service 层负责业务编排、参数校验入口、必要模型转换、结果
 
 1. 识别 service 边界：确认公开方法、param、response、依赖 DAL/service/cache/logger 和方法类型。
 2. 加载 `references/go-service-conventions.md`，按项目约定处理 interface、struct、constructor 和错误语义。
-3. 定义结构：项目使用 interface 时同步更新 interface 和实现；依赖通过构造函数注入。
+3. 定义结构：项目使用 interface 时同步更新 interface 和实现；依赖通过构造函数注入；service 方法统一使用指针接收者。
 4. 实现公开方法：涉及 I/O 的公开方法第一个参数使用 `ctx context.Context`；入口调用 `param.Check()`。
 5. 编排依赖：调用 DAL/service/cache；slice/map 作为返回值时先实例化，所有返回路径都不能返回 nil slice/map；错误按项目约定记录和包装。
 6. 拆分 helper：复杂详情或跨资源聚合按数据域拆成私有 helper；批量取数先收集 ID、去重、批量查、map 回填。
@@ -24,6 +24,7 @@ service 层负责业务编排、参数校验入口、必要模型转换、结果
 ## Pre-Delivery Checklist
 
 - [ ] 符合项目 service interface/struct/constructor 约定。
+- [ ] service 实现方法都使用指针接收者，例如 `func (s *XxxSrv) SearchXxx(...)`，没有值接收者。
 - [ ] 涉及 I/O 的公开 service 方法第一个参数是 `ctx context.Context`。
 - [ ] 方法体没有重复的 `s == nil` 或依赖 nil 防御判断。
 - [ ] 有 param 校验方法时入口调用 `param.Check()`；无重复清洗、ID 校验或派生字段计算。

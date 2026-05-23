@@ -10,6 +10,7 @@ A DAL file contains:
 - A DAO implementation named `XxxDao`.
 - A constructor `NewXxxDao(db *databases.RDBInstance) *XxxDao`.
 - Methods that receive `ctx context.Context`.
+- DAO implementation methods use pointer receivers, such as `func (dal *XxxDao) SearchXxx(...)`. Do not use value receivers.
 - Constructors/initialization guarantee DAO dependencies are non-nil; methods do not defensively check `dal == nil` or `dal.db == nil`.
 - Param structs live with models, not in the DAL package.
 - No recommended `Get` method by default; use `Search(ctx, param)` unless the user explicitly asks for single-record lookup.

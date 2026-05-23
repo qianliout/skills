@@ -15,6 +15,8 @@ The sample models use rich domain structs rather than passive DTOs. A persistent
 
 Model-layer ownership includes model structs, param structs, model-related constants, validation, serialization, deserialization, derived fields, and update field selection. These behaviors should usually be methods on the specific model type, such as `(m *Xxx) Check()` or `(m *Xxx) Serialize()`, rather than loose helpers with no owner.
 
+All model, param, response, and value-object methods use pointer receivers. Do not use value receivers, including for read-only methods such as `TableName()` or `LogStr()`.
+
 The model package should stay low-level. It may depend on the standard library, external foundational libraries, and project `utils`; it should not depend on API, service, DAL, or other business-layer packages.
 
 ## Database Compatibility

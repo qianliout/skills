@@ -109,6 +109,7 @@ Rules:
 - No DB/cache/network/file I/O.
 - No side effects.
 - No receiver or external state mutation.
+- Use a pointer receiver; do not use a value receiver.
 - No complex calculation, sorting, filtering, or deduplication.
 - No sensitive fields.
 - Output should be stable, concise, and searchable.
@@ -116,7 +117,7 @@ Rules:
 Example:
 
 ```go
-func (p SearchXxxParam) LogStr() string {
+func (p *SearchXxxParam) LogStr() string {
     return fmt.Sprintf(
         "projectID=%d,status=%s,keyword=%s,limit=%d,offset=%d",
         p.ProjectID,

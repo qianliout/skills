@@ -11,7 +11,7 @@ API 层只负责 HTTP 适配：解析请求、基础校验入口、调用 servic
 
 1. 识别 API 边界：确认 handler、query/body/header 来源、service 依赖、返回 items/count/page 信息。
 2. 加载 `references/go-api-conventions.md`，按项目约定处理路由、请求解析、错误响应和分页响应。
-3. 定义结构：API struct 只持有 service、logger 或轻量依赖；依赖通过构造函数注入。
+3. 定义结构：API struct 只持有 service、logger 或轻量依赖；依赖通过构造函数注入；handler 方法统一使用指针接收者。
 4. 解析请求：所有请求参数使用 query 传参，body 使用项目既有 JSON binding；字段多时组装语义化 param。
 5. 校验与调用：param 有 `Check()` 时在调用 service 前执行；handler 不直接访问 DB/GORM/DAL。
 6. 响应交付：使用统一 response helper；列表响应包含 items、total、itemsPerPage、startIndex。
@@ -23,6 +23,7 @@ API 层只负责 HTTP 适配：解析请求、基础校验入口、调用 servic
 ## Pre-Delivery Checklist
 
 - [ ] API struct 只持有 service/logger/轻量依赖，依赖由构造函数注入。
+- [ ] handler/API 方法都使用指针接收者，例如 `func (api *XxxAPI) Action(ctx *gin.Context)`，没有值接收者。
 - [ ] Handler 签名符合项目框架约定；handler 内没有重复 nil 防御判断。
 - [ ] HTTP 方法只使用 `GET`、`POST`、`PUT`、`DELETE`，除非用户明确确认例外。
 - [ ] 请求 param、response DTO 定义在 model/API 类型层，没有 handler 内临时 struct。

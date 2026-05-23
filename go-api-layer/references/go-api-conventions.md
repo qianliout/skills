@@ -33,7 +33,8 @@ Rules:
 
 - Keep API struct narrow: service dependencies, logger, or tiny stateless helpers.
 - Dependency validity is guaranteed by construction/bootstrap; avoid repeated nil checks in handlers.
-- Handler methods use the project framework signature, commonly `func (api *XxxAPI) Action(ctx *gin.Context)`.
+- Handler methods use pointer receivers and the project framework signature, commonly `func (api *XxxAPI) Action(ctx *gin.Context)`.
+- Do not use value receivers for API/handler methods.
 
 ## Request Parsing
 
