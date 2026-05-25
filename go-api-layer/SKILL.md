@@ -13,7 +13,7 @@ API 层只负责 HTTP 适配：解析请求、基础校验入口、调用 servic
 2. 加载 `references/go-api-conventions.md`，按项目约定处理路由、请求解析、错误响应和分页响应。
 3. 定义结构：API struct 只持有 service、logger 或轻量依赖；依赖通过构造函数注入；handler 方法统一使用指针接收者。
 4. 解析请求：所有请求参数使用 query 传参，body 使用项目既有 JSON binding；字段多时组装语义化 param。
-5. 校验与调用：param 有 `Serialize()` 时用原变量接收返回值，再执行 `Check()`；handler 不直接访问 DB/GORM/DAL；trim/default/derive/fill 等领域规整统一放到拥有字段的 param/DTO 的公有 `Serialize()` 中。
+5. 校验与调用：带领域方法的 param/DTO 使用指针变量；param 有 `Serialize()` 时用原变量接收返回值，再执行 `Check()`；handler 不直接访问 DB/GORM/DAL；trim/default/derive/fill 等领域规整统一放到拥有字段的 param/DTO 的公有 `Serialize()` 中。
 6. 响应交付：使用统一 response helper；列表响应包含 items、total、itemsPerPage、startIndex。
 
 ## Reference Loading
@@ -27,6 +27,7 @@ API 层只负责 HTTP 适配：解析请求、基础校验入口、调用 servic
 - [ ] Handler 签名符合项目框架约定；handler 内没有重复 nil 防御判断。
 - [ ] HTTP 方法只使用 `GET`、`POST`、`PUT`、`DELETE`，除非用户明确确认例外。
 - [ ] 请求 param、response DTO 定义在 model/API 类型层，没有 handler 内临时 struct。
+- [ ] 带领域方法的 param/DTO 使用指针变量，便于 `Serialize()` / `Deserialize()` 在 nil receiver 场景返回新对象。
 - [ ] 所有请求参数使用 query 传参，没有 path 参数。
 - [ ] `PUT` 更新为全量更新，query 必传更新 ID，body 传全量内容。
 - [ ] 字段较多的入参已收敛为语义化 param struct。

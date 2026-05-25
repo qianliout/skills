@@ -11,11 +11,13 @@ The sample models use rich domain structs rather than passive DTOs. A persistent
 - Runtime-only fields marked `gorm:"-"`.
 - Serialized text backing fields marked `json:"-"` when a runtime complex structure is stored in a string text column.
 - Lifecycle methods: `Serialize`, `Deserialize`, `Check`, `TableName`.
-- Derived identity methods such as `GenUniqueID`, `GenUUID`, `GenCheckSum`.
+- Derived identity, UUID, checksum, display/search, and compatibility fields are prepared inside `Serialize()`, not in extra same-purpose methods such as `GenUniqueID`, `GenUUID`, or `GenCheckSum`.
 
 Model-layer ownership includes model structs, param structs, model-related constants, validation, serialization, deserialization, derived fields, normalization, default filling, and update field selection. These behaviors should usually be public methods on the specific model type, such as `(m *Xxx) Check()` or `(m *Xxx) Serialize()`, rather than loose helpers with no owner.
 
 Domain normalization belongs to the struct that owns the fields. If logic trims names, fills default status values, normalizes IDs, derives display/search fields, serializes backing text fields, or fixes compatibility values from a model/param/result's fields, put it on that model/param/result's `Serialize()` method. Do not create `Normalize()`, `FillDefault()`, lower-case normalization helpers, or package-level functions for logic that clearly belongs to one struct. Package-level functions are only for truly generic, domain-neutral tools with no clear field owner.
+
+If `Serialize()` or `Deserialize()` exists for a struct, do not add another method or function with overlapping normalization, defaulting, derived-field, serialization, or deserialization responsibilities.
 
 Common domain methods must be exported and use these fixed signatures:
 
@@ -28,6 +30,8 @@ func (m *Xxx) Same(after *Xxx) bool
 ```
 
 Do not change these signatures to omit the receiver return, accept context, accept external params, or use lower-case method names. `Serialize()` and `Deserialize()` return a receiver pointer. When the receiver is nil, they must create a new object and return it; when the receiver is non-nil, they mutate and return the original receiver. Callers must assign the return value back to the original variable, such as `data = data.Serialize()` or `item = item.Deserialize()`. Their method bodies do not create normalized copies or replacement objects except for the nil receiver allocation.
+
+`Serialize()`、`Deserialize()`、`ToUpdater()`、`Check()`、`Same()` do not call each other internally. Their composition is fully controlled by external callers, such as API/service/DAL code deciding to run `param = param.Serialize()` and then `param.Check()`. Keep each domain method mostly self-contained in one function; do not split struct-specific normalization, validation, comparison, or updater logic into private helpers unless the helper is truly generic and has no field owner.
 
 All model, param, response, and value-object methods use pointer receivers. Do not use value receivers, including for read-only methods such as `TableName()` or `LogStr()`.
 
@@ -126,7 +130,7 @@ Rules:
 3. Require common identity fields such as name/code/type/version.
 4. Require context-specific fields such as tenant ID, project ID, parent ID, or external ID.
 
-`Check()` belongs with the model or param it validates. Do not repeat the same validation in API, service, or DAL. `Check()` does not trim, fill defaults, derive fields, or mutate data; call `Serialize()` before `Check()` when validation depends on normalized values.
+`Check()` belongs with the model or param it validates. Do not repeat the same validation in API, service, or DAL. `Check()` does not trim, fill defaults, derive fields, mutate data, or call `Serialize()` / `Deserialize()` / `ToUpdater()` / `Same()`; callers decide when to run `Serialize()` before `Check()`.
 
 ## Serialization Pattern
 

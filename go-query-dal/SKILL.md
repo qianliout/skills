@@ -12,7 +12,7 @@ DAL 只编排数据库访问，不承载业务规则。每个 DB 方法必须有
 1. 识别 DAL 边界：确认实体 model、model 层 param、目标表名、依赖 DAL 和方法类型。
 2. 加载 `references/go-query-dal-conventions.md`，按项目约定处理 DB timeout、GORM 链路、过滤分页和序列化。
 3. 定义接口：公开方法第一个参数是 `ctx context.Context`；DAO 实现方法统一使用指针接收者；默认提供 `Create`、`Search`、`Update`、`Delete`。
-4. 实现查询：开头按 `param = param.Serialize()`、`param.Check()` 顺序处理；查询字段规整依赖拥有字段的 param 公有 `Serialize()`；创建 `context.WithTimeout` 并使用 `WithContext(cancelCtx)`。
+4. 实现查询：带领域方法的 param 使用指针类型；开头按 `param = param.Serialize()`、`param.Check()` 顺序处理；查询字段规整依赖拥有字段的 param 公有 `Serialize()`；创建 `context.WithTimeout` 并使用 `WithContext(cancelCtx)`。
 5. 组织 GORM 链路：先初始化空结果切片，所有返回路径都不能返回 nil slice；表名来自 `TableName()`；先业务过滤，再 `Count`，再 `AddFilter`，最后 `Find` 和 `Deserialize()`。
 6. 实现写操作：`Create` 执行 `Serialize`/`Check`；`Update` 校验 ID，执行 `Serialize`/`Check`，查原记录、校验不可变字段、`ToUpdater`；`Delete` 只按主键 ID 删除。
 7. 交付：缺少 model 方法或 param 字段时列出假设，不临时把类型写进 DAL。
@@ -28,8 +28,9 @@ DAL 只编排数据库访问，不承载业务规则。每个 DB 方法必须有
 - [ ] 每个 DB 操作都使用 `context.WithTimeout` 和 `WithContext(cancelCtx)`。
 - [ ] `Create/Search/Update/Delete` 签名符合约定；没有主动新增 `Get`。
 - [ ] 所有 param 定义在 model 同层；字段命名语义化，能看出主 model 或关联 model 含义。
-- [ ] `Search` 开头按 `param = param.Serialize()`、`param.Check()` 顺序处理，DAL 内没有重复参数清洗、UUID 校验或派生字段计算。
+- [ ] `Search` 的 param 入参是指针类型，开头按 `param = param.Serialize()`、`param.Check()` 顺序处理，DAL 内没有重复参数清洗、UUID 校验或派生字段计算。
 - [ ] DAL 内没有散落 trim/default/derive/fill 逻辑或以 param/model 为首参的规整 helper；这类逻辑已挂到拥有字段的 param/model 公有 `Serialize()` 上，没有 `Normalize()`、`FillDefault()` 或小写规整方法。
+- [ ] DAL 作为外部调用方显式组合领域方法；不依赖 `Check()`、`ToUpdater()`、`Same()` 内部代调 `Serialize()` / `Deserialize()`。
 - [ ] `Search` 的结果 slice 已在函数开头实例化，校验错误、查询错误和成功路径都返回该空 slice 而不是 nil。
 - [ ] 查询链路按步骤拆开；where 只在 param 非零值时追加，零值特殊查询有注释。
 - [ ] 查询兼容不同数据库，没有不必要的高阶 SQL、数据库特有函数、JSON/数组操作、全文检索等。

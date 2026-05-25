@@ -44,7 +44,7 @@ Rules:
 ## Public Search Pattern
 
 ```go
-func (s *XxxSrv) SearchXxx(ctx context.Context, param model.SearchXxxParam) (
+func (s *XxxSrv) SearchXxx(ctx context.Context, param *model.SearchXxxParam) (
     []*model.XxxResponse, int64, error) {
     res := make([]*model.XxxResponse, 0)
     param = param.Serialize()
@@ -77,9 +77,10 @@ Rules:
 
 - Initialize result slices before validation.
 - If a slice or map is part of the return values, initialize it before validation and return that initialized value on every path, including errors.
+- Params with domain methods should be pointer types, such as `*model.SearchXxxParam`, so `Serialize()` can return a replacement object for nil receiver cases.
 - Call `param = param.Serialize()` before `param.Check()` at the public service boundary when the param type provides these methods.
 - Keep trim/default/normalize/derive/fill logic on the model/param/result struct that owns those fields, unified under public `Serialize()`. Service may call `param = param.Serialize()`, `param.Check()`, or `data = data.Serialize()`, but should not host package-level normalization helpers, `Normalize()`, `FillDefault()`, or lower-case normalization methods for a specific struct.
-- Use param conversion methods only when API and DAL params differ or the mapping is non-trivial.
+- Use param conversion methods only for cross-type API/DAL DTO mapping when the mapping is non-trivial; conversion methods must not duplicate `Serialize()` / `Deserialize()` responsibilities such as trim, defaults, normalization, or derived fields.
 - Passing the original param through is fine when it already matches the DAL contract.
 - Log DAL errors with operation context according to project logging conventions.
 - Return empty slices/maps instead of nil whenever slice/map values are returned.
@@ -87,7 +88,7 @@ Rules:
 ## Update Pattern
 
 ```go
-func (s *XxxSrv) UpdateXxx(ctx context.Context, param model.UpdateXxxParam) error {
+func (s *XxxSrv) UpdateXxx(ctx context.Context, param *model.UpdateXxxParam) error {
     param = param.Serialize()
     if err := param.Check(); err != nil {
         return err
@@ -110,7 +111,8 @@ Rules:
 ## Detail Aggregation Pattern
 
 ```go
-func (s *XxxSrv) GetXxxDetail(ctx context.Context, param model.XxxDetailParam) (*model.XxxDetailResponse, error) {
+func (s *XxxSrv) GetXxxDetail(ctx context.Context, param *model.XxxDetailParam) (*model.XxxDetailResponse, error) {
+    param = param.Serialize()
     if err := param.Check(); err != nil {
         return nil, err
     }
@@ -121,9 +123,9 @@ func (s *XxxSrv) GetXxxDetail(ctx context.Context, param model.XxxDetailParam) (
     }
 
     errs := make([]error, 0)
-    errs = append(errs, s.addBaseData(ctx, &param, ans))
-    errs = append(errs, s.addRelatedData(ctx, &param, ans))
-    errs = append(errs, s.addExtraData(ctx, &param, ans))
+    errs = append(errs, s.addBaseData(ctx, param, ans))
+    errs = append(errs, s.addRelatedData(ctx, param, ans))
+    errs = append(errs, s.addExtraData(ctx, param, ans))
 
     errText := make([]string, 0)
     for i := range errs {
@@ -169,7 +171,7 @@ Avoid querying related DAL inside each item loop when the data can be batched.
 
 ## Service vs DAL vs Model
 
-- Model: types, public `Serialize`, `Deserialize`, `ToUpdater`, `Check`, `Same`, conversion helpers.
+- Model: types, public `Serialize`, `Deserialize`, `ToUpdater`, `Check`, `Same`, and pure cross-type conversion methods that do not duplicate serialization/deserialization or normalization responsibilities.
 - DAL: persistence, timeout, SQL/GORM, `AddFilter`, CRUD/search.
 - Service: orchestration, cross-DAL aggregation, response composition, logging, error wrapping.
 - Package-level helpers: only truly generic, domain-neutral utilities with no clear owning struct.

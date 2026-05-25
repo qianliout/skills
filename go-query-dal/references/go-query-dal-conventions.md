@@ -39,14 +39,14 @@ Use these signatures unless the user explicitly overrides them:
 
 ```go
 CreateXxx(ctx context.Context, data *model.Xxx) error
-SearchXxx(ctx context.Context, param model.SearchXxxParam) ([]*model.Xxx, int64, error)
+SearchXxx(ctx context.Context, param *model.SearchXxxParam) ([]*model.Xxx, int64, error)
 UpdateXxx(ctx context.Context, id int64, data *model.Xxx) error
 DeleteXxx(ctx context.Context, id int64) error
 ```
 
 Rules:
 
-- `Search` has exactly two inputs: `ctx` and `param`.
+- `Search` has exactly two inputs: `ctx` and pointer `param`.
 - `Search` has exactly three outputs: result slice, total count, error.
 - `Update` has exactly three inputs: `ctx`, primary key ID, and model data.
 - `Delete` has exactly two inputs: `ctx` and primary key ID; do not add param structs or extra condition arguments.
@@ -71,7 +71,7 @@ type SearchXxxParam struct {
 DAL code imports and uses model params:
 
 ```go
-SearchXxx(ctx context.Context, param model.SearchXxxParam) ([]*model.Xxx, int64, error)
+SearchXxx(ctx context.Context, param *model.SearchXxxParam) ([]*model.Xxx, int64, error)
 ```
 
 Do not define `SearchXxxParam`, `UpdateXxxParam`, filter structs, sort structs, or pagination structs in the DAL package.
@@ -95,7 +95,7 @@ Avoid vague fields such as `ID`, `Type`, `Name`, or `Keyword` when the query spa
 Template:
 
 ```go
-func (dal *XxxDao) SearchXxx(ctx context.Context, param model.SearchXxxParam) (
+func (dal *XxxDao) SearchXxx(ctx context.Context, param *model.SearchXxxParam) (
     []*model.Xxx, int64, error) {
     res := make([]*model.Xxx, 0)
     param = param.Serialize()
@@ -141,6 +141,7 @@ func (dal *XxxDao) SearchXxx(ctx context.Context, param model.SearchXxxParam) (
 
 Rules:
 
+- Params with domain methods should be pointer types, such as `*model.SearchXxxParam`, so `Serialize()` can return a replacement object for nil receiver cases.
 - Call `param = param.Serialize()` before `param.Check()` and before creating query conditions.
 - Initialize result slices before validation and return the initialized empty slice on every path.
 - Put trim, ID normalization, default values, and derived query fields in the owning param's public `Serialize()`; put format and optional-resource validation in `Check()`.

@@ -67,6 +67,8 @@ Prefer methods with receivers for behavior that belongs to a struct. Except for 
 
 Domain normalization belongs to the struct that owns the fields being normalized. If logic trims, fills defaults, normalizes IDs, derives fields, fixes enum aliases, or prepares persisted/query/update fields from a specific struct's data, implement it on that struct's public `Serialize()` method. Do not create `Normalize()`, `FillDefault()`, lower-case normalization helpers, or package-level functions for logic that clearly belongs to one struct. Keep package-level functions only for truly general, domain-neutral utilities with no clear field owner, such as primitive string helpers or generic collection helpers.
 
+If `Serialize()` or `Deserialize()` exists for a struct, do not add another method or function with overlapping normalization, defaulting, derived-field, serialization, or deserialization responsibilities. Avoid aliases, wrappers, migration shims, or lower-case variants for the same behavior.
+
 Common domain methods must use fixed exported names and signatures:
 
 ```go
@@ -107,6 +109,8 @@ func (m Xxx) Check() error {
 - `ToUpdater()` 不接收参数，返回已初始化的 `map[string]interface{}`。
 - `Check()` 不接收参数，只返回 `error`；它只做校验，不做 trim/default/derive/fill。
 - `Same(after *Xxx) bool` 只接收同类型对象指针并返回比较结果。
+- `Serialize()`、`Deserialize()`、`ToUpdater()`、`Check()`、`Same()` 内部不要互相调用；这些方法的组合顺序完全由外部调用方决定。
+- 单个领域方法尽量在一个函数内完成，不为同一 struct 拆出私有规整、校验、比较、updater helper。只有真正通用、无字段归属的标准库或项目工具函数可以被调用。
 - 这些方法必须是大写公有方法，即使当前项目里已有小写或其他签名，也按固定签名生成和重构。
 
 Good:
@@ -134,6 +138,13 @@ func (r *Request) normalize() {}
 func (r *Request) Normalize() *Request {}
 
 func (r *Request) FillDefault() {}
+
+func (r *Request) serializeName() {}
+
+func (r *Request) Check() error {
+    r.Serialize()
+    return nil
+}
 
 func (r *Request) Serialize() {}
 

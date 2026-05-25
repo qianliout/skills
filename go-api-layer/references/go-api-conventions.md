@@ -61,7 +61,7 @@ Do not introduce `PATCH`, `HEAD`, `OPTIONS`, or other HTTP methods unless the us
 Example:
 
 ```go
-param := model.SearchXxxAPIParam{
+param := &model.SearchXxxAPIParam{
     Keyword: util.GetKeywordFromQuery(ctx, "keyword"),
     Status:  util.GetKeywordFromQuery(ctx, "status"),
     Filter:  model.GetFilter(ctx).SetMaxLimit(consts.DefaultMaxLimit),
@@ -92,7 +92,7 @@ if err := ctx.ShouldBindJSON(&body); err != nil {
     return
 }
 
-param := model.UpdateXxxAPIParam{
+param := &model.UpdateXxxAPIParam{
     ID:   id,
     Data: body,
 }
