@@ -15,7 +15,7 @@ A DAL file contains:
 - Param structs live with models, not in the DAL package.
 - No recommended `Get` method by default; use `Search(ctx, param)` unless the user explicitly asks for single-record lookup.
 - GORM queries built from `dal.db.Get().WithContext(cancelCtx).Table(...)`.
-- Model lifecycle calls: `Check`, `Serialize`, `Deserialize`, `ToUpdater`, `TableName`.
+- Model lifecycle calls: `Serialize`, `Check`, `Deserialize`, `ToUpdater`, `TableName`.
 
 ## Timeout Pattern
 
@@ -98,6 +98,7 @@ Template:
 func (dal *XxxDao) SearchXxx(ctx context.Context, param model.SearchXxxParam) (
     []*model.Xxx, int64, error) {
     res := make([]*model.Xxx, 0)
+    param = param.Serialize()
     if err := param.Check(); err != nil {
         return res, 0, err
     }
@@ -131,7 +132,7 @@ func (dal *XxxDao) SearchXxx(ctx context.Context, param model.SearchXxxParam) (
         return res, 0, err
     }
     for i := range res {
-        res[i].Deserialize()
+        res[i] = res[i].Deserialize()
     }
 
     return res, cnt, nil
@@ -140,9 +141,10 @@ func (dal *XxxDao) SearchXxx(ctx context.Context, param model.SearchXxxParam) (
 
 Rules:
 
-- Call `param.Check()` before creating query conditions.
+- Call `param = param.Serialize()` before `param.Check()` and before creating query conditions.
 - Initialize result slices before validation and return the initialized empty slice on every path.
-- Put trim, format validation, ID normalization, optional-resource validation, default values, and derived query fields in `param.Check()` or param methods.
+- Put trim, ID normalization, default values, and derived query fields in the owning param's public `Serialize()`; put format and optional-resource validation in `Check()`.
+- Query normalization belongs to the param struct that owns the query fields and is unified under public `Serialize()`. DAL should not define `Normalize()`, `FillDefault()`, lower-case normalization methods, or package-level helpers such as `NormalizeSearchXxxParam(param *SearchXxxParam)` when the behavior belongs on the param receiver.
 - Do not repeat parameter normalization or validation in DAL; DAL should only consume checked param fields.
 - Do not check `dal == nil` or `dal.db == nil` inside DAL methods; initialization owns that guarantee.
 - Build exact business filters before `Count`.
@@ -164,10 +166,10 @@ Rules:
 
 ```go
 func (dal *XxxDao) CreateXxx(ctx context.Context, data *model.Xxx) error {
+    data = data.Serialize()
     if err := data.Check(); err != nil {
         return err
     }
-    data.Serialize()
 
     cancelCtx, cancelFunc := context.WithTimeout(ctx, time.Second*10)
     defer cancelFunc()
@@ -184,10 +186,10 @@ func (dal *XxxDao) UpdateXxx(ctx context.Context, id int64, data *model.Xxx) err
     if id <= 0 {
         return fmt.Errorf("not get id")
     }
+    data = data.Serialize()
     if err := data.Check(); err != nil {
         return err
     }
-    data.Serialize()
 
     cancelCtx, cancelFunc := context.WithTimeout(ctx, time.Second*3)
     defer cancelFunc()

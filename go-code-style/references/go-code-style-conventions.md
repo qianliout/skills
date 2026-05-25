@@ -65,6 +65,20 @@ Split a function when it mixes validation, data access, transformation, and resp
 
 Prefer methods with receivers for behavior that belongs to a struct. Except for real shared utilities such as `utils` helpers, avoid loose functions with no owner. Put business behavior on the service/API/model/param/helper struct that owns the state or responsibility.
 
+Domain normalization belongs to the struct that owns the fields being normalized. If logic trims, fills defaults, normalizes IDs, derives fields, fixes enum aliases, or prepares persisted/query/update fields from a specific struct's data, implement it on that struct's public `Serialize()` method. Do not create `Normalize()`, `FillDefault()`, lower-case normalization helpers, or package-level functions for logic that clearly belongs to one struct. Keep package-level functions only for truly general, domain-neutral utilities with no clear field owner, such as primitive string helpers or generic collection helpers.
+
+Common domain methods must use fixed exported names and signatures:
+
+```go
+func (m *Xxx) Serialize() *Xxx
+func (m *Xxx) Deserialize() *Xxx
+func (m *Xxx) ToUpdater() map[string]interface{}
+func (m *Xxx) Check() error
+func (m *Xxx) Same(after *Xxx) bool
+```
+
+Do not introduce lower-case variants such as `serialize()` or alternate signatures such as `Serialize()`, `Serialize(ctx context.Context)`, `Check(param Xxx) error`, or `ToUpdater(data *Xxx) map[string]interface{}`.
+
 All methods must use pointer receivers. Do not use value receivers, even for read-only methods or small structs. This keeps method sets consistent and avoids accidental struct copies.
 
 Good:
@@ -83,18 +97,22 @@ func (m Xxx) Check() error {
 }
 ```
 
-## Self-Returning Mutation Methods
+## Domain Method Shape
 
-- `Normalize()`、`FillDefault()`、`WithXxx()` 等会修改 receiver 并返回自身的方法，必须是 pointer receiver，并且返回同一个对象的指针，例如 `func (r *Request) Normalize() *Request`。
-- 这类方法直接规整或补全 receiver 字段并返回自身；nil receiver 场景在方法内初始化为空对象后继续处理。
-- 只要这类方法有返回值，调用方必须用原变量接收返回值，例如 `req = req.Normalize()`、`input.Prompt = input.Prompt.Normalize()`、`opts = opts.FillDefault()`。
-- 不区分调用方当前变量是否为 nil；统一使用原变量接收返回值。原因是 nil receiver 场景下，方法内的 `r = &Request{}` 只改变局部 receiver 变量，不会修改调用方手里的 nil 指针。
-- 调用侧不要裸调这类有返回值的方法，也不要另起变量承接规整结果，例如不要写 `req.Normalize()`、`opts.FillDefault()`、`normalized := req.Normalize()`、`prompt := input.Prompt.Normalize()`、`modelInfo := llmModel.Normalize()`。
+- `Serialize()` 统一承载 trim、default、normalize、derive、fill、序列化文本字段、派生查询/更新字段等规整职责。
+- `Serialize()` 和 `Deserialize()` 修改 receiver，不接收参数，返回 receiver 指针。
+- `Serialize()` 和 `Deserialize()` 在 receiver 为 nil 时必须新建一个对象，并返回这个对象；非 nil 时直接修改并返回原 receiver。
+- `Serialize()` 和 `Deserialize()` 方法体内不创建规整副本；除 nil receiver 分支用于创建接收对象外，不新建替代对象。
+- 调用方必须用原变量接收 `Serialize()` / `Deserialize()` 返回值，例如 `req = req.Serialize()`、`item = item.Deserialize()`，否则 nil receiver 场景下新对象会丢失。
+- `ToUpdater()` 不接收参数，返回已初始化的 `map[string]interface{}`。
+- `Check()` 不接收参数，只返回 `error`；它只做校验，不做 trim/default/derive/fill。
+- `Same(after *Xxx) bool` 只接收同类型对象指针并返回比较结果。
+- 这些方法必须是大写公有方法，即使当前项目里已有小写或其他签名，也按固定签名生成和重构。
 
 Good:
 
 ```go
-func (r *Request) Normalize() *Request {
+func (r *Request) Serialize() *Request {
     if r == nil {
         r = &Request{}
     }
@@ -102,37 +120,32 @@ func (r *Request) Normalize() *Request {
     return r
 }
 
-req = req.Normalize()
+req = req.Serialize()
 req.Check()
 
-existingReq = existingReq.Normalize()
-existingReq.Check()
-
-opts = opts.FillDefault()
+updater := req.ToUpdater()
 ```
 
 Avoid:
 
 ```go
-func (r *Request) Normalize() Request {
-    if r == nil {
-        return Request{}
-    }
-    r.Name = strings.TrimSpace(r.Name)
-    return *r
+func (r *Request) normalize() {}
+
+func (r *Request) Normalize() *Request {}
+
+func (r *Request) FillDefault() {}
+
+func (r *Request) Serialize() {}
+
+func (r *Request) Serialize() *Request {
+    ans := &Request{}
+    ans.Name = strings.TrimSpace(r.Name)
+    return ans
 }
 
-normalized := req.Normalize()
-normalized.Check()
+req.Serialize()
 
-var req *Request
-req.Normalize()
-req.Check()
-
-existingReq.Normalize()
-existingReq.Check()
-
-defaults := opts.FillDefault()
+func SerializeRequest(r *Request) {}
 ```
 
 ## File And Line Length
@@ -174,10 +187,42 @@ defaults := opts.FillDefault()
 - Use `var` only when it improves clarity, such as declaring a nil pointer/interface intentionally, accumulating a zero value across branches, or sharing a variable outside a narrow inner scope.
 - When a function returns a slice or map, instantiate it before any return path and never return a nil slice/map. Use `res := make([]*model.Xxx, 0)` or `ans := make(map[string]*model.Xxx)` and return that value on both success and error paths.
 
+## Return Values For Debugging
+
+- Do not directly return the result of any function or method call. Assign the returned value to a local variable first, then return the variable. This makes it easy to place a breakpoint and inspect the returned value.
+- For `(value, error)` calls, split the call into `value, err := ...`, handle `err`, then `return value, nil`.
+- For final conversions or cleanup, assign the converted value to a local variable before returning it.
+
+Good:
+
+```go
+result, err := client.Do(ctx, req)
+if err != nil {
+    return nil, err
+}
+return result, nil
+
+value := strings.TrimSpace(raw)
+return value
+```
+
+Avoid:
+
+```go
+return client.Do(ctx, req)
+
+return strings.TrimSpace(raw)
+
+return buildResult(input)
+
+return repo.Find(ctx, id)
+```
+
 ## Types And Interfaces
 
 - Function inputs and outputs should prefer defined structs or concrete types.
 - Function inputs and outputs should each usually stay within 3 values. If a signature needs more, prefer a named param struct, result struct, or option pattern.
+- Function and method call arguments should be variables, constants, literals, or simple field/index access. Do not pass another function or method call result directly as an argument; assign it to a meaningful local variable first so the value can be named, inspected, and debugged.
 - Slice/map return values must be non-nil by contract. This includes error paths such as `(items, 0, err)` instead of `(nil, 0, err)` when `items` is a slice return value.
 - Numeric fields in structs should use `int64` by default.
 - Use other numeric types only for clear exceptions, such as external API contracts, third-party library signatures, byte-size data, proven memory/performance needs, or a local project convention.
@@ -186,6 +231,19 @@ defaults := opts.FillDefault()
 - If data has a stable shape, define a struct even when only a few fields are currently used.
 - Keep `any` for unavoidable boundaries such as generic helpers, JSON/raw dynamic payloads, logging fields, or third-party APIs; convert to typed structs as soon as practical.
 - Keep common Go return shapes such as `(value, error)` or `(list, count, error)` when they match local conventions.
+
+Good:
+
+```go
+messages := buildTextMessages(prompt, opts)
+resp, err := g.chatModel.Generate(ctx, messages)
+```
+
+Avoid:
+
+```go
+resp, err := g.chatModel.Generate(ctx, buildTextMessages(prompt, opts))
+```
 
 ## Tags
 

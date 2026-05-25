@@ -15,7 +15,7 @@ description: "Go model 层级和数据模型专家。Use when designing, writing
 4. 定义字段契约：落库字段使用数据库兼容基础类型和明确 `gorm` tag；API 字段使用稳定 `json` tag；运行时字段使用 `gorm:"-"`。
 5. 处理复杂结构：避免数据库 JSON/JSONB、数组、map、对象列；需要时用文本列配合 `Serialize()` / `Deserialize()`。
 6. 补齐模型行为：实体通常提供 `TableName()`、`Check()`、`Serialize()`、`Deserialize()`；更新提供 `ToUpdater()`，且返回 map 必须实例化；比较提供 `Same()`。
-7. 归属方法和常量：强关联逻辑写成 pointer receiver 方法，不能使用值接收者；请求/参数规整放到 `Normalize()`；model 常量、枚举、默认值、字段约束放在 model 层。
+7. 归属方法和常量：强关联逻辑写成 pointer receiver 方法，不能使用值接收者；领域规整逻辑尽量挂到拥有这些字段的 struct 上，并统一收敛到公有 `Serialize()`；不要新增 `Normalize()`、`FillDefault()` 或小写规整方法；包级函数只保留真正通用、无字段归属的工具；model 常量、枚举、默认值、字段约束放在 model 层。
 8. 交付：信息不足时列出假设，不编造未知表名、枚举值或外部类型。
 
 ## Reference Loading
@@ -28,7 +28,9 @@ description: "Go model 层级和数据模型专家。Use when designing, writing
 - [ ] param、model 常量、校验、序列化、反序列化等强关联能力都在 model 层，常量没有散落到其他层。
 - [ ] 没有把明显属于某个 model/param/result struct 的行为写成以该 struct 为首参的裸 helper；此类逻辑已归属为 receiver 方法。
 - [ ] 所有 model/param/result 方法都是指针接收者，例如 `func (m *Xxx) TableName()`，没有值接收者。
-- [ ] 请求/参数 struct 的 `Normalize()` 是 receiver 方法，直接规整当前对象并返回自身，没有创建规整副本。
+- [ ] 领域方法必须是大写公有方法，并使用固定签名：`Serialize() *Xxx`、`Deserialize() *Xxx`、`ToUpdater() map[string]interface{}`、`Check() error`、`Same(after *Xxx) bool`。
+- [ ] `Serialize()`、`Deserialize()` 在 receiver 为 nil 时新建对象并返回；非 nil 时返回原 receiver；调用方用原变量接收返回值；方法体内不创建规整副本。
+- [ ] trim、default、normalize、derive、fill、serialize/update 字段选择等领域规整逻辑已挂到拥有相关字段的 model/param/result struct 的 `Serialize()` 上；没有新增 `Normalize()`、`FillDefault()` 或小写规整方法；包级函数只保留真正跨领域、无字段归属的通用工具。
 - [ ] `ToUpdater()` 或其他 map/slice 返回值已实例化，所有返回路径都不返回 nil map/slice。
 - [ ] 二值/状态语义字段没有使用冗余 `Is` 前缀，除非项目既有约定或外部协议强制要求。
 - [ ] model 层只依赖标准库、外部基础库和项目 utils；不依赖 API/service/DAL 等业务层。

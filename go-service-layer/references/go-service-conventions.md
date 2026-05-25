@@ -47,6 +47,7 @@ Rules:
 func (s *XxxSrv) SearchXxx(ctx context.Context, param model.SearchXxxParam) (
     []*model.XxxResponse, int64, error) {
     res := make([]*model.XxxResponse, 0)
+    param = param.Serialize()
     if err := param.Check(); err != nil {
         return res, 0, err
     }
@@ -76,7 +77,8 @@ Rules:
 
 - Initialize result slices before validation.
 - If a slice or map is part of the return values, initialize it before validation and return that initialized value on every path, including errors.
-- Call `param.Check()` at the public service boundary when the param type provides it.
+- Call `param = param.Serialize()` before `param.Check()` at the public service boundary when the param type provides these methods.
+- Keep trim/default/normalize/derive/fill logic on the model/param/result struct that owns those fields, unified under public `Serialize()`. Service may call `param = param.Serialize()`, `param.Check()`, or `data = data.Serialize()`, but should not host package-level normalization helpers, `Normalize()`, `FillDefault()`, or lower-case normalization methods for a specific struct.
 - Use param conversion methods only when API and DAL params differ or the mapping is non-trivial.
 - Passing the original param through is fine when it already matches the DAL contract.
 - Log DAL errors with operation context according to project logging conventions.
@@ -86,6 +88,7 @@ Rules:
 
 ```go
 func (s *XxxSrv) UpdateXxx(ctx context.Context, param model.UpdateXxxParam) error {
+    param = param.Serialize()
     if err := param.Check(); err != nil {
         return err
     }
@@ -102,6 +105,7 @@ Rules:
 - Service validates operation param when validation exists, then delegates persistence to DAL.
 - Avoid manually building update maps in service; prefer model/DAL update contracts.
 - Avoid mutating persistence fields that belong to model `Serialize()` / `ToUpdater()`.
+- Avoid field normalization in service when the owning param/model can provide public `Serialize()`.
 
 ## Detail Aggregation Pattern
 
@@ -132,7 +136,7 @@ func (s *XxxSrv) GetXxxDetail(ctx context.Context, param model.XxxDetailParam) (
         return ans, fmt.Errorf(strings.Join(errText, ","))
     }
 
-    ans.Normalize()
+    ans = ans.Serialize()
     return ans, nil
 }
 ```
@@ -165,6 +169,7 @@ Avoid querying related DAL inside each item loop when the data can be batched.
 
 ## Service vs DAL vs Model
 
-- Model: types, `Check`, `Serialize`, `Deserialize`, `ToUpdater`, conversion helpers.
+- Model: types, public `Serialize`, `Deserialize`, `ToUpdater`, `Check`, `Same`, conversion helpers.
 - DAL: persistence, timeout, SQL/GORM, `AddFilter`, CRUD/search.
 - Service: orchestration, cross-DAL aggregation, response composition, logging, error wrapping.
+- Package-level helpers: only truly generic, domain-neutral utilities with no clear owning struct.

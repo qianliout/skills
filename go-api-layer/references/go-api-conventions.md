@@ -44,7 +44,8 @@ Rules:
 - Convert raw HTTP strings into a typed param before calling service.
 - Prefer one param struct over many positional arguments.
 - Put params and response DTOs at the model/API type layer, not inside handler functions.
-- Put trim, enum validation, ID normalization, default values, and derived fields in `param.Check()` or param methods.
+- Put trim, ID normalization, default values, and derived fields in the owning param/DTO `Serialize()` method; put enum and required-field validation in `Check()`.
+- Domain normalization belongs to the param/DTO struct that owns the fields. Do not scatter request cleanup in handlers, do not create `Normalize()` / `FillDefault()`, and do not create package-level `NormalizeXxxParam` helpers when public `Serialize()` on the typed param can own it.
 
 ## HTTP Methods
 
@@ -65,6 +66,7 @@ param := model.SearchXxxAPIParam{
     Status:  util.GetKeywordFromQuery(ctx, "status"),
     Filter:  model.GetFilter(ctx).SetMaxLimit(consts.DefaultMaxLimit),
 }
+param = param.Serialize()
 if err := param.Check(); err != nil {
     response.JSONError(ctx, err)
     return

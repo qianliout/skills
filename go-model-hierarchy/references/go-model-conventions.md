@@ -13,7 +13,21 @@ The sample models use rich domain structs rather than passive DTOs. A persistent
 - Lifecycle methods: `Serialize`, `Deserialize`, `Check`, `TableName`.
 - Derived identity methods such as `GenUniqueID`, `GenUUID`, `GenCheckSum`.
 
-Model-layer ownership includes model structs, param structs, model-related constants, validation, serialization, deserialization, derived fields, and update field selection. These behaviors should usually be methods on the specific model type, such as `(m *Xxx) Check()` or `(m *Xxx) Serialize()`, rather than loose helpers with no owner.
+Model-layer ownership includes model structs, param structs, model-related constants, validation, serialization, deserialization, derived fields, normalization, default filling, and update field selection. These behaviors should usually be public methods on the specific model type, such as `(m *Xxx) Check()` or `(m *Xxx) Serialize()`, rather than loose helpers with no owner.
+
+Domain normalization belongs to the struct that owns the fields. If logic trims names, fills default status values, normalizes IDs, derives display/search fields, serializes backing text fields, or fixes compatibility values from a model/param/result's fields, put it on that model/param/result's `Serialize()` method. Do not create `Normalize()`, `FillDefault()`, lower-case normalization helpers, or package-level functions for logic that clearly belongs to one struct. Package-level functions are only for truly generic, domain-neutral tools with no clear field owner.
+
+Common domain methods must be exported and use these fixed signatures:
+
+```go
+func (m *Xxx) Serialize() *Xxx
+func (m *Xxx) Deserialize() *Xxx
+func (m *Xxx) ToUpdater() map[string]interface{}
+func (m *Xxx) Check() error
+func (m *Xxx) Same(after *Xxx) bool
+```
+
+Do not change these signatures to omit the receiver return, accept context, accept external params, or use lower-case method names. `Serialize()` and `Deserialize()` return a receiver pointer. When the receiver is nil, they must create a new object and return it; when the receiver is non-nil, they mutate and return the original receiver. Callers must assign the return value back to the original variable, such as `data = data.Serialize()` or `item = item.Deserialize()`. Their method bodies do not create normalized copies or replacement objects except for the nil receiver allocation.
 
 All model, param, response, and value-object methods use pointer receivers. Do not use value receivers, including for read-only methods such as `TableName()` or `LogStr()`.
 
@@ -109,15 +123,14 @@ Rules:
 
 1. Return an error for nil receiver.
 2. Validate enum/type fields.
-3. Fill safe derived fields such as display name or unique ID.
-4. Require common identity fields such as name/code/type/version.
-5. Require context-specific fields such as tenant ID, project ID, parent ID, or external ID.
+3. Require common identity fields such as name/code/type/version.
+4. Require context-specific fields such as tenant ID, project ID, parent ID, or external ID.
 
-`Check()` belongs with the model or param it validates. Do not repeat the same validation in API, service, or DAL.
+`Check()` belongs with the model or param it validates. Do not repeat the same validation in API, service, or DAL. `Check()` does not trim, fill defaults, derive fields, or mutate data; call `Serialize()` before `Check()` when validation depends on normalized values.
 
 ## Serialization Pattern
 
-`Serialize()` is the single place to normalize and derive:
+`Serialize()` is the single place to trim, fill defaults, normalize, derive, and prepare fields:
 
 - Default flag.
 - Historical timestamp units.
@@ -127,7 +140,9 @@ Rules:
 - Denormalized grouping fields.
 - Checksum.
 
-Do not generate these model-derived values in API, service, or DAL. Upper layers should call the model method and consume the normalized result.
+Do not generate these model-derived values in API, service, or DAL. Upper layers should call `Serialize()` before `Check()` and before persistence/query/update code consumes the fields.
+
+When the normalization is tied to request/query/update fields instead of persistent entity fields, still use the owning param or result struct's `Serialize()` method. Avoid `Normalize()`, `FillDefault()`, and package-level functions like `NormalizeSearchXxxParam(param *SearchXxxParam)` when the behavior clearly belongs to that param.
 
 ## Deserialization Compatibility
 

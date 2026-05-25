@@ -12,8 +12,8 @@ service 层负责业务编排、参数校验入口、必要模型转换、结果
 1. 识别 service 边界：确认公开方法、param、response、依赖 DAL/service/cache/logger 和方法类型。
 2. 加载 `references/go-service-conventions.md`，按项目约定处理 interface、struct、constructor 和错误语义。
 3. 定义结构：项目使用 interface 时同步更新 interface 和实现；依赖通过构造函数注入；service 方法统一使用指针接收者。
-4. 实现公开方法：涉及 I/O 的公开方法第一个参数使用 `ctx context.Context`；入口调用 `param.Check()`。
-5. 编排依赖：调用 DAL/service/cache；slice/map 作为返回值时先实例化，所有返回路径都不能返回 nil slice/map；错误按项目约定记录和包装。
+4. 实现公开方法：涉及 I/O 的公开方法第一个参数使用 `ctx context.Context`；入口按 `param = param.Serialize()`、`param.Check()` 顺序处理。
+5. 编排依赖：调用 DAL/service/cache；slice/map 作为返回值时先实例化，所有返回路径都不能返回 nil slice/map；错误按项目约定记录和包装；领域规整逻辑优先调用拥有字段的 model/param/result 的公有 `Serialize()`。
 6. 拆分 helper：复杂详情或跨资源聚合按数据域拆成私有 helper；批量取数先收集 ID、去重、批量查、map 回填。
 7. 交付：缺少 DAL/model/param 方法时列出假设，不编造外部类型。
 
@@ -27,7 +27,8 @@ service 层负责业务编排、参数校验入口、必要模型转换、结果
 - [ ] service 实现方法都使用指针接收者，例如 `func (s *XxxSrv) SearchXxx(...)`，没有值接收者。
 - [ ] 涉及 I/O 的公开 service 方法第一个参数是 `ctx context.Context`。
 - [ ] 方法体没有重复的 `s == nil` 或依赖 nil 防御判断。
-- [ ] 有 param 校验方法时入口调用 `param.Check()`；无重复清洗、ID 校验或派生字段计算。
+- [ ] 有 param 领域方法时入口按 `param = param.Serialize()`、`param.Check()` 顺序处理；无重复清洗、ID 校验或派生字段计算。
+- [ ] service 内没有散落 trim/default/derive/fill 逻辑或以 struct 为首参的规整 helper；这类逻辑已挂到拥有字段的 model/param/result 的公有 `Serialize()` 上，没有 `Normalize()`、`FillDefault()` 或小写规整方法。
 - [ ] service 没有直接 DB/GORM/SQL 操作。
 - [ ] 没有在 service 文件中临时定义 param/response/model struct。
 - [ ] 列表/聚合的 slice/map 返回值已实例化，成功和错误路径都返回空集合而不是 nil。
