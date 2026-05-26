@@ -81,7 +81,7 @@ func (m *Xxx) Same(after *Xxx) bool
 
 Do not introduce lower-case variants such as `serialize()` or alternate signatures such as `Serialize()`, `Serialize(ctx context.Context)`, `Check(param Xxx) error`, or `ToUpdater(data *Xxx) map[string]interface{}`.
 
-All methods must use pointer receivers. Do not use value receivers, even for read-only methods or small structs. This keeps method sets consistent and avoids accidental struct copies.
+All methods must use pointer receivers. Do not use value receivers, even for read-only methods or small structs. A single struct must not mix value receiver methods and pointer receiver methods; if both forms exist, convert the value receiver methods to pointer receivers so the whole struct uses one receiver style. This keeps method sets consistent and avoids accidental struct copies.
 
 Good:
 
@@ -96,6 +96,30 @@ Avoid:
 ```go
 func (m Xxx) Check() error {
     return nil
+}
+```
+
+Also avoid mixed receivers on the same struct:
+
+```go
+func (m Xxx) Name() string {
+    return m.Name
+}
+
+func (m *Xxx) Serialize() *Xxx {
+    return m
+}
+```
+
+Use pointer receivers consistently instead:
+
+```go
+func (m *Xxx) Name() string {
+    return m.Name
+}
+
+func (m *Xxx) Serialize() *Xxx {
+    return m
 }
 ```
 
