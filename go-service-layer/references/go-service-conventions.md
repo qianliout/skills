@@ -17,15 +17,48 @@ Service does not talk to the database directly. Persistence goes through DAL int
 
 All service implementation methods use pointer receivers, such as `func (s *XxxSrv) SearchXxx(...)`. Do not use value receivers for service structs.
 
+Service dependencies must be explicit. Inject DALs, other services, caches, clients, loggers, clocks, ID generators, config, or other long-lived collaborators through the constructor and store them in clearly named struct fields. Do not instantiate those dependencies inside public or private business methods; method bodies should orchestrate already-injected dependencies.
+
+## Dependency Management
+
+Manage dependencies in one place: the service struct declares what the service needs, and `NewXxxSrv(...)` wires those dependencies. Keep the field order and constructor parameter order aligned so the dependency graph is readable at a glance.
+
+Common service dependency order:
+
+1. DAL/repository interfaces for the primary model, then related models.
+2. Other service interfaces used for cross-domain orchestration.
+3. Cache, queue, lock, or other infrastructure handles.
+4. External clients/gateways, such as HTTP/RPC/object storage clients.
+5. Config, clock, ID generator, feature flags, or small stateless helpers.
+6. Logger or log event.
+
+Rules:
+
+- Depend on interfaces when the project has service/DAL interfaces; otherwise follow the local constructor convention.
+- Constructor parameters should match the struct field order and use meaningful names, such as `policyDal`, `projectSrv`, or `cache`.
+- Initialize lightweight owned helpers in the constructor only when they do not hide external dependencies.
+- Do not call `NewXxxDao`, `NewXxxSrv`, `NewClient`, `utils.NewLogEvent`, or similar dependency factories inside business methods.
+- Method-local objects are allowed only when they are request-scoped values, params, result containers, transactions, timers, or other short-lived data.
+- If adding a new dependency, update the struct, constructor signature, constructor assignment, and call sites together.
+
 ## Constructor Pattern
 
 Constructor owns dependency wiring and logger/cache initialization:
 
 ```go
-func NewXxxSrv(primaryDal store.PrimaryDal, relatedDal store.RelatedDal) *XxxSrv {
+func NewXxxSrv(
+    primaryDal store.PrimaryDal,
+    relatedDal store.RelatedDal,
+    relatedSrv service.RelatedService,
+    cache cache.XxxCache,
+    client gateway.XxxClient,
+) *XxxSrv {
     srv := XxxSrv{
         primaryDal: primaryDal,
         relatedDal:  relatedDal,
+        relatedSrv:  relatedSrv,
+        cache:       cache,
+        client:      client,
         log: utils.NewLogEvent(
             utils.WithModule("moduleName"),
             utils.WithSubModule("service"),
@@ -37,6 +70,7 @@ func NewXxxSrv(primaryDal store.PrimaryDal, relatedDal store.RelatedDal) *XxxSrv
 
 Rules:
 
+- Constructor parameters should show the service dependency graph clearly and keep the same order as the struct fields.
 - Do dependency validation at construction/bootstrap time when the project requires it.
 - Avoid repeating `s == nil` or dependency nil checks in every service method.
 - Keep constructor side effects limited to lightweight initialization.

@@ -2,6 +2,10 @@
 
 Use this reference when generating, refactoring, or reviewing general Go code style.
 
+## Skill Alignment
+
+New Go code should follow the currently triggered Go skill rules first. When multiple skills apply, combine them by layer responsibility: API adapts HTTP, service orchestrates dependencies and business flow, DAL handles persistence, model owns field lifecycle and domain methods, logging follows `go-logging`, and general readability follows this style guide.
+
 ## Control Flow
 
 - Guard invalid input, nil data, permission failures, and errors with early return.
@@ -63,7 +67,7 @@ A good Go function usually has guard clauses, small setup, ordered operation ste
 
 Split a function when it mixes validation, data access, transformation, and response assembly; when a block has a clear purpose and name; or when the reader must scroll to understand one branch. Do not split when the helper name would be vague or the extracted code is clearer inline.
 
-Prefer methods with receivers for behavior that belongs to a struct. Except for real shared utilities such as `utils` helpers, avoid loose functions with no owner. Put business behavior on the service/API/model/param/helper struct that owns the state or responsibility.
+Prefer methods with receivers for behavior that belongs to a struct. Except for real shared utilities such as `utils` helpers, avoid loose package-level functions with no owner. Put business behavior on the service/API/model/param/helper struct that owns the state or responsibility. If a function's first parameter is the struct that clearly owns the behavior, make it a pointer receiver method unless it is a genuinely generic utility.
 
 Domain normalization belongs to the struct that owns the fields being normalized. If logic trims, fills defaults, normalizes IDs, derives fields, fixes enum aliases, or prepares persisted/query/update fields from a specific struct's data, implement it on that struct's public `Serialize()` method. Do not create `Normalize()`, `FillDefault()`, lower-case normalization helpers, or package-level functions for logic that clearly belongs to one struct. Keep package-level functions only for truly general, domain-neutral utilities with no clear field owner, such as primitive string helpers or generic collection helpers.
 
@@ -82,6 +86,8 @@ func (m *Xxx) Same(after *Xxx) bool
 Do not introduce lower-case variants such as `serialize()` or alternate signatures such as `Serialize()`, `Serialize(ctx context.Context)`, `Check(param Xxx) error`, or `ToUpdater(data *Xxx) map[string]interface{}`.
 
 All methods must use pointer receivers. Do not use value receivers, even for read-only methods or small structs. A single struct must not mix value receiver methods and pointer receiver methods; if both forms exist, convert the value receiver methods to pointer receivers so the whole struct uses one receiver style. This keeps method sets consistent and avoids accidental struct copies.
+
+Service/API/DAL dependencies should be injected through constructors or explicit struct fields following the corresponding layer skill. Do not create DALs, services, clients, caches, or loggers ad hoc inside business methods when they are long-lived dependencies. Keep dependency field order and constructor parameter order consistent; common order is persistence dependencies first, then cross-domain services, infrastructure/cache/clients, config or small helpers, and logger last.
 
 Good:
 

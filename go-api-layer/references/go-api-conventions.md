@@ -22,16 +22,26 @@ Typical shape:
 ```go
 type XxxAPI struct {
     xxxSrv service.XxxService
+    log    *utils.LogEvent
 }
 
 func NewXxxAPI(xxxSrv service.XxxService) *XxxAPI {
-    return &XxxAPI{xxxSrv: xxxSrv}
+    api := XxxAPI{
+        xxxSrv: xxxSrv,
+        log: utils.NewLogEvent(
+            utils.WithModule("moduleName"),
+            utils.WithSubModule("api"),
+        ),
+    }
+    return &api
 }
 ```
 
 Rules:
 
 - Keep API struct narrow: service dependencies, logger, or tiny stateless helpers.
+- Manage dependencies through the API struct and constructor. Common field/constructor order is service dependencies first, then tiny helpers/config, then logger.
+- Do not create service, DAL, client, cache, or logger dependencies inside handler methods. Handlers should parse input, call injected services, and return responses.
 - Dependency validity is guaranteed by construction/bootstrap; avoid repeated nil checks in handlers.
 - Handler methods use pointer receivers and the project framework signature, commonly `func (api *XxxAPI) Action(ctx *gin.Context)`.
 - Do not use value receivers for API/handler methods.

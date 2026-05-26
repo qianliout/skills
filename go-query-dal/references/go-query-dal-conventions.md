@@ -17,6 +17,24 @@ A DAL file contains:
 - GORM queries built from `dal.db.Get().WithContext(cancelCtx).Table(...)`.
 - Model lifecycle calls: `Serialize`, `Check`, `Deserialize`, `ToUpdater`, `TableName`.
 
+## Dependency Management
+
+DAO dependencies are declared on the DAO struct and wired in `NewXxxDao(...)`. Keep constructor parameter order aligned with field order.
+
+Common DAO dependency order:
+
+1. DB or transaction entry, such as `*databases.RDBInstance`.
+2. Related DAO/repository interfaces only when the DAL method genuinely composes persistence from another store.
+3. External persistence clients or stateless helpers, when the local project permits them in DAL.
+4. Logger.
+
+Rules:
+
+- Query methods use already-injected fields; do not call DB/client/DAO constructors inside `Create`, `Search`, `Update`, or `Delete`.
+- Keep ordinary SQL/GORM query builders, timeout contexts, result slices, and updater maps method-local because they are request-scoped.
+- Prefer keeping cross-domain orchestration in service. Add related DAO dependencies to DAL only when the local architecture already allows DAL-to-DAL composition.
+- If adding a dependency, update the DAO struct, constructor signature, assignments, and bootstrap call sites together.
+
 ## Timeout Pattern
 
 Every DB method must use an explicit timeout:
