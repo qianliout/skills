@@ -44,6 +44,8 @@ Private helpers:
 - Do not use global logging objects directly in methods.
 - Do not create a logger inside every method.
 - Do not pass logger as a normal argument through call chains.
+- Keep logger as the last dependency field when the struct also owns service/DAL/client/cache/config dependencies.
+- Service/API methods that use the logger still follow receiver naming from their layer: service receiver `s`, API receiver `api`. Model `LogStr()` follows model receiver naming: Param uses `p`, other model-layer objects use `vi`.
 
 Example:
 
@@ -54,13 +56,14 @@ type XxxSrv struct {
 }
 
 func NewXxxSrv(xxxDal XxxDal) *XxxSrv {
-    return &XxxSrv{
+    srv := XxxSrv{
         xxxDal: xxxDal,
         log: utils.NewLogEvent(
             utils.WithModule("xxx"),
             utils.WithSubModule("service"),
         ),
     }
+    return &srv
 }
 ```
 
@@ -83,9 +86,10 @@ Error logs should include:
 Recommended:
 
 ```go
+paramLog := param.LogStr()
 s.log.Err(err).
     Int64("projectID", projectID).
-    Str("param", param.LogStr()).
+    Str("param", paramLog).
     Msg("search xxx failed")
 ```
 
@@ -109,7 +113,7 @@ Rules:
 - No DB/cache/network/file I/O.
 - No side effects.
 - No receiver or external state mutation.
-- Use a pointer receiver; do not use a value receiver.
+- Use a pointer receiver; do not use a value receiver. Model-layer Param `LogStr()` receivers use `p`; other model-layer object receivers use `vi`.
 - No complex calculation, sorting, filtering, or deduplication.
 - No sensitive fields.
 - Output should be stable, concise, and searchable.
@@ -118,7 +122,7 @@ Example:
 
 ```go
 func (p *SearchXxxParam) LogStr() string {
-    return fmt.Sprintf(
+    ans := fmt.Sprintf(
         "projectID=%d,status=%s,keyword=%s,limit=%d,offset=%d",
         p.ProjectID,
         p.Status,
@@ -126,6 +130,7 @@ func (p *SearchXxxParam) LogStr() string {
         p.Filter.Limit,
         p.Filter.Offset,
     )
+    return ans
 }
 ```
 

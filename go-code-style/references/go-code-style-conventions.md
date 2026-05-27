@@ -11,7 +11,7 @@ New Go code should follow the currently triggered Go skill rules first. When mul
 - Guard invalid input, nil data, permission failures, and errors with early return.
 - Keep the main success path left-aligned.
 - Avoid nested `if-else`; use `switch case` for one value with several mutually exclusive states.
-- Extract complex boolean expressions into named local variables or small helpers.
+- Extract complex boolean expressions into named local variables first. Use a small helper only when the expression is reused, hides a stable business concept, or would make the caller much easier to scan.
 
 Before:
 
@@ -43,7 +43,8 @@ if user == nil {
 if user.Enabled != "true" {
     return ErrDisabled
 }
-return run(user)
+err := run(user)
+return err
 ```
 
 For state branching:
@@ -51,21 +52,32 @@ For state branching:
 ```go
 switch param.Action {
 case ActionCreate:
-    return create(ctx, param)
+    err := create(ctx, param)
+    return err
 case ActionUpdate:
-    return update(ctx, param)
+    err := update(ctx, param)
+    return err
 case ActionDelete:
-    return delete(ctx, param)
+    err := delete(ctx, param)
+    return err
 default:
-    return fmt.Errorf("unsupported action: %s", param.Action)
+    err := fmt.Errorf("unsupported action: %s", param.Action)
+    return err
 }
 ```
 
 ## Function Shape
 
-A good Go function usually has guard clauses, small setup, ordered operation steps, local error handling, and a clear return.
+A good Go function usually has guard clauses, small setup, ordered operation steps, local error handling, and a clear return. It should read like a short business procedure, not like a packed script and not like a table of contents that forces constant jumping.
 
-Split a function when it mixes validation, data access, transformation, and response assembly; when a block has a clear purpose and name; or when the reader must scroll to understand one branch. Do not split when the helper name would be vague or the extracted code is clearer inline.
+Balance function granularity with these rules:
+
+- Keep one function at one abstraction level. A service method may say "validate param, load data, enrich result, serialize response"; it should not also hide unrelated HTTP parsing or raw SQL details.
+- Prefer 3-7 ordered business steps in the main function. Fewer steps may be clearer inline; many more steps usually means a real subtask should be named.
+- Split when a block crosses a data domain, has a stable business name, is reused, isolates side effects, handles a complex branch, or makes the main flow readable without hiding essential decisions.
+- Do not split when the helper name is vague, the body is only one or two obvious lines, the helper only forwards arguments, or the reader must jump through several helpers to understand one simple operation.
+- Prefer semantic local variables before helpers for small expressions and one-off transformations.
+- Avoid "helper chains" where `A()` only calls `B()`, `B()` only calls `C()`, and each layer adds no business decision.
 
 Prefer methods with receivers for behavior that belongs to a struct. Except for real shared utilities such as `utils` helpers, avoid loose package-level functions with no owner. Put business behavior on the service/API/model/param/helper struct that owns the state or responsibility. If a function's first parameter is the struct that clearly owns the behavior, make it a pointer receiver method unless it is a genuinely generic utility.
 
@@ -73,26 +85,34 @@ Domain normalization belongs to the struct that owns the fields being normalized
 
 If `Serialize()` or `Deserialize()` exists for a struct, do not add another method or function with overlapping normalization, defaulting, derived-field, serialization, or deserialization responsibilities. Avoid aliases, wrappers, migration shims, or lower-case variants for the same behavior.
 
-Common domain methods must use fixed exported names and signatures:
+Common domain lifecycle methods must use fixed exported names and signatures:
 
 ```go
-func (m *Xxx) Serialize() *Xxx
-func (m *Xxx) Deserialize() *Xxx
-func (m *Xxx) ToUpdater() map[string]interface{}
-func (m *Xxx) Check() error
-func (m *Xxx) Same(after *Xxx) bool
+func (vi *Xxx) Serialize() *Xxx
+func (vi *Xxx) Deserialize() *Xxx
+func (vi *Xxx) ToUpdater() map[string]interface{}
+func (vi *Xxx) Check() error
+func (vi *Xxx) Same(after *Xxx) bool
 ```
 
-Do not introduce lower-case variants such as `serialize()` or alternate signatures such as `Serialize()`, `Serialize(ctx context.Context)`, `Check(param Xxx) error`, or `ToUpdater(data *Xxx) map[string]interface{}`.
+For this lifecycle method group, do not introduce lower-case variants such as `serialize()` or alternate signatures such as `Serialize()`, `Serialize(ctx context.Context)`, `Check(param Xxx) error`, or `ToUpdater(data *Xxx) map[string]interface{}`. This restriction does not forbid framework or interface adapter methods with their required signatures, such as GORM `TableName() string`, `MarshalJSON() ([]byte, error)`, or other established project adapter methods.
 
-All methods must use pointer receivers. Do not use value receivers, even for read-only methods or small structs. A single struct must not mix value receiver methods and pointer receiver methods; if both forms exist, convert the value receiver methods to pointer receivers so the whole struct uses one receiver style. This keeps method sets consistent and avoids accidental struct copies.
+All methods must use pointer receivers. Do not use value receivers, even for read-only methods or small structs. A single struct must not mix value receiver methods and pointer receiver methods; if both forms exist, convert the value receiver methods to pointer receivers so the whole struct uses one receiver style. Receiver names are standardized by layer: service uses `s`, DAL uses `dal`, API uses `api`, model-layer types whose names contain `Param` use `p`, and other model-layer objects use `vi`.
 
 Service/API/DAL dependencies should be injected through constructors or explicit struct fields following the corresponding layer skill. Do not create DALs, services, clients, caches, or loggers ad hoc inside business methods when they are long-lived dependencies. Keep dependency field order and constructor parameter order consistent; common order is persistence dependencies first, then cross-domain services, infrastructure/cache/clients, config or small helpers, and logger last.
+
+Dependency ownership rules:
+
+- Struct fields declare long-lived collaborators only: DAL/service interfaces, DB handles, cache, external clients, config, clocks, ID generators, small stateless helpers, and logger.
+- Constructors wire those collaborators and keep parameter order aligned with field order.
+- Business methods create only request-scoped values: params, local result containers, query builders, timeout contexts, transactions, timers, and temporary maps/slices.
+- Adding a dependency means updating struct fields, constructor parameters, constructor assignments, and bootstrap/call sites together.
+- Avoid method-local `NewXxxSrv`, `NewXxxDao`, `NewClient`, `NewCache`, or `utils.NewLogEvent` calls unless the object is intentionally short-lived and not a service dependency.
 
 Good:
 
 ```go
-func (m *Xxx) Check() error {
+func (vi *Xxx) Check() error {
     return nil
 }
 ```
@@ -100,7 +120,7 @@ func (m *Xxx) Check() error {
 Avoid:
 
 ```go
-func (m Xxx) Check() error {
+func (vi Xxx) Check() error {
     return nil
 }
 ```
@@ -108,24 +128,24 @@ func (m Xxx) Check() error {
 Also avoid mixed receivers on the same struct:
 
 ```go
-func (m Xxx) Name() string {
-    return m.Name
+func (vi Xxx) Name() string {
+    return vi.Name
 }
 
-func (m *Xxx) Serialize() *Xxx {
-    return m
+func (vi *Xxx) Serialize() *Xxx {
+    return vi
 }
 ```
 
 Use pointer receivers consistently instead:
 
 ```go
-func (m *Xxx) Name() string {
-    return m.Name
+func (vi *Xxx) Name() string {
+    return vi.Name
 }
 
-func (m *Xxx) Serialize() *Xxx {
-    return m
+func (vi *Xxx) Serialize() *Xxx {
+    return vi
 }
 ```
 
@@ -141,17 +161,17 @@ func (m *Xxx) Serialize() *Xxx {
 - `Same(after *Xxx) bool` 只接收同类型对象指针并返回比较结果。
 - `Serialize()`、`Deserialize()`、`ToUpdater()`、`Check()`、`Same()` 内部不要互相调用；这些方法的组合顺序完全由外部调用方决定。
 - 单个领域方法尽量在一个函数内完成，不为同一 struct 拆出私有规整、校验、比较、updater helper。只有真正通用、无字段归属的标准库或项目工具函数可以被调用。
-- 这些方法必须是大写公有方法，即使当前项目里已有小写或其他签名，也按固定签名生成和重构。
+- 这组生命周期方法必须是大写公有方法，即使当前项目里已有小写或其他签名，也按固定签名生成和重构；框架/接口适配方法不属于这组限制，按适配方要求的签名实现，例如 GORM `TableName() string`。
 
 Good:
 
 ```go
-func (r *Request) Serialize() *Request {
-    if r == nil {
-        r = &Request{}
+func (p *RequestParam) Serialize() *RequestParam {
+    if p == nil {
+        p = &RequestParam{}
     }
-    r.Name = strings.TrimSpace(r.Name)
-    return r
+    p.Name = strings.TrimSpace(p.Name)
+    return p
 }
 
 req = req.Serialize()
@@ -163,30 +183,30 @@ updater := req.ToUpdater()
 Avoid:
 
 ```go
-func (r *Request) normalize() {}
+func (p *RequestParam) normalize() {}
 
-func (r *Request) Normalize() *Request {}
+func (p *RequestParam) Normalize() *RequestParam {}
 
-func (r *Request) FillDefault() {}
+func (p *RequestParam) FillDefault() {}
 
-func (r *Request) serializeName() {}
+func (p *RequestParam) serializeName() {}
 
-func (r *Request) Check() error {
-    r.Serialize()
+func (p *RequestParam) Check() error {
+    p.Serialize()
     return nil
 }
 
-func (r *Request) Serialize() {}
+func (p *RequestParam) Serialize() {}
 
-func (r *Request) Serialize() *Request {
-    ans := &Request{}
-    ans.Name = strings.TrimSpace(r.Name)
+func (p *RequestParam) Serialize() *RequestParam {
+    ans := &RequestParam{}
+    ans.Name = strings.TrimSpace(p.Name)
     return ans
 }
 
 req.Serialize()
 
-func SerializeRequest(r *Request) {}
+func SerializeRequestParam(p *RequestParam) {}
 ```
 
 ## File And Line Length
@@ -288,9 +308,16 @@ resp, err := g.chatModel.Generate(ctx, buildTextMessages(prompt, opts))
 
 ## Tags
 
-- Do not use `omitempty` directly in JSON tags.
+- Do not use `omitempty` in JSON tags.
 - Avoid tags such as `json:"name,omitempty"` or `json:",omitempty"`.
 - Prefer explicit zero values in API responses and serialized data so callers can distinguish absent fields from empty values by contract, not by implicit tag behavior.
+
+## Time Fields
+
+- For newly designed tables or features, use `int64` millisecond timestamps for all time-related fields.
+- Keep the same millisecond unit across database storage, model fields, params, responses, frontend/backend payloads, service calls, DAL queries, cache payloads, and serialized data.
+- Use `time.Now().UTC().UnixMilli()` when generating current timestamps.
+- Do not migrate existing features from their established time unit unless the task explicitly asks for that migration.
 
 ## Error Handling
 
@@ -316,7 +343,8 @@ Example:
 go func() {
     defer func() {
         if r := recover(); r != nil {
-            log.Err(fmt.Errorf("panic: %v", r)).Msg("worker panic")
+            err := fmt.Errorf("panic: %v", r)
+            log.Err(err).Msg("worker panic")
         }
     }()
     runWorker(ctx)

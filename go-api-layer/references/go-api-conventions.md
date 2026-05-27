@@ -42,8 +42,9 @@ Rules:
 - Keep API struct narrow: service dependencies, logger, or tiny stateless helpers.
 - Manage dependencies through the API struct and constructor. Common field/constructor order is service dependencies first, then tiny helpers/config, then logger.
 - Do not create service, DAL, client, cache, or logger dependencies inside handler methods. Handlers should parse input, call injected services, and return responses.
+- If a new API dependency is needed, add it to the API struct, constructor parameters, constructor assignment, and route/bootstrap wiring together.
 - Dependency validity is guaranteed by construction/bootstrap; avoid repeated nil checks in handlers.
-- Handler methods use pointer receivers and the project framework signature, commonly `func (api *XxxAPI) Action(ctx *gin.Context)`.
+- Handler methods use pointer receivers named `api` and the project framework signature, commonly `func (api *XxxAPI) Action(ctx *gin.Context)`.
 - Do not use value receivers for API/handler methods.
 
 ## Request Parsing
@@ -54,6 +55,8 @@ Rules:
 - Convert raw HTTP strings into a typed param before calling service.
 - Prefer one param struct over many positional arguments.
 - Put params and response DTOs at the model/API type layer, not inside handler functions.
+- JSON tags on params and response DTOs must be explicit and must not use `omitempty`.
+- For newly designed APIs/features, every time-related request or response field uses an `int64` millisecond timestamp. Keep existing APIs on their established time unit unless the user explicitly asks for migration.
 - Put trim, ID normalization, default values, and derived fields in the owning param/DTO `Serialize()` method; put enum and required-field validation in `Check()`.
 - Domain normalization belongs to the param/DTO struct that owns the fields. Do not scatter request cleanup in handlers, do not create `Normalize()` / `FillDefault()`, and do not create package-level `NormalizeXxxParam` helpers when public `Serialize()` on the typed param can own it.
 
@@ -71,10 +74,14 @@ Do not introduce `PATCH`, `HEAD`, `OPTIONS`, or other HTTP methods unless the us
 Example:
 
 ```go
+filter := model.GetFilter(ctx)
+filter = filter.SetMaxLimit(consts.DefaultMaxLimit)
+keyword := util.GetKeywordFromQuery(ctx, "keyword")
+status := util.GetKeywordFromQuery(ctx, "status")
 param := &model.SearchXxxAPIParam{
-    Keyword: util.GetKeywordFromQuery(ctx, "keyword"),
-    Status:  util.GetKeywordFromQuery(ctx, "status"),
-    Filter:  model.GetFilter(ctx).SetMaxLimit(consts.DefaultMaxLimit),
+    Keyword: keyword,
+    Status:  status,
+    Filter:  filter,
 }
 param = param.Serialize()
 if err := param.Check(); err != nil {
@@ -98,7 +105,8 @@ Example:
 id := util.GetInt64FromQuery(ctx, "id")
 body := model.UpdateXxxBody{}
 if err := ctx.ShouldBindJSON(&body); err != nil {
-    response.JSONError(ctx, response.NewHttpError(http.StatusBadRequest, err))
+    httpErr := response.NewHttpError(http.StatusBadRequest, err)
+    response.JSONError(ctx, httpErr)
     return
 }
 
@@ -115,15 +123,20 @@ List response:
 ```go
 items, cnt, err := api.xxxSrv.SearchXxx(ctx, param)
 if err != nil {
-    response.JSONError(ctx, wrapSearchXxxErr(err))
+    searchErr := wrapSearchXxxErr(err)
+    response.JSONError(ctx, searchErr)
     return
 }
 
+itemsOption := response.WithItems(items)
+totalOption := response.WithTotalItems(cnt)
+itemsPerPageOption := response.WithItemsPerPage(param.Filter.Limit)
+startIndexOption := response.WithStartIndex(param.Filter.Offset)
 response.JSONOK(ctx,
-    response.WithItems(items),
-    response.WithTotalItems(cnt),
-    response.WithItemsPerPage(param.Filter.Limit),
-    response.WithStartIndex(param.Filter.Offset),
+    itemsOption,
+    totalOption,
+    itemsPerPageOption,
+    startIndexOption,
 )
 ```
 
@@ -135,7 +148,8 @@ if err != nil {
     response.JSONError(ctx, err)
     return
 }
-response.JSONOK(ctx, response.WithItem(item))
+itemOption := response.WithItem(item)
+response.JSONOK(ctx, itemOption)
 ```
 
 Rules:
@@ -158,6 +172,10 @@ Keep handlers short. API logic should be simple: parse request, build typed para
 - Needs retries, transactions, async work, or cache coordination.
 
 Small response shaping is acceptable, but complex assembly and domain decisions belong in service.
+
+Do not over-split handlers. Keep straightforward query parsing, param construction, service call, and response writing inline unless the project already has a shared helper or the extracted block has a stable framework concern. Avoid private helpers such as `parseXxxParam`, `buildXxxResponse`, or `writeXxxOK` when they only hide a few obvious lines and make the handler harder to read end to end.
+
+As a rule of thumb, a handler should read in one pass as parse/build/serialize/check/call/respond. Split only when a block is reused, represents a stable framework concern, or is complex enough that naming it removes real cognitive load.
 
 ## Type Rules
 

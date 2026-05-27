@@ -10,12 +10,14 @@ A DAL file contains:
 - A DAO implementation named `XxxDao`.
 - A constructor `NewXxxDao(db *databases.RDBInstance) *XxxDao`.
 - Methods that receive `ctx context.Context`.
-- DAO implementation methods use pointer receivers, such as `func (dal *XxxDao) SearchXxx(...)`. Do not use value receivers.
+- DAO implementation methods use pointer receivers named `dal`, such as `func (dal *XxxDao) SearchXxx(...)`. Do not use value receivers.
 - Constructors/initialization guarantee DAO dependencies are non-nil; methods do not defensively check `dal == nil` or `dal.db == nil`.
 - Param structs live with models, not in the DAL package.
 - No recommended `Get` method by default; use `Search(ctx, param)` unless the user explicitly asks for single-record lookup.
 - GORM queries built from `dal.db.Get().WithContext(cancelCtx).Table(...)`.
 - Model lifecycle calls: `Serialize`, `Check`, `Deserialize`, `ToUpdater`, `TableName`.
+- JSON tags on DAL-related model/param/result structs must not use `omitempty`.
+- For newly designed tables/features, time fields used by DAL filters, inserts, updates, and reads are `int64` millisecond timestamps stored in integer columns; existing tables keep their established unit unless explicitly migrated.
 
 ## Dependency Management
 
@@ -34,6 +36,7 @@ Rules:
 - Keep ordinary SQL/GORM query builders, timeout contexts, result slices, and updater maps method-local because they are request-scoped.
 - Prefer keeping cross-domain orchestration in service. Add related DAO dependencies to DAL only when the local architecture already allows DAL-to-DAL composition.
 - If adding a dependency, update the DAO struct, constructor signature, assignments, and bootstrap call sites together.
+- DAL methods should not create services. If a query needs business orchestration or multiple stores with domain decisions, move that orchestration to service and keep DAL focused on persistence.
 
 ## Timeout Pattern
 
@@ -110,6 +113,8 @@ Avoid vague fields such as `ID`, `Type`, `Name`, or `Keyword` when the query spa
 
 ## Search Pattern
 
+Prefer a complete top-to-bottom query chain in one DAL method. A reader should be able to open `SearchXxx` and immediately see how the query is built, counted, paginated, executed, and deserialized without jumping through private helpers.
+
 Template:
 
 ```go
@@ -123,7 +128,9 @@ func (dal *XxxDao) SearchXxx(ctx context.Context, param *model.SearchXxxParam) (
     cancelCtx, cancelFunc := context.WithTimeout(ctx, time.Second*3)
     defer cancelFunc()
 
-    db := dal.db.Get().WithContext(cancelCtx).Table(new(model.Xxx).TableName())
+    data := &model.Xxx{}
+    tb := data.TableName()
+    db := dal.db.Get().WithContext(cancelCtx).Table(tb)
     if len(param.Filed) > 0 {
         db = db.Select(param.Filed)
     }
@@ -166,6 +173,7 @@ Rules:
 - Query normalization belongs to the param struct that owns the query fields and is unified under public `Serialize()`. DAL should not define `Normalize()`, `FillDefault()`, lower-case normalization methods, or package-level helpers such as `NormalizeSearchXxxParam(param *SearchXxxParam)` when the behavior belongs on the param receiver.
 - Do not repeat parameter normalization or validation in DAL; DAL should only consume checked param fields.
 - Do not check `dal == nil` or `dal.db == nil` inside DAL methods; initialization owns that guarantee.
+- Keep the full query chain in the method whenever practical: setup table, append business filters, count, apply filter/page, find, deserialize, return.
 - Build exact business filters before `Count`.
 - Build GORM queries step by step with assignments like `db = db.Where(...)`; avoid long chained calls.
 - Add `Where` clauses only when the param field is non-zero.
@@ -174,9 +182,9 @@ Rules:
 - Avoid window functions, CTEs, complex subqueries, database-specific functions, JSON operators, array operators, full-text-search syntax, and custom SQL functions in DAL queries. If unavoidable, add a detailed comment explaining why, compatibility impact, alternatives considered, and the target database.
 - Do not apply calculations, SQL functions, or type casts to indexed columns in query conditions. Prefer comparing raw columns to normalized param values, such as `created_at >= ? AND created_at < ?`, `name = ?`, or `id = ?`.
 - Avoid conditions such as `DATE(created_at) = ?`, `LOWER(name) = ?`, `CAST(id AS text) = ?`, or `amount + fee > ?` because they can make normal indexes unusable. If such a condition is unavoidable, add a detailed comment explaining why, the expected index impact, data size assumption, and why a normalized field, generated column, expression index, or param-side transformation is not used.
-- Apply caller-provided sorting and pagination only through the model-layer `AddFilter(db, param.Filter)` after `Count`.
-- DAL does not choose default ordering; callers decide ordering through `param.Filter`.
-- Do not write `Order`, `Limit`, or `Offset` directly in DAL methods.
+- Apply caller-provided sorting and pagination only through the project-defined model-layer `AddFilter(db, param.Filter)` after `Count`; `AddFilter` is the dedicated sorting/pagination entry point.
+- DAL does not choose default ordering; callers decide ordering through `param.Filter`, and DAL applies it through `AddFilter`.
+- Do not write `Order`, `Limit`, or `Offset` directly in DAL methods, and do not create local helper replacements for `AddFilter`.
 - Return the initialized empty result slice on query errors, such as `return res, 0, err`; do not return `nil` for slice results.
 - Keep `Filed` spelling if the existing param uses it.
 - Use string `"true"` / `"false"` status values; do not introduce `bool`.
@@ -192,7 +200,10 @@ func (dal *XxxDao) CreateXxx(ctx context.Context, data *model.Xxx) error {
 
     cancelCtx, cancelFunc := context.WithTimeout(ctx, time.Second*10)
     defer cancelFunc()
-    return dal.db.Get().WithContext(cancelCtx).Table(data.TableName()).Create(data).Error
+    tb := data.TableName()
+    db := dal.db.Get().WithContext(cancelCtx).Table(tb)
+    err := db.Create(data).Error
+    return err
 }
 ```
 
@@ -203,7 +214,8 @@ If the domain requires version/cache maintenance after creation, call a private 
 ```go
 func (dal *XxxDao) UpdateXxx(ctx context.Context, id int64, data *model.Xxx) error {
     if id <= 0 {
-        return fmt.Errorf("not get id")
+        err := fmt.Errorf("not get id")
+        return err
     }
     data = data.Serialize()
     if err := data.Check(); err != nil {
@@ -221,13 +233,15 @@ func (dal *XxxDao) UpdateXxx(ctx context.Context, id int64, data *model.Xxx) err
         return err
     }
     if pre.Type != data.Type {
-        return fmt.Errorf("type is not correct")
+        err := fmt.Errorf("type is not correct")
+        return err
     }
 
     updater := data.ToUpdater()
     db = dal.db.Get().WithContext(cancelCtx).Table(tb)
     db = db.Where("id = ?", id)
-    return db.Updates(updater).Error
+    err := db.Updates(updater).Error
+    return err
 }
 ```
 
@@ -242,7 +256,8 @@ Rules:
 ```go
 func (dal *XxxDao) DeleteXxx(ctx context.Context, id int64) error {
     if id <= 0 {
-        return fmt.Errorf("not get id")
+        err := fmt.Errorf("not get id")
+        return err
     }
     cancelCtx, cancelFunc := context.WithTimeout(ctx, time.Second*3)
     defer cancelFunc()
@@ -255,12 +270,14 @@ func (dal *XxxDao) DeleteXxx(ctx context.Context, id int64) error {
         return err
     }
     if pre.IsDefault == consts.TrueString {
-        return fmt.Errorf("delete default data is not permitted")
+        err := fmt.Errorf("delete default data is not permitted")
+        return err
     }
 
     db = dal.db.Get().WithContext(cancelCtx).Table(tb)
     db = db.Where("id = ?", id)
-    return db.Delete(&model.Xxx{}).Error
+    err := db.Delete(&model.Xxx{}).Error
+    return err
 }
 ```
 
@@ -273,3 +290,5 @@ Use private helpers for derived cache/version records:
 - Build update maps explicitly.
 - Use a fresh timeout context for helper DB writes.
 - If helper failure should not block the main operation, call it as `_ = helper(ctx)` so the choice is visible.
+
+Do not extract the normal `Search` pipeline into many tiny helpers by default. Query setup, conditional `Where` clauses, `Count`, `AddFilter`, `Find`, and `Deserialize` should stay in one method so the query is readable from top to bottom. Extract only when a query fragment is reused with the same semantics or an extracted block isolates a real maintenance side effect. Avoid `buildXxxWhere`, `countXxx`, or `findXxx` helpers that only wrap one or two GORM calls and force the reader to jump around.

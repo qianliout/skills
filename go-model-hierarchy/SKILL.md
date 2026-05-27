@@ -12,10 +12,10 @@ description: "Go model 层级和数据模型专家。Use when designing, writing
 1. 识别模型职责：判断目标是实体、param、response/view/cache/statistic，还是辅助值对象。
 2. 加载 `references/go-model-conventions.md`，按项目约定处理字段生命周期、tag、校验和序列化。
 3. 建立层级：先给模型树，再给 struct；实体模型优先，param/view/cache/statistic 跟随所属实体或业务域。
-4. 定义字段契约：落库字段使用数据库兼容基础类型和明确 `gorm` tag；API 字段使用稳定 `json` tag；运行时字段使用 `gorm:"-"`。
+4. 定义字段契约：落库字段使用数据库兼容基础类型和明确 `gorm` tag；新设计的表或功能中，所有时间相关字段统一使用 `int64` 毫秒级时间戳，数据库存储、前后端传参和层间传递都保持毫秒；API 字段使用稳定 `json` tag，且任何 `json` tag 都不能带 `omitempty`；运行时字段使用 `gorm:"-"`。
 5. 处理复杂结构：避免数据库 JSON/JSONB、数组、map、对象列；需要时用文本列配合 `Serialize()` / `Deserialize()`。
 6. 补齐模型行为：实体通常提供 `TableName()`、`Check()`、`Serialize()`、`Deserialize()`；更新提供 `ToUpdater()`，且返回 map 必须实例化；比较提供 `Same()`。
-7. 归属方法和常量：强关联逻辑写成 pointer receiver 方法，不能使用值接收者；领域规整逻辑尽量挂到拥有这些字段的 struct 上，并统一收敛到公有 `Serialize()`；不要新增 `Normalize()`、`FillDefault()` 或小写规整方法；领域方法之间不互相调用，组合顺序由外部决定；包级函数只保留真正通用、无字段归属的工具；model 常量、枚举、默认值、字段约束放在 model 层。
+7. 归属方法和常量：强关联逻辑写成 pointer receiver 方法，不能使用值接收者；名字含 Param 的 receiver 统一命名为 `p`，其他 model 层对象如 model/entity/result/view/cache/statistic 的 receiver 统一命名为 `vi`；领域规整逻辑尽量挂到拥有这些字段的 struct 上，并统一收敛到公有 `Serialize()`；不要新增 `Normalize()`、`FillDefault()` 或小写规整方法；领域方法之间不互相调用，组合顺序由外部决定；包级函数只保留真正通用、无字段归属的工具；model 常量、枚举、默认值、字段约束放在 model 层。
 8. 交付：信息不足时列出假设，不编造未知表名、枚举值或外部类型。
 
 ## Reference Loading
@@ -24,11 +24,12 @@ description: "Go model 层级和数据模型专家。Use when designing, writing
 
 ## Pre-Delivery Checklist
 
+- [ ] 新写 model/param/DTO 代码同时符合 `go-code-style`、`go-logging` 以及调用层当前任务涉及的规则。
 - [ ] 已说明模型层级和字段生命周期。
 - [ ] param、model 常量、校验、序列化、反序列化等强关联能力都在 model 层，常量没有散落到其他层。
 - [ ] 没有把明显属于某个 model/param/result struct 的行为写成以该 struct 为首参的裸 helper；此类逻辑已归属为 receiver 方法。
-- [ ] 所有 model/param/result 方法都是指针接收者，例如 `func (m *Xxx) TableName()`，没有值接收者。
-- [ ] 领域方法必须是大写公有方法，并使用固定签名：`Serialize() *Xxx`、`Deserialize() *Xxx`、`ToUpdater() map[string]interface{}`、`Check() error`、`Same(after *Xxx) bool`。
+- [ ] 所有 model/param/result 方法都是指针接收者；名字含 Param 的 receiver 统一命名为 `p`，其他 model 层对象 receiver 统一命名为 `vi`，没有值接收者。
+- [ ] `Serialize()`、`Deserialize()`、`ToUpdater()`、`Check()`、`Same()` 这组领域生命周期方法必须是大写公有方法，并使用固定签名：`Serialize() *Xxx`、`Deserialize() *Xxx`、`ToUpdater() map[string]interface{}`、`Check() error`、`Same(after *Xxx) bool`；框架/接口适配方法按适配方要求签名实现，例如 GORM `TableName() string`。
 - [ ] `Serialize()`、`Deserialize()` 在 receiver 为 nil 时新建对象并返回；非 nil 时返回原 receiver；调用方用原变量接收返回值；方法体内不创建规整副本。
 - [ ] trim、default、normalize、derive、fill、serialize/update 字段选择等领域规整逻辑已挂到拥有相关字段的 model/param/result struct 的 `Serialize()` 上；没有新增 `Normalize()`、`FillDefault()` 或小写规整方法；包级函数只保留真正跨领域、无字段归属的通用工具。
 - [ ] `Serialize()`、`Deserialize()`、`ToUpdater()`、`Check()`、`Same()` 内部没有互相调用；这些方法的组合完全由外部调用方决定。
@@ -39,6 +40,8 @@ description: "Go model 层级和数据模型专家。Use when designing, writing
 - [ ] 落库字段没有使用 JSON/JSONB、数组、map、复杂对象等数据库复杂类型。
 - [ ] 复杂结构已用 `ConfigJSON string` 这类文本列配合 `Serialize()` / `Deserialize()`，或按查询/更新/约束需求拆列/拆表。
 - [ ] 每个落库实体都有 `TableName()`；运行时字段有 `gorm:"-"`；序列化文本字段有 `json:"-"`。
+- [ ] 所有 `json` tag 都没有 `omitempty`，包括 model、param、response/view、cache/statistic 和辅助值对象。
+- [ ] 新表或新功能的时间字段统一使用 `int64` 毫秒级时间戳，数据库列、model、param、response、前后端传参和层间传递都不使用秒级时间戳；已有功能不因本规则强制迁移。
 - [ ] 数值字段默认使用 Go 类型 `int64`；使用其他数值类型时有明确理由。
 - [ ] 没有新增 `uint64`、`uint`、`bool` 或大于 `int64` 的数值类型。
 - [ ] 二值状态字段是 `string`，取值约定为 `"true"` / `"false"`。

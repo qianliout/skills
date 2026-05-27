@@ -15,7 +15,7 @@ A service file contains:
 
 Service does not talk to the database directly. Persistence goes through DAL interfaces or established repository abstractions.
 
-All service implementation methods use pointer receivers, such as `func (s *XxxSrv) SearchXxx(...)`. Do not use value receivers for service structs.
+All service implementation methods use pointer receivers named `s`, such as `func (s *XxxSrv) SearchXxx(...)`. Do not use value receivers for service structs.
 
 Service dependencies must be explicit. Inject DALs, other services, caches, clients, loggers, clocks, ID generators, config, or other long-lived collaborators through the constructor and store them in clearly named struct fields. Do not instantiate those dependencies inside public or private business methods; method bodies should orchestrate already-injected dependencies.
 
@@ -40,6 +40,7 @@ Rules:
 - Do not call `NewXxxDao`, `NewXxxSrv`, `NewClient`, `utils.NewLogEvent`, or similar dependency factories inside business methods.
 - Method-local objects are allowed only when they are request-scoped values, params, result containers, transactions, timers, or other short-lived data.
 - If adding a new dependency, update the struct, constructor signature, constructor assignment, and call sites together.
+- Keep dependency direction clear: service may depend on DAL/repository interfaces, other service interfaces, cache/infrastructure, external clients, config/helpers, and logger; service must not import API/controller packages and must not bypass DAL to use DB/GORM/SQL directly.
 
 ## Constructor Pattern
 
@@ -86,14 +87,17 @@ func (s *XxxSrv) SearchXxx(ctx context.Context, param *model.SearchXxxParam) (
         return res, 0, err
     }
 
-    s.log.Trace().Str("param", param.LogStr()).Msg("SearchXxx")
+    paramLog := param.LogStr()
+    s.log.Trace().Str("param", paramLog).Msg("SearchXxx")
 
     dalParam := param
     // Use param.ToXxxDalParam() instead when API fields need non-trivial mapping.
     data, cnt, err := s.primaryDal.SearchXxx(ctx, dalParam)
     if err != nil {
-        s.log.Err(err).Str("param", dalParam.LogStr()).Msg("SearchXxx.SearchXxx")
-        return res, 0, wrapSearchXxxErr(err)
+        dalParamLog := dalParam.LogStr()
+        s.log.Err(err).Str("param", dalParamLog).Msg("SearchXxx.SearchXxx")
+        searchErr := wrapSearchXxxErr(err)
+        return res, 0, searchErr
     }
     if len(data) == 0 {
         return res, 0, nil
@@ -128,8 +132,10 @@ func (s *XxxSrv) UpdateXxx(ctx context.Context, param *model.UpdateXxxParam) err
         return err
     }
     if err := s.primaryDal.UpdateXxx(ctx, param.ID, param.Data); err != nil {
-        s.log.Err(err).Str("param", param.LogStr()).Msg("UpdateXxx")
-        return wrapUpdateXxxErr(err)
+        paramLog := param.LogStr()
+        s.log.Err(err).Str("param", paramLog).Msg("UpdateXxx")
+        updateErr := wrapUpdateXxxErr(err)
+        return updateErr
     }
     return nil
 }
@@ -157,19 +163,25 @@ func (s *XxxSrv) GetXxxDetail(ctx context.Context, param *model.XxxDetailParam) 
     }
 
     errs := make([]error, 0)
-    errs = append(errs, s.addBaseData(ctx, param, ans))
-    errs = append(errs, s.addRelatedData(ctx, param, ans))
-    errs = append(errs, s.addExtraData(ctx, param, ans))
+    baseErr := s.addBaseData(ctx, param, ans)
+    errs = append(errs, baseErr)
+    relatedErr := s.addRelatedData(ctx, param, ans)
+    errs = append(errs, relatedErr)
+    extraErr := s.addExtraData(ctx, param, ans)
+    errs = append(errs, extraErr)
 
     errText := make([]string, 0)
     for i := range errs {
         if errs[i] != nil {
             s.log.Err(errs[i]).Msg("GetXxxDetail")
-            errText = append(errText, errs[i].Error())
+            errMsg := errs[i].Error()
+            errText = append(errText, errMsg)
         }
     }
     if len(errText) > 0 {
-        return ans, fmt.Errorf(strings.Join(errText, ","))
+        errMsg := strings.Join(errText, ",")
+        ansErr := fmt.Errorf("%s", errMsg)
+        return ans, ansErr
     }
 
     ans = ans.Serialize()
@@ -180,9 +192,31 @@ func (s *XxxSrv) GetXxxDetail(ctx context.Context, param *model.XxxDetailParam) 
 Rules:
 
 - Initialize slice/map fields that may be returned to callers; never leave returned slice/map fields nil unless the field is explicitly pointer-optional by contract.
-- Use `addXxxData` helpers when a detail method spans multiple data domains.
+- Use `addXxxData` helpers when a detail method spans multiple data domains, not merely because a block is a few lines long.
 - Return partial `ans` with aggregated error only when that is the established project behavior.
 - Keep helper names private and specific.
+
+## Helper Granularity
+
+Service methods should keep the main business path readable without forcing unnecessary jumps.
+
+The main method should usually present 3-7 ordered business steps at the same abstraction level, such as serialize/check param, load primary data, load related data, merge response, log/wrap errors, and return. If the method has many unrelated stages, split by data domain or side effect; if each helper only hides one obvious line, keep it inline.
+
+Good helper boundaries:
+
+- One helper owns one related data domain, such as base data, project data, policy data, or cache enrichment.
+- One helper isolates a side effect, such as an external client call, transaction block, async enqueue, or cache refresh.
+- One helper hides a complex branch whose name is a real business concept.
+- One helper is reused by multiple public service methods with the same semantics.
+
+Avoid helper boundaries:
+
+- A helper that only forwards to one DAL/service call without adding business meaning.
+- A helper that only appends one field, assigns one map entry, or wraps one error.
+- A chain of private helpers where each helper only calls the next helper.
+- Splitting validation, serialization, and one DAL call into separate private methods when the public method would be clearer inline.
+
+When unsure, keep the code inline with semantic local variables. Split only after the block has a stable name that helps the reader understand the service workflow.
 
 ## Batch Association Pattern
 

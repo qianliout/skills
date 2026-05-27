@@ -7,33 +7,35 @@ Use this reference when generating general Go model layer definitions. The patte
 The sample models use rich domain structs rather than passive DTOs. A persistent entity usually owns:
 
 - DB tags with explicit columns.
-- JSON tags for API compatibility.
+- JSON tags for API compatibility, without `omitempty`.
 - Runtime-only fields marked `gorm:"-"`.
 - Serialized text backing fields marked `json:"-"` when a runtime complex structure is stored in a string text column.
 - Lifecycle methods: `Serialize`, `Deserialize`, `Check`, `TableName`.
 - Derived identity, UUID, checksum, display/search, and compatibility fields are prepared inside `Serialize()`, not in extra same-purpose methods such as `GenUniqueID`, `GenUUID`, or `GenCheckSum`.
 
-Model-layer ownership includes model structs, param structs, model-related constants, validation, serialization, deserialization, derived fields, normalization, default filling, and update field selection. These behaviors should usually be public methods on the specific model type, such as `(m *Xxx) Check()` or `(m *Xxx) Serialize()`, rather than loose helpers with no owner.
+Model-layer ownership includes model structs, param structs, model-related constants, validation, serialization, deserialization, derived fields, normalization, default filling, and update field selection. These behaviors should usually be public methods on the specific model type, such as `(vi *Xxx) Check()` or `(vi *Xxx) Serialize()`, rather than loose helpers with no owner.
 
 Domain normalization belongs to the struct that owns the fields. If logic trims names, fills default status values, normalizes IDs, derives display/search fields, serializes backing text fields, or fixes compatibility values from a model/param/result's fields, put it on that model/param/result's `Serialize()` method. Do not create `Normalize()`, `FillDefault()`, lower-case normalization helpers, or package-level functions for logic that clearly belongs to one struct. Package-level functions are only for truly generic, domain-neutral tools with no clear field owner.
 
 If `Serialize()` or `Deserialize()` exists for a struct, do not add another method or function with overlapping normalization, defaulting, derived-field, serialization, or deserialization responsibilities.
 
-Common domain methods must be exported and use these fixed signatures:
+Common domain lifecycle methods must be exported and use these fixed signatures:
 
 ```go
-func (m *Xxx) Serialize() *Xxx
-func (m *Xxx) Deserialize() *Xxx
-func (m *Xxx) ToUpdater() map[string]interface{}
-func (m *Xxx) Check() error
-func (m *Xxx) Same(after *Xxx) bool
+func (vi *Xxx) Serialize() *Xxx
+func (vi *Xxx) Deserialize() *Xxx
+func (vi *Xxx) ToUpdater() map[string]interface{}
+func (vi *Xxx) Check() error
+func (vi *Xxx) Same(after *Xxx) bool
 ```
 
-Do not change these signatures to omit the receiver return, accept context, accept external params, or use lower-case method names. `Serialize()` and `Deserialize()` return a receiver pointer. When the receiver is nil, they must create a new object and return it; when the receiver is non-nil, they mutate and return the original receiver. Callers must assign the return value back to the original variable, such as `data = data.Serialize()` or `item = item.Deserialize()`. Their method bodies do not create normalized copies or replacement objects except for the nil receiver allocation.
+Do not change this lifecycle method group's signatures to omit the receiver return, accept context, accept external params, or use lower-case method names. This rule does not forbid framework or interface adapter methods with required signatures, such as GORM `TableName() string`, `MarshalJSON() ([]byte, error)`, or other established project adapter methods. `Serialize()` and `Deserialize()` return a receiver pointer. When the receiver is nil, they must create a new object and return it; when the receiver is non-nil, they mutate and return the original receiver. Callers must assign the return value back to the original variable, such as `data = data.Serialize()` or `item = item.Deserialize()`. Their method bodies do not create normalized copies or replacement objects except for the nil receiver allocation.
 
 `Serialize()`、`Deserialize()`、`ToUpdater()`、`Check()`、`Same()` do not call each other internally. Their composition is fully controlled by external callers, such as API/service/DAL code deciding to run `param = param.Serialize()` and then `param.Check()`. Keep each domain method mostly self-contained in one function; do not split struct-specific normalization, validation, comparison, or updater logic into private helpers unless the helper is truly generic and has no field owner.
 
-All model, param, response, and value-object methods use pointer receivers. Do not use value receivers, including for read-only methods such as `TableName()` or `LogStr()`.
+All model, param, response, and value-object methods use pointer receivers. Do not use value receivers, including for read-only methods such as `TableName()` or `LogStr()`. Types whose names contain `Param` use receiver name `p`; other model-layer objects such as model/entity/result/view/cache/statistic use receiver name `vi`.
+
+Model methods should stay readable without becoming either a packed script or a helper maze. Keep a single domain method top-to-bottom when it owns one field lifecycle task. Extract only truly generic, domain-neutral utilities or a reused block with a stable business meaning; do not split one struct's normalization, validation, comparison, or updater field selection into `normalizeXxx`, `checkXxx`, `sameXxx`, or `buildUpdater` helpers.
 
 The model package should stay low-level. It may depend on the standard library, external foundational libraries, and project `utils`; it should not depend on API, service, DAL, or other business-layer packages.
 
@@ -44,10 +46,20 @@ Model design must consider database compatibility first.
 Rules:
 
 - Do not use database complex types such as JSON/JSONB, arrays, maps, or object columns as persistent model fields.
-- Persistent fields should use broadly compatible primitive database types: signed integers, strings/text, timestamps, and simple status strings.
+- Persistent fields should use broadly compatible primitive database types: signed integers, strings/text, and simple status strings. For newly designed tables or features, time fields use `int64` millisecond timestamps stored in integer columns.
 - Complex structures may be stored in `string` text columns with `Serialize()` / `Deserialize()`.
 - Split complex structures into normal columns or relation tables when they need frequent filtering, indexing, partial update, or database constraints.
 - Runtime complex fields must be marked `gorm:"-"`.
+
+## JSON Tag Pattern
+
+Do not write `omitempty` in any `json` tag.
+
+Rules:
+
+- Use explicit field names such as `json:"name"` or `json:"-"`.
+- Do not write `json:"name,omitempty"` or `json:",omitempty"` on model, param, response/view, cache/statistic, or helper value-object structs.
+- Keep zero values explicit in API responses and serialized data; absence semantics should be represented by the model contract or pointer/nullable field choice, not by hiding fields with `omitempty`.
 
 ## Serialized Text Pattern
 
@@ -101,6 +113,19 @@ Type rules:
 - never numeric types larger than `int64`: no `big.Int`, decimal big integer, custom large-number type, or unsigned 64-bit type in models.
 - never database JSON/JSONB, arrays, maps, or complex object columns as persistent fields.
 - never `bool`: binary status fields use `string` with values `"true"` / `"false"`.
+
+## Time Field Pattern
+
+For newly designed tables or features, every time-related value uses a millisecond timestamp.
+
+Rules:
+
+- Use Go `int64` for time fields in model, param, response/view, cache/statistic, and helper value-object structs.
+- Store time fields in the database as integer millisecond timestamps, usually PostgreSQL `bigint`; do not introduce second-level timestamp fields for new tables/features.
+- Keep frontend/backend request params, response fields, service inputs/outputs, DAL query params, cache payloads, and serialized data in milliseconds.
+- Use `time.Now().UTC().UnixMilli()` for current time values.
+- Existing features keep their established time unit and storage shape unless the user explicitly asks for a migration or compatibility refactor.
+- When reading old second-level data for compatibility, convert it to milliseconds in `Deserialize()` and keep the compatibility rule close to the owning model.
 
 ## Boolean Status Pattern
 
@@ -164,7 +189,7 @@ Keep these rules close to the model because they define stored-data compatibilit
 `TableName()` returns a literal table name:
 
 ```go
-func (m *Resource) TableName() string {
+func (vi *Resource) TableName() string {
     return "app_resource"
 }
 ```
