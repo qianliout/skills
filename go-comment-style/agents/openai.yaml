@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go Comment Style"
+  short_description: "Chinese comment rules for Go code"
+  default_prompt: "Use $go-comment-style to add, remove, or review Go comments."
