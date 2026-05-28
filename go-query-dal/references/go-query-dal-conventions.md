@@ -4,7 +4,7 @@ Use this reference when generating general Go DAL/DAO code.
 
 ## Core Shape
 
-A DAL file contains:
+DAL/DAO code lives in the project `store` directory/package. A DAL file contains:
 
 - A narrow interface named `XxxDal`.
 - A DAO implementation named `XxxDao`.
