@@ -45,7 +45,7 @@ Private helpers:
 - Do not create a logger inside every method.
 - Do not pass logger as a normal argument through call chains.
 - Keep logger as the last dependency field when the struct also owns service/DAL/client/cache/config dependencies.
-- Service/API methods that use the logger still follow receiver naming from their layer: service receiver `s`, API receiver `api`. Model `LogStr()` follows model receiver naming: Param uses `p`, other model-layer objects use `vi`.
+- Service/API methods that use the logger still follow receiver naming from their layer: service receiver `s`, API receiver `api`. Model `LogStr()` follows model receiver naming: Param uses `p`, other model-layer objects use `vi`. The receiver form and variable name must stay consistent with other methods on the same struct.
 
 Example:
 
@@ -113,7 +113,7 @@ Rules:
 - No DB/cache/network/file I/O.
 - No side effects.
 - No receiver or external state mutation.
-- Use a pointer receiver; do not use a value receiver. Model-layer Param `LogStr()` receivers use `p`; other model-layer object receivers use `vi`.
+- Use a pointer receiver; do not use a value receiver. Keep the receiver form and variable name consistent with the rest of the same struct. Model-layer Param `LogStr()` receivers use `p`; other model-layer object receivers use `vi`.
 - No complex calculation, sorting, filtering, or deduplication.
 - No sensitive fields.
 - Output should be stable, concise, and searchable.

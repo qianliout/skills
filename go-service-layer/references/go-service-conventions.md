@@ -15,7 +15,7 @@ A service file contains:
 
 Service does not talk to the database directly. Persistence goes through DAL interfaces or established repository abstractions.
 
-All service implementation methods use pointer receivers named `s`, such as `func (s *XxxSrv) SearchXxx(...)`. Do not use value receivers for service structs.
+All service implementation methods use pointer receivers named `s`, such as `func (s *XxxSrv) SearchXxx(...)`. Do not use value receivers for service structs. Every method on the same service struct must use the same receiver form and name; do not mix `s`, `srv`, or `service` on one `XxxSrv`.
 
 Service dependencies must be explicit. Inject DALs, other services, caches, clients, loggers, clocks, ID generators, config, or other long-lived collaborators through the constructor and store them in clearly named struct fields. Do not instantiate those dependencies inside public or private business methods; method bodies should orchestrate already-injected dependencies.
 

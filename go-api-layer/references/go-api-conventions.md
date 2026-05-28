@@ -45,6 +45,7 @@ Rules:
 - If a new API dependency is needed, add it to the API struct, constructor parameters, constructor assignment, and route/bootstrap wiring together.
 - Dependency validity is guaranteed by construction/bootstrap; avoid repeated nil checks in handlers.
 - Handler methods use pointer receivers named `api` and the project framework signature, commonly `func (api *XxxAPI) Action(ctx *gin.Context)`.
+- Every method on the same API struct must use the same receiver form and name; do not mix `api`, `a`, or `handler` on one `XxxAPI`.
 - Do not use value receivers for API/handler methods.
 
 ## Request Parsing

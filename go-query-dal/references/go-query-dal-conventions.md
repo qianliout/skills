@@ -10,7 +10,7 @@ A DAL file contains:
 - A DAO implementation named `XxxDao`.
 - A constructor `NewXxxDao(db *databases.RDBInstance) *XxxDao`.
 - Methods that receive `ctx context.Context`.
-- DAO implementation methods use pointer receivers named `dal`, such as `func (dal *XxxDao) SearchXxx(...)`. Do not use value receivers.
+- DAO implementation methods use pointer receivers named `dal`, such as `func (dal *XxxDao) SearchXxx(...)`. Do not use value receivers. Every method on the same DAO struct must use the same receiver form and name; do not mix `dal`, `dao`, or `d` on one `XxxDao`.
 - Constructors/initialization guarantee DAO dependencies are non-nil; methods do not defensively check `dal == nil` or `dal.db == nil`.
 - Param structs live with models, not in the DAL package.
 - No recommended `Get` method by default; use `Search(ctx, param)` unless the user explicitly asks for single-record lookup.
@@ -214,8 +214,7 @@ If the domain requires version/cache maintenance after creation, call a private 
 ```go
 func (dal *XxxDao) UpdateXxx(ctx context.Context, id int64, data *model.Xxx) error {
     if id <= 0 {
-        err := fmt.Errorf("not get id")
-        return err
+        return fmt.Errorf("not get id")
     }
     data = data.Serialize()
     if err := data.Check(); err != nil {
@@ -233,8 +232,7 @@ func (dal *XxxDao) UpdateXxx(ctx context.Context, id int64, data *model.Xxx) err
         return err
     }
     if pre.Type != data.Type {
-        err := fmt.Errorf("type is not correct")
-        return err
+        return fmt.Errorf("type is not correct")
     }
 
     updater := data.ToUpdater()
@@ -256,8 +254,7 @@ Rules:
 ```go
 func (dal *XxxDao) DeleteXxx(ctx context.Context, id int64) error {
     if id <= 0 {
-        err := fmt.Errorf("not get id")
-        return err
+        return fmt.Errorf("not get id")
     }
     cancelCtx, cancelFunc := context.WithTimeout(ctx, time.Second*3)
     defer cancelFunc()
@@ -270,8 +267,7 @@ func (dal *XxxDao) DeleteXxx(ctx context.Context, id int64) error {
         return err
     }
     if pre.IsDefault == consts.TrueString {
-        err := fmt.Errorf("delete default data is not permitted")
-        return err
+        return fmt.Errorf("delete default data is not permitted")
     }
 
     db = dal.db.Get().WithContext(cancelCtx).Table(tb)

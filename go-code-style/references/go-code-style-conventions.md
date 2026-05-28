@@ -61,8 +61,7 @@ case ActionDelete:
     err := delete(ctx, param)
     return err
 default:
-    err := fmt.Errorf("unsupported action: %s", param.Action)
-    return err
+    return fmt.Errorf("unsupported action: %s", param.Action)
 }
 ```
 
@@ -97,7 +96,7 @@ func (vi *Xxx) Same(after *Xxx) bool
 
 For this lifecycle method group, do not introduce lower-case variants such as `serialize()` or alternate signatures such as `Serialize()`, `Serialize(ctx context.Context)`, `Check(param Xxx) error`, or `ToUpdater(data *Xxx) map[string]interface{}`. This restriction does not forbid framework or interface adapter methods with their required signatures, such as GORM `TableName() string`, `MarshalJSON() ([]byte, error)`, or other established project adapter methods.
 
-All methods must use pointer receivers. Do not use value receivers, even for read-only methods or small structs. A single struct must not mix value receiver methods and pointer receiver methods; if both forms exist, convert the value receiver methods to pointer receivers so the whole struct uses one receiver style. Receiver names are standardized by layer: service uses `s`, DAL uses `dal`, API uses `api`, model-layer types whose names contain `Param` use `p`, and other model-layer objects use `vi`.
+All methods must use pointer receivers. Do not use value receivers, even for read-only methods or small structs. A single struct must not mix value receiver methods and pointer receiver methods; if both forms exist, convert the value receiver methods to pointer receivers so the whole struct uses one receiver style. The receiver variable name must also be consistent for every method on the same struct. Do not use `s` on one `XxxSrv` method and `srv` on another, or `vi` on one model method and `m` on another. Receiver names are standardized by layer: service uses `s`, DAL uses `dal`, API uses `api`, model-layer types whose names contain `Param` use `p`, and other model-layer objects use `vi`.
 
 Service/API/DAL dependencies should be injected through constructors or explicit struct fields following the corresponding layer skill. Do not create DALs, services, clients, caches, or loggers ad hoc inside business methods when they are long-lived dependencies. Keep dependency field order and constructor parameter order consistent; common order is persistence dependencies first, then cross-domain services, infrastructure/cache/clients, config or small helpers, and logger last.
 
@@ -215,7 +214,7 @@ func SerializeRequestParam(p *RequestParam) {}
 - Split files by type group, responsibility, route group, method family, or established local convention.
 - Public structs that are not model-layer types may live in a shared `structs` directory.
 - Keep those non-model shared structs in one consistent place instead of scattering them across service, API, DAL, or helper files.
-- If a struct belongs to model semantics, param validation, serialization, database mapping, or model constants, keep it in the model layer rather than moving it to `structs`.
+- If a struct belongs to model semantics, param validation, serialization, or database mapping, keep it in the model layer rather than moving it to `structs`.
 - Do not create tiny fragmented files only to reduce line count; split when it improves navigation and ownership.
 - A single line should not be too long.
 - Wrap long function calls, chained calls, struct literals, slices/maps, and complex conditions at natural boundaries.
@@ -223,10 +222,10 @@ func SerializeRequestParam(p *RequestParam) {}
 
 ## Constants
 
-- Manage constants in a unified place by responsibility.
-- Do not scatter constants across functions, handlers, service files, DAL files, or helper files.
-- Model-related constants, enum values, defaults, and field constraints belong in the model layer.
-- Shared non-model constants may live in the project’s established constants package or another unified location.
+- Put all constants in the project-defined `consts` directory.
+- Do not define constants in model, API, service, DAL, helper, handler, or function bodies.
+- Model-related constants, enum values, defaults, and field constraints also belong in `consts`; model code may reference them, but must not define them locally.
+- Organize constants inside `consts` by business responsibility so ownership stays clear.
 - Prefer named constants over repeated magic strings or numbers.
 
 ## Naming
@@ -250,9 +249,12 @@ func SerializeRequestParam(p *RequestParam) {}
 
 ## Return Values For Debugging
 
-- Do not directly return the result of any function or method call. Assign the returned value to a local variable first, then return the variable. This makes it easy to place a breakpoint and inspect the returned value.
+- Do not mechanically forbid every direct `return xxx()`. Decide by debugging value and readability.
+- If the return expression is a business call, I/O call, DAL/service/client call, complex conversion/construction, chained call, error wrapper, or a result whose intermediate value may need inspection, assign it to a local variable first and then return it.
+- If the return expression is very direct, side-effect-free, and does not need an intermediate breakpoint, it may be returned directly.
 - For `(value, error)` calls, split the call into `value, err := ...`, handle `err`, then `return value, nil`.
-- For final conversions or cleanup, assign the converted value to a local variable before returning it.
+- For final conversions or cleanup with real computation, assign the converted value to a local variable before returning it.
+- Direct return is fine for simple values such as `nil`, `err`, `true`, `false`, `0`, `""`, constants, field access, `fmt.Errorf("...")`, `errors.New("...")`, and stable adapter methods that return a literal or stable value such as `vi.TableName()`.
 
 Good:
 
@@ -265,6 +267,10 @@ return result, nil
 
 value := strings.TrimSpace(raw)
 return value
+
+return fmt.Errorf("unsupported action: %s", param.Action)
+
+return vi.TableName()
 ```
 
 Avoid:
@@ -277,6 +283,12 @@ return strings.TrimSpace(raw)
 return buildResult(input)
 
 return repo.Find(ctx, id)
+
+return wrapSearchErr(err)
+
+return data.Serialize()
+
+return db.Updates(updater).Error
 ```
 
 ## Types And Interfaces
@@ -285,6 +297,9 @@ return repo.Find(ctx, id)
 - Function inputs and outputs should each usually stay within 3 values. If a signature needs more, prefer a named param struct, result struct, or option pattern.
 - Function and method call arguments should be variables, constants, literals, or simple field/index access. Do not pass another function or method call result directly as an argument; assign it to a meaningful local variable first so the value can be named, inspected, and debugged.
 - Slice/map return values must be non-nil by contract. This includes error paths such as `(items, 0, err)` instead of `(nil, 0, err)` when `items` is a slice return value.
+- Prefer plain primitive fields and params such as `string` and `int64`.
+- Avoid named primitive wrappers such as `type Kind string` unless there is a real need: an external API or third-party library requires the type, the type owns meaningful methods, or a strong type-safety boundary prevents practical bugs.
+- Constants for allowed values still belong in `consts`; they do not require a matching named primitive type.
 - Numeric fields in structs should use `int64` by default.
 - Use other numeric types only for clear exceptions, such as external API contracts, third-party library signatures, byte-size data, proven memory/performance needs, or a local project convention.
 - Avoid `any`, `interface{}`, `map[string]any`, and broad data interfaces for request params, response values, and business data.

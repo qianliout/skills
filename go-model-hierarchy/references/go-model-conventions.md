@@ -13,7 +13,7 @@ The sample models use rich domain structs rather than passive DTOs. A persistent
 - Lifecycle methods: `Serialize`, `Deserialize`, `Check`, `TableName`.
 - Derived identity, UUID, checksum, display/search, and compatibility fields are prepared inside `Serialize()`, not in extra same-purpose methods such as `GenUniqueID`, `GenUUID`, or `GenCheckSum`.
 
-Model-layer ownership includes model structs, param structs, model-related constants, validation, serialization, deserialization, derived fields, normalization, default filling, and update field selection. These behaviors should usually be public methods on the specific model type, such as `(vi *Xxx) Check()` or `(vi *Xxx) Serialize()`, rather than loose helpers with no owner.
+Model-layer ownership includes model structs, param structs, validation, serialization, deserialization, derived fields, normalization, default filling, and update field selection. These behaviors should usually be public methods on the specific model type, such as `(vi *Xxx) Check()` or `(vi *Xxx) Serialize()`, rather than loose helpers with no owner. Model-related constants are an exception to model-layer file ownership: define them in the project-defined `consts` directory.
 
 Domain normalization belongs to the struct that owns the fields. If logic trims names, fills default status values, normalizes IDs, derives display/search fields, serializes backing text fields, or fixes compatibility values from a model/param/result's fields, put it on that model/param/result's `Serialize()` method. Do not create `Normalize()`, `FillDefault()`, lower-case normalization helpers, or package-level functions for logic that clearly belongs to one struct. Package-level functions are only for truly generic, domain-neutral tools with no clear field owner.
 
@@ -33,7 +33,7 @@ Do not change this lifecycle method group's signatures to omit the receiver retu
 
 `Serialize()`、`Deserialize()`、`ToUpdater()`、`Check()`、`Same()` do not call each other internally. Their composition is fully controlled by external callers, such as API/service/DAL code deciding to run `param = param.Serialize()` and then `param.Check()`. Keep each domain method mostly self-contained in one function; do not split struct-specific normalization, validation, comparison, or updater logic into private helpers unless the helper is truly generic and has no field owner.
 
-All model, param, response, and value-object methods use pointer receivers. Do not use value receivers, including for read-only methods such as `TableName()` or `LogStr()`. Types whose names contain `Param` use receiver name `p`; other model-layer objects such as model/entity/result/view/cache/statistic use receiver name `vi`.
+All model, param, response, and value-object methods use pointer receivers. Do not use value receivers, including for read-only methods such as `TableName()` or `LogStr()`. Every method on the same model-layer struct must use the same receiver form and name. Types whose names contain `Param` use receiver name `p`; other model-layer objects such as model/entity/result/view/cache/statistic use receiver name `vi`. Do not mix `p` and `param` on one param type, or `vi`, `m`, and `item` on one model type.
 
 Model methods should stay readable without becoming either a packed script or a helper maze. Keep a single domain method top-to-bottom when it owns one field lifecycle task. Extract only truly generic, domain-neutral utilities or a reused block with a stable business meaning; do not split one struct's normalization, validation, comparison, or updater field selection into `normalizeXxx`, `checkXxx`, `sameXxx`, or `buildUpdater` helpers.
 
@@ -83,16 +83,20 @@ Rules:
 
 Do not use `uint64` in persistent models. PostgreSQL has no native unsigned 64-bit integer type.
 
-Use `int64` for database-backed IDs and business identities that fit PostgreSQL `bigint`:
+Every persistent data model must include the standard unique data identifier:
 
 ```go
 UniqueID int64 `gorm:"column:unique_id" json:"uniqueID"`
 ```
 
-Do not introduce numeric types larger than `int64`. If an external identifier is larger than `int64`, produced by unsigned hashing, comes from a snowflake generator, or must preserve lexical form, model it as an opaque `string` identifier, not as a number:
+Use `UniqueID int64` to represent the globally unique data identity for the model. Do not omit it from a persistent data model, and do not rename it to another field such as `ID`, `DataID`, or `UID` unless an existing external contract explicitly requires compatibility.
+
+Use `int64` for database-backed IDs and business identities that fit PostgreSQL `bigint`.
+
+Do not introduce numeric types larger than `int64`. If an external identifier is larger than `int64`, produced by unsigned hashing, comes from a snowflake generator, or must preserve lexical form, model it as a separate opaque `string` identifier, not as a replacement for `UniqueID`:
 
 ```go
-UniqueID string `gorm:"column:unique_id" json:"uniqueID"`
+ExternalID string `gorm:"column:external_id" json:"externalID"`
 ```
 
 Generate source-specific IDs from stable business keys:
@@ -105,6 +109,9 @@ If a source type intentionally has no generated ID, document it.
 
 Type rules:
 
+- Model, param, response, and value-object fields should use plain primitive types by default.
+- Avoid named primitive wrappers such as `type Kind string` for enum/status fields unless an external API, third-party library, meaningful method set, or strong type-safety boundary clearly requires it.
+- Represent enum/status values with primitive fields plus named constants in `consts`.
 - Numeric fields in structs use `int64` by default unless there is a clear exception.
 - `int64`: PostgreSQL `bigint`, timestamps in milliseconds, counts, signed flags, numeric IDs inside signed range.
 - `string`: UUID, snowflake IDs, unsigned hash output, external IDs, compound unique keys, and serialized text. These are opaque identifiers or text payloads, not numeric fields.
@@ -118,8 +125,17 @@ Type rules:
 
 For newly designed tables or features, every time-related value uses a millisecond timestamp.
 
+Every persistent data model must include the standard lifecycle fields:
+
+```go
+CreatedAt int64 `gorm:"autoCreateTime:milli;column:created_at" json:"createdAt"` // milliseconds
+UpdatedAt int64 `gorm:"autoUpdateTime:milli;column:updated_at" json:"updatedAt"` // milliseconds
+DeletedAt int64 `gorm:"column:deleted_at" json:"deletedAt"`                     // milliseconds
+```
+
 Rules:
 
+- Include `CreatedAt`, `UpdatedAt`, and `DeletedAt` on every persistent data model. Do not omit `DeletedAt` just because a feature has no active soft-delete flow yet.
 - Use Go `int64` for time fields in model, param, response/view, cache/statistic, and helper value-object structs.
 - Store time fields in the database as integer millisecond timestamps, usually PostgreSQL `bigint`; do not introduce second-level timestamp fields for new tables/features.
 - Keep frontend/backend request params, response fields, service inputs/outputs, DAL query params, cache payloads, and serialized data in milliseconds.
@@ -206,8 +222,8 @@ func (vi *Resource) TableName() string {
 
 ## Constants And Dependencies
 
-- Define model-related constants, enum values, default values, and field value constraints in the model layer.
-- Keep constants close to the model or param that owns them, and manage them in one consistent place by responsibility.
-- Do not scatter model-related constants across API, service, DAL, helper files, or function bodies.
-- Upper layers may reference model constants; model should not import upper layers.
+- Define model-related constants, enum values, default values, and field value constraints in the project-defined `consts` directory, not in model files.
+- Organize constants inside `consts` by the model, param, or business responsibility that owns them.
+- Do not scatter constants across model, API, service, DAL, helper files, or function bodies.
+- Model and upper layers may reference `consts`; model should not import upper layers.
 - If a helper needs service, DAL, request context, or framework types, it does not belong in the model layer.
