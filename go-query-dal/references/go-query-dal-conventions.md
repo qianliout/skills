@@ -12,6 +12,7 @@ DAL/DAO code lives in the project `store` directory/package. A DAL file contains
 - Methods that receive `ctx context.Context`.
 - DAO implementation methods use pointer receivers named `dal`, such as `func (dal *XxxDao) SearchXxx(...)`. Do not use value receivers. Every method on the same DAO struct must use the same receiver form and name; do not mix `dal`, `dao`, or `d` on one `XxxDao`.
 - Constructors/initialization guarantee DAO dependencies are non-nil; methods do not defensively check `dal == nil` or `dal.db == nil`.
+- DAO methods must not skip queries, writes, updates, deletes, cache/index maintenance, or logging because DB/DAO/client/logger dependencies are nil. Missing dependencies are constructor/bootstrap/test fixture failures, not DAL runtime branches.
 - Param structs live with models, not in the DAL package.
 - No recommended `Get` method by default; use `Search(ctx, param)` unless the user explicitly asks for single-record lookup.
 - GORM queries built from `dal.db.Get().WithContext(cancelCtx).Table(...)`.
@@ -37,6 +38,7 @@ Rules:
 - Prefer keeping cross-domain orchestration in service. Add related DAO dependencies to DAL only when the local architecture already allows DAL-to-DAL composition.
 - If adding a dependency, update the DAO struct, constructor signature, assignments, and bootstrap call sites together.
 - DAL methods should not create services. If a query needs business orchestration or multiple stores with domain decisions, move that orchestration to service and keep DAL focused on persistence.
+- Do not add nil-dependent fallback paths such as `if dal.db == nil { return res, 0, nil }` or `if dal.relatedDao != nil { ... }`. If a dependency is optional by product design, model that explicitly in service/config instead of making DAL silently skip persistence work.
 
 ## Timeout Pattern
 
@@ -73,6 +75,7 @@ Rules:
 - `Delete` has exactly two inputs: `ctx` and primary key ID; do not add param structs or extra condition arguments.
 - `Create` has exactly two inputs: `ctx` and the data model pointer.
 - Do not provide a `Get` method by default.
+- Do not create method variants for caller or ownership scenarios, such as `SearchXxxForUser`, `SearchXxxForProject`, `UpdateXxxForUser`, or `UpdateXxxForProject`. Use `SearchXxx(ctx, param)` with typed filter fields, or the standard update signature with validated data, unless the behavior is a genuinely different persistence operation.
 
 ## Param Location Rule
 
@@ -96,6 +99,8 @@ SearchXxx(ctx context.Context, param *model.SearchXxxParam) ([]*model.Xxx, int64
 ```
 
 Do not define `SearchXxxParam`, `UpdateXxxParam`, filter structs, sort structs, or pagination structs in the DAL package.
+
+Use param fields to express caller, owner, tenant, project, status, and permission-related filters. Adding `UserID`, `ProjectID`, `OwnerID`, or `TenantID` to `SearchXxxParam` is preferred over adding new DAL methods named for those scenarios.
 
 ## Param Semantic Naming
 
@@ -173,6 +178,7 @@ Rules:
 - Query normalization belongs to the param struct that owns the query fields and is unified under public `Serialize()`. DAL should not define `Normalize()`, `FillDefault()`, lower-case normalization methods, or package-level helpers such as `NormalizeSearchXxxParam(param *SearchXxxParam)` when the behavior belongs on the param receiver.
 - Do not repeat parameter normalization or validation in DAL; DAL should only consume checked param fields.
 - Do not check `dal == nil` or `dal.db == nil` inside DAL methods; initialization owns that guarantee.
+- Do not make DAL behavior conditional on injected dependencies being non-nil; dependency absence should fail during wiring, not silently alter query or write behavior.
 - Keep the full query chain in the method whenever practical: setup table, append business filters, count, apply filter/page, find, deserialize, return.
 - Build exact business filters before `Count`.
 - Build GORM queries step by step with assignments like `db = db.Where(...)`; avoid long chained calls.

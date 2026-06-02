@@ -23,16 +23,10 @@ description: "Go 日志规范专家。Use when writing, refactoring, or reviewin
 
 ## Pre-Delivery Checklist
 
-- [ ] 新写日志相关代码同时符合 `go-code-style` 以及所在层当前任务涉及的 Go skill 规则。
+- [ ] 已同时符合 `go-code-style` 以及所在层当前任务涉及的 Go skill 规则。
+- [ ] 需要日志的 API/service 等 struct 自己持有 logger，并在构造函数中设置稳定 module/subModule；没有全局日志或方法内临时 logger。
 - [ ] DAL/model 层没有被 Agent 自动新增日志。
-- [ ] 需要日志的 struct 自己持有 logger，并在构造函数中设置 module / subModule。
-- [ ] 没有直接使用全局日志对象打日志，也没有在每个方法里临时创建 logger。
-- [ ] 错误日志包含操作名、错误对象和关键业务 ID。
-- [ ] struct 摘要日志使用 `LogStr()`；`LogStr()` 只做字符串拼装，不含敏感字段。
-- [ ] logger、service/API 日志方法和 `LogStr()` 都使用指针接收者；同一个 struct 的 receiver 形式和变量名一致；service/API receiver 分别用 `s`/`api`，model 层 Param 用 `p`，其他 model 层对象用 `vi`。
-- [ ] 私有 helper 默认不记录错误日志，由上层调用方记录。
-- [ ] 没有只打日志不返回错误；没有每层重复打印同一个错误。
-- [ ] goroutine panic 有 recover 日志。
-- [ ] 没有记录敏感信息或大 payload；循环/批量任务没有大量成功日志。
+- [ ] 错误日志包含操作名、错误对象和关键业务 ID；没有每层重复打印同一个错误。
+- [ ] `LogStr()` 使用指针接收者，只做安全摘要拼装，不包含敏感字段或大 payload。
+- [ ] 私有 helper 默认返回错误给上层记录；goroutine panic 有 recover 日志。
 - [ ] 日志 Msg 使用英文且稳定简短，结构化信息放字段中。
-- [ ] 没有 placeholder：`TODO`、`FIXME`、`xxx`。

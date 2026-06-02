@@ -19,6 +19,8 @@ All service implementation methods use pointer receivers named `s`, such as `fun
 
 Service dependencies must be explicit. Inject DALs, other services, caches, clients, loggers, clocks, ID generators, config, or other long-lived collaborators through the constructor and store them in clearly named struct fields. Do not instantiate those dependencies inside public or private business methods; method bodies should orchestrate already-injected dependencies.
 
+Service interfaces should stay broad enough to survive new callers and filters. Use resource/action methods such as `SearchXxx`, `UpdateXxx`, `CreateXxx`, and `DeleteXxx`; do not create caller-specific variants such as `SearchXxxForUser`, `UpdateXxxForProject`, or `CreateXxxForOrg` when the difference is only a filter, owner, tenant, project, or permission context. Put those constraints on typed params or command structs and validate them with `Check()`.
+
 ## Dependency Management
 
 Manage dependencies in one place: the service struct declares what the service needs, and `NewXxxSrv(...)` wires those dependencies. Keep the field order and constructor parameter order aligned so the dependency graph is readable at a glance.
@@ -41,6 +43,8 @@ Rules:
 - Method-local objects are allowed only when they are request-scoped values, params, result containers, transactions, timers, or other short-lived data.
 - If adding a new dependency, update the struct, constructor signature, constructor assignment, and call sites together.
 - Keep dependency direction clear: service may depend on DAL/repository interfaces, other service interfaces, cache/infrastructure, external clients, config/helpers, and logger; service must not import API/controller packages and must not bypass DAL to use DB/GORM/SQL directly.
+- Do not use nil injected dependencies to skip business behavior. Branches such as `if s.cache != nil { ... }`, `if s.primaryDal == nil { return res, 0, nil }`, or `if s.log != nil { ... }` hide wiring errors; fix constructor/bootstrap/test setup instead.
+- Ordinary input nil checks and model/param receiver nil handling are still allowed; this rule is only about long-lived service dependencies.
 
 ## Constructor Pattern
 
@@ -74,6 +78,7 @@ Rules:
 - Constructor parameters should show the service dependency graph clearly and keep the same order as the struct fields.
 - Do dependency validation at construction/bootstrap time when the project requires it.
 - Avoid repeating `s == nil` or dependency nil checks in every service method.
+- Do not make service methods degrade or silently skip work when a DAL/service/cache/client/logger dependency is nil.
 - Keep constructor side effects limited to lightweight initialization.
 
 ## Public Search Pattern
@@ -116,6 +121,7 @@ Rules:
 - Initialize result slices before validation.
 - If a slice or map is part of the return values, initialize it before validation and return that initialized value on every path, including errors.
 - Params with domain methods should be pointer types, such as `*model.SearchXxxParam`, so `Serialize()` can return a replacement object for nil receiver cases.
+- Do not add separate search methods per caller scenario. Prefer one `SearchXxx(ctx, param)` method and fields such as `UserID`, `ProjectID`, `OwnerID`, `TenantID`, or status fields on the param.
 - Call `param = param.Serialize()` before `param.Check()` at the public service boundary when the param type provides these methods.
 - Keep trim/default/normalize/derive/fill logic on the model/param/result struct that owns those fields, unified under public `Serialize()`. Service may call `param = param.Serialize()`, `param.Check()`, or `data = data.Serialize()`, but should not host package-level normalization helpers, `Normalize()`, `FillDefault()`, or lower-case normalization methods for a specific struct.
 - Use param conversion methods only for cross-type API/DAL DTO mapping when the mapping is non-trivial; conversion methods must not duplicate `Serialize()` / `Deserialize()` responsibilities such as trim, defaults, normalization, or derived fields.
@@ -143,6 +149,7 @@ func (s *XxxSrv) UpdateXxx(ctx context.Context, param *model.UpdateXxxParam) err
 
 Rules:
 
+- Do not add separate update methods per caller scenario, such as `UpdateXxxForProject`. Prefer a single update command/param that carries the ID, owner/project constraints, and update data, then validate the constraints before calling DAL.
 - Service validates operation param when validation exists, then delegates persistence to DAL.
 - Avoid manually building update maps in service; prefer model/DAL update contracts.
 - Avoid mutating persistence fields that belong to model `Serialize()` / `ToUpdater()`.

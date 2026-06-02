@@ -23,9 +23,9 @@ for skill_dir in "$ROOT"/*; do
   [[ -d "$skill_dir" && -f "$skill_dir/SKILL.md" ]] || continue
 
   skill_name="$(basename "$skill_dir")"
-  skill_md="$skill_dir/SKILL.md"
 
+  rm -rf "$CURSOR_RULES/$skill_name.mdc" "$TRAE_SKILLS/$skill_name.md"
   link_path "$skill_dir" "$CODEX_SKILLS/$skill_name"
-  link_path "$skill_md" "$CURSOR_RULES/$skill_name.mdc"
-  link_path "$skill_md" "$TRAE_SKILLS/$skill_name.md"
+  link_path "$skill_dir" "$CURSOR_RULES/$skill_name"
+  link_path "$skill_dir" "$TRAE_SKILLS/$skill_name"
 done

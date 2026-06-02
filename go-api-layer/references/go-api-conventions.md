@@ -44,13 +44,17 @@ Rules:
 - Do not create service, DAL, client, cache, or logger dependencies inside handler methods. Handlers should parse input, call injected services, and return responses.
 - If a new API dependency is needed, add it to the API struct, constructor parameters, constructor assignment, and route/bootstrap wiring together.
 - Dependency validity is guaranteed by construction/bootstrap; avoid repeated nil checks in handlers.
+- Do not skip service calls, response handling, validation, or logging because an injected service/logger/helper is nil. Missing API dependencies must be fixed in constructor, route wiring, bootstrap, or tests, not hidden by handler branches.
 - Handler methods use pointer receivers named `api` and the project framework signature, commonly `func (api *XxxAPI) Action(ctx *gin.Context)`.
 - Every method on the same API struct must use the same receiver form and name; do not mix `api`, `a`, or `handler` on one `XxxAPI`.
 - Do not use value receivers for API/handler methods.
 
 ## Request Parsing
 
-- Use query params for all request parameters; do not use path params.
+- Do not use path params.
+- `POST` endpoints read all request parameters from the JSON body.
+- `PUT` endpoints read the update ID or uniqueID from query, such as `?id=123` or `?uniqueID=123`, and read all other update fields from the JSON body.
+- Other endpoints use query params for request parameters.
 - Use project helpers for query/header parsing.
 - Use `ShouldBindJSON`, `BindJSON`, or the project wrapper for JSON body binding.
 - Convert raw HTTP strings into a typed param before calling service.
@@ -95,9 +99,9 @@ if err := param.Check(); err != nil {
 
 PUT updates must be full updates:
 
-- The update ID is required in query, such as `?id=123`.
-- The body contains the full update content.
-- Do not use path params for the ID.
+- The update ID or uniqueID is required in query, such as `?id=123` or `?uniqueID=123`.
+- The body contains all other full update content.
+- Do not use path params for the ID or uniqueID.
 - Do not treat PUT as partial update.
 
 Example:

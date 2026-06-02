@@ -6,7 +6,7 @@ Use this reference when generating general Go model layer definitions. The patte
 
 The sample models use rich domain structs rather than passive DTOs. A persistent entity usually owns:
 
-- DB tags with explicit columns.
+- DB tags with explicit columns only.
 - JSON tags for API compatibility, without `omitempty`.
 - Runtime-only fields marked `gorm:"-"`.
 - Serialized text backing fields marked `json:"-"` when a runtime complex structure is stored in a string text column.
@@ -24,7 +24,7 @@ Common domain lifecycle methods must be exported and use these fixed signatures:
 ```go
 func (vi *Xxx) Serialize() *Xxx
 func (vi *Xxx) Deserialize() *Xxx
-func (vi *Xxx) ToUpdater() map[string]interface{}
+func (vi *Xxx) ToUpdater() map[string]any
 func (vi *Xxx) Check() error
 func (vi *Xxx) Same(after *Xxx) bool
 ```
@@ -47,6 +47,8 @@ Rules:
 
 - Do not use database complex types such as JSON/JSONB, arrays, maps, or object columns as persistent model fields.
 - Persistent fields should use broadly compatible primitive database types: signed integers, strings/text, and simple status strings. For newly designed tables or features, time fields use `int64` millisecond timestamps stored in integer columns.
+- Persistent field `gorm` tags only declare the column mapping, such as `gorm:"column:name"`. Do not put schema details in Go model tags: no `type:...`, `index`, `uniqueIndex`, `default`, `not null`, `primaryKey`, `autoCreateTime`, `autoUpdateTime`, or migration/index options.
+- Runtime-only fields may still use `gorm:"-"` because they are explicitly excluded from persistence.
 - Complex structures may be stored in `string` text columns with `Serialize()` / `Deserialize()`.
 - Split complex structures into normal columns or relation tables when they need frequent filtering, indexing, partial update, or database constraints.
 - Runtime complex fields must be marked `gorm:"-"`.
@@ -113,6 +115,9 @@ Type rules:
 - Avoid named primitive wrappers such as `type Kind string` for enum/status fields unless an external API, third-party library, meaningful method set, or strong type-safety boundary clearly requires it.
 - Represent enum/status values with primitive fields plus named constants in `consts`.
 - Numeric fields in structs use `int64` by default unless there is a clear exception.
+- Project code should keep numeric fields, params, responses, cache/stat values, counters, paging values, IDs, timestamps, and layer-to-layer numeric values on `int64` by default.
+- Use `int`, `int32`, `uint`, `uint64`, or other numeric types only when an external protocol, third-party library signature, explicit memory/performance/storage boundary, or existing compatibility contract makes it necessary.
+- Do not preserve non-`int64` numeric types only for old implementation compatibility; keep compatibility only when the external contract or migration risk makes it necessary.
 - `int64`: PostgreSQL `bigint`, timestamps in milliseconds, counts, signed flags, numeric IDs inside signed range.
 - `string`: UUID, snowflake IDs, unsigned hash output, external IDs, compound unique keys, and serialized text. These are opaque identifiers or text payloads, not numeric fields.
 - Other numeric types require an explicit reason, such as external protocol compatibility, third-party library signatures, byte-size data, or an established local convention.
@@ -128,14 +133,15 @@ For newly designed tables or features, every time-related value uses a milliseco
 Every persistent data model must include the standard lifecycle fields:
 
 ```go
-CreatedAt int64 `gorm:"autoCreateTime:milli;column:created_at" json:"createdAt"` // milliseconds
-UpdatedAt int64 `gorm:"autoUpdateTime:milli;column:updated_at" json:"updatedAt"` // milliseconds
-DeletedAt int64 `gorm:"column:deleted_at" json:"deletedAt"`                     // milliseconds
+CreatedAt int64 `gorm:"column:created_at" json:"createdAt"` // milliseconds
+UpdatedAt int64 `gorm:"column:updated_at" json:"updatedAt"` // milliseconds
+DeletedAt int64 `gorm:"column:deleted_at" json:"deletedAt"` // milliseconds
 ```
 
 Rules:
 
 - Include `CreatedAt`, `UpdatedAt`, and `DeletedAt` on every persistent data model. Do not omit `DeletedAt` just because a feature has no active soft-delete flow yet.
+- Keep lifecycle field `gorm` tags to `column:...`; do not use GORM automatic time tags such as `autoCreateTime` or `autoUpdateTime`.
 - Use Go `int64` for time fields in model, param, response/view, cache/statistic, and helper value-object structs.
 - Store time fields in the database as integer millisecond timestamps, usually PostgreSQL `bigint`; do not introduce second-level timestamp fields for new tables/features.
 - Keep frontend/backend request params, response fields, service inputs/outputs, DAL query params, cache payloads, and serialized data in milliseconds.

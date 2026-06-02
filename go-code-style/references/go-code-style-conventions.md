@@ -89,12 +89,12 @@ Common domain lifecycle methods must use fixed exported names and signatures:
 ```go
 func (vi *Xxx) Serialize() *Xxx
 func (vi *Xxx) Deserialize() *Xxx
-func (vi *Xxx) ToUpdater() map[string]interface{}
+func (vi *Xxx) ToUpdater() map[string]any
 func (vi *Xxx) Check() error
 func (vi *Xxx) Same(after *Xxx) bool
 ```
 
-For this lifecycle method group, do not introduce lower-case variants such as `serialize()` or alternate signatures such as `Serialize()`, `Serialize(ctx context.Context)`, `Check(param Xxx) error`, or `ToUpdater(data *Xxx) map[string]interface{}`. This restriction does not forbid framework or interface adapter methods with their required signatures, such as GORM `TableName() string`, `MarshalJSON() ([]byte, error)`, or other established project adapter methods.
+For this lifecycle method group, do not introduce lower-case variants such as `serialize()` or alternate signatures such as `Serialize()`, `Serialize(ctx context.Context)`, `Check(param Xxx) error`, or `ToUpdater(data *Xxx) map[string]any`. This restriction does not forbid framework or interface adapter methods with their required signatures, such as GORM `TableName() string`, `MarshalJSON() ([]byte, error)`, or other established project adapter methods.
 
 All methods must use pointer receivers. Do not use value receivers, even for read-only methods or small structs. A single struct must not mix value receiver methods and pointer receiver methods; if both forms exist, convert the value receiver methods to pointer receivers so the whole struct uses one receiver style. The receiver variable name must also be consistent for every method on the same struct. Do not use `s` on one `XxxSrv` method and `srv` on another, or `vi` on one model method and `m` on another. Receiver names are standardized by layer: service uses `s`, DAL uses `dal`, API uses `api`, model-layer types whose names contain `Param` use `p`, and other model-layer objects use `vi`.
 
@@ -107,6 +107,8 @@ Dependency ownership rules:
 - Business methods create only request-scoped values: params, local result containers, query builders, timeout contexts, transactions, timers, and temporary maps/slices.
 - Adding a dependency means updating struct fields, constructor parameters, constructor assignments, and bootstrap/call sites together.
 - Avoid method-local `NewXxxSrv`, `NewXxxDao`, `NewClient`, `NewCache`, or `utils.NewLogEvent` calls unless the object is intentionally short-lived and not a service dependency.
+- Long-lived dependencies must be non-nil by construction, initialization, or bootstrap. Do not add branches that skip calls, validation, writes, cache maintenance, or logging just because an injected service, DAL, DB, cache, client, helper, or logger is nil. Fix the wiring or startup validation instead.
+- This dependency rule does not forbid ordinary input nil checks, model/param receiver nil handling, panic recover checks, or explicit contracts where a callee documents `(nil, nil)` as a valid result.
 
 Good:
 
@@ -155,7 +157,7 @@ func (vi *Xxx) Serialize() *Xxx {
 - `Serialize()` 和 `Deserialize()` 在 receiver 为 nil 时必须新建一个对象，并返回这个对象；非 nil 时直接修改并返回原 receiver。
 - `Serialize()` 和 `Deserialize()` 方法体内不创建规整副本；除 nil receiver 分支用于创建接收对象外，不新建替代对象。
 - 调用方必须用原变量接收 `Serialize()` / `Deserialize()` 返回值，例如 `req = req.Serialize()`、`item = item.Deserialize()`，否则 nil receiver 场景下新对象会丢失。
-- `ToUpdater()` 不接收参数，返回已初始化的 `map[string]interface{}`。
+- `ToUpdater()` 不接收参数，返回已初始化的 `map[string]any`。
 - `Check()` 不接收参数，只返回 `error`；它只做校验，不做 trim/default/derive/fill。
 - `Same(after *Xxx) bool` 只接收同类型对象指针并返回比较结果。
 - `Serialize()`、`Deserialize()`、`ToUpdater()`、`Check()`、`Same()` 内部不要互相调用；这些方法的组合顺序完全由外部调用方决定。
@@ -231,6 +233,9 @@ func SerializeRequestParam(p *RequestParam) {}
 ## Naming
 
 - Types and functions use business meaning: `SearchPolicyParam`, `BuildSummary`, `ValidateOwner`.
+- Public interfaces and methods should describe the resource and action at a reusable level. Do not encode the current caller, owner, tenant, or scene into method names such as `SearchXxxForUser`, `UpdateXxxForProject`, `CreateXxxForOrg`, or `DeleteXxxForWorkspace`.
+- Prefer a general method plus typed param fields for constraints: use `SearchXxx(ctx, param)` with `param.UserID`, `param.ProjectID`, or `param.OwnerID`; use `UpdateXxx(ctx, param)` or `UpdateXxx(ctx, id, data)` with checked fields instead of creating a new method per caller scenario.
+- Add a specialized method name only when the behavior is genuinely different, stable, and not expressible as filters or command fields, such as a separate domain action with distinct side effects.
 - Local variables should describe role: `ownerByID`, `enabledItems`, `pendingIDs`.
 - Avoid broad names like `data`, `tmp`, `obj`, `res` when the scope is not tiny.
 - Names should be concise and expressive. Do not repeat context already clear from the function, receiver, type, or package name.
@@ -300,9 +305,11 @@ return db.Updates(updater).Error
 - Prefer plain primitive fields and params such as `string` and `int64`.
 - Avoid named primitive wrappers such as `type Kind string` unless there is a real need: an external API or third-party library requires the type, the type owns meaningful methods, or a strong type-safety boundary prevents practical bugs.
 - Constants for allowed values still belong in `consts`; they do not require a matching named primitive type.
-- Numeric fields in structs should use `int64` by default.
-- Use other numeric types only for clear exceptions, such as external API contracts, third-party library signatures, byte-size data, proven memory/performance needs, or a local project convention.
-- Avoid `any`, `interface{}`, `map[string]any`, and broad data interfaces for request params, response values, and business data.
+- Numeric types across project code should use `int64` by default, including struct fields, function/method parameters, return values, counters, paging values, IDs, timestamps, and values passed between API/service/DAL/model layers.
+- Use other numeric types only when necessary for external API contracts, third-party library signatures, byte-size data, proven memory/performance needs, or existing compatibility constraints.
+- Do not introduce `int`, `int32`, `uint`, `uint64`, or other numeric aliases only because the current value range is small; prefer `int64` for project consistency.
+- Do not preserve non-`int64` numeric types only for old implementation compatibility; keep compatibility only when the external contract or migration risk makes it necessary.
+- Avoid `any`, `interface{}`, `map[string]any`, and broad data interfaces for request params, response values, and business data, except for model-layer `ToUpdater()` which must return `map[string]any`.
 - Use small behavior interfaces only when callers truly vary by behavior, such as `io.Reader`, `context.Context`, or a narrow project interface.
 - If data has a stable shape, define a struct even when only a few fields are currently used.
 - Keep `any` for unavoidable boundaries such as generic helpers, JSON/raw dynamic payloads, logging fields, or third-party APIs; convert to typed structs as soon as practical.
@@ -342,6 +349,7 @@ resp, err := g.chatModel.Generate(ctx, buildTextMessages(prompt, opts))
 - If a secondary cleanup/maintenance error is intentionally ignored, make that explicit.
 - Use `errors.Is` / `errors.As` when comparing wrapped errors if the project uses standard wrapping.
 - For functions that return `(value, error)` and whose contract says `value` is usable when `err == nil`, do not add repetitive defensive `if value == nil` checks at call sites. The callee should return an error when it cannot provide a usable value; only keep a nil check when the function explicitly allows `(nil, nil)`.
+- Do not treat a nil injected dependency as a recoverable runtime condition. Code such as `if s.cache != nil { ... }`, `if dal.db == nil { return res, 0, nil }`, or `if api.srv == nil { response.JSONOK(ctx, nil); return }` hides wiring errors and is not allowed.
 
 ## Context And Concurrency
 

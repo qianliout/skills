@@ -11,8 +11,8 @@ API 层只负责 HTTP 适配：解析请求、基础校验入口、调用 servic
 
 1. 识别 API 边界：确认 handler、query/body/header 来源、service 依赖、返回 items/count/page 信息。
 2. 加载 `references/go-api-conventions.md`，按项目约定处理路由、请求解析、错误响应和分页响应。
-3. 定义结构：API struct 只持有 service、logger 或轻量依赖；字段和构造函数参数常见顺序为 service、轻量 helper/config、logger；依赖通过构造函数或明确字段注入，不能在 handler 内临时创建 service/DAL/client；同一个 API struct 的 handler 方法统一使用指针接收者，receiver 统一命名为 `api`。
-4. 解析请求：所有请求参数使用 query 传参，body 使用项目既有 JSON binding；字段多时组装语义化 param。
+3. 定义结构：API struct 只持有 service、logger 或轻量依赖；字段和构造函数参数常见顺序为 service、轻量 helper/config、logger；依赖通过构造函数或明确字段注入，不能在 handler 内临时创建 service/DAL/client，也不能因为 service/logger/helper 为 nil 就跳过调用或降级执行；同一个 API struct 的 handler 方法统一使用指针接收者，receiver 统一命名为 `api`。
+4. 解析请求：按 HTTP 方法确定参数来源：`POST` 所有参数都从 body 传参；`PUT` 从 query 读取更新 ID 或 uniqueID，其他参数从 body 传参；其他方法使用 query 传参；字段多时组装语义化 param。
 5. 校验与调用：带领域方法的 param/DTO 使用指针变量；param 有 `Serialize()` 时用原变量接收返回值，再执行 `Check()`；handler 不直接访问 DB/GORM/DAL；trim/default/derive/fill 等领域规整统一放到拥有字段的 param/DTO 的公有 `Serialize()` 中。
 6. 响应交付：使用统一 response helper；列表响应包含 items、total、itemsPerPage、startIndex；handler 保持薄但不机械拆分，简单 parse/build/call/return 流程优先内联。
 
@@ -22,25 +22,11 @@ API 层只负责 HTTP 适配：解析请求、基础校验入口、调用 servic
 
 ## Pre-Delivery Checklist
 
-- [ ] 新写 API 代码同时符合 `go-code-style`、`go-logging`、`go-model-hierarchy`、`go-service-layer` 中当前任务涉及的规则。
-- [ ] API struct 只持有 service/logger/轻量依赖，字段和构造函数参数按 service、轻量 helper/config、logger 的常见顺序组织。
-- [ ] 依赖由构造函数或明确字段注入，handler 内没有临时创建 service/DAL/client。
-- [ ] 同一个 API struct 的所有 handler 方法都使用指针接收者，receiver 统一命名为 `api`，例如 `func (api *XxxAPI) Action(ctx *gin.Context)`，没有值接收者或其它 receiver 名。
-- [ ] Handler 签名符合项目框架约定；handler 内没有重复 nil 防御判断。
-- [ ] HTTP 方法只使用 `GET`、`POST`、`PUT`、`DELETE`，除非用户明确确认例外。
-- [ ] 请求 param、response DTO 定义在 model/API 类型层，没有 handler 内临时 struct。
-- [ ] 新增或调整的 param/response DTO 的 `json` tag 没有 `omitempty`。
-- [ ] 所有常量统一放到项目定义的 `consts` 目录下，没有散落在 API、handler 或函数体中。
-- [ ] 新功能的请求参数和响应中，所有时间相关字段都使用毫秒级 `int64` 时间戳；已有 API 不因本规则强制迁移。
-- [ ] 没有新增不必要的基础包装类型，如 `type Kind string`；请求和响应字段优先使用基础类型。
-- [ ] 带领域方法的 param/DTO 使用指针变量，便于 `Serialize()` / `Deserialize()` 在 nil receiver 场景返回新对象。
-- [ ] 所有请求参数使用 query 传参，没有 path 参数。
-- [ ] `PUT` 更新为全量更新，query 必传更新 ID，body 传全量内容。
-- [ ] 字段较多的入参已收敛为语义化 param struct。
-- [ ] 有 param 领域方法时，调用 service 前按 `param = param.Serialize()`、`param.Check()` 顺序执行。
-- [ ] Handler 内没有散落 trim/default/derive/fill 逻辑；领域规整已挂到拥有字段的 param/DTO 的公有 `Serialize()` 上，没有 `Normalize()`、`FillDefault()` 或小写规整方法。
-- [ ] API 层没有 DB/GORM/DAL 操作；复杂逻辑组装、关联聚合和业务编排留在 service。
-- [ ] handler 没有塞入复杂业务，也没有把简单请求解析和响应拆成一串无业务命名收益的小 helper。
-- [ ] 错误通过统一 response 返回；列表响应包含分页信息且空列表是空切片。
-- [ ] 没有新增 `uint64`、`uint`、`bool` 或大于 `int64` 的数值类型。
-- [ ] 没有 placeholder：`TODO`、`FIXME`、`xxx`。
+- [ ] 已同时遵循当前任务涉及的 `go-code-style`、`go-logging`、`go-model-hierarchy`、`go-service-layer` 规则。
+- [ ] API struct 只持有 service/logger/轻量依赖；依赖由构造注入，handler 内没有临时创建或 nil 跳过逻辑。
+- [ ] Handler 使用项目签名和指针接收者，receiver 统一为 `api`。
+- [ ] 请求参数来源符合方法约定：`POST` 全部 body；`PUT` query 必传更新 ID 或 uniqueID，body 传其他全量内容；其他方法使用 query。
+- [ ] Param/DTO 定义在 model/API 类型层；字段较多时收敛为语义化 param。
+- [ ] 调用 service 前按需要执行 `param = param.Serialize()`、`param.Check()`；handler 内没有散落领域规整或业务编排。
+- [ ] API 层没有 DB/GORM/DAL 操作；复杂组装、聚合和业务流程留在 service。
+- [ ] 响应使用统一 helper；列表响应包含分页信息，空列表为空切片。

@@ -32,11 +32,13 @@ description: "Go 代码整体入口和规则路由。Use whenever writing, refac
 - Model 层管理字段生命周期、参数规整、校验、序列化、反序列化和更新字段选择。
 - 日志由拥有业务上下文的 API/service/goroutine 等边界记录；DAL/model 默认不新增日志。
 - 代码注释使用中文，日志内容使用英文。
+- 项目内数值类型默认统一使用 `int64`；除非外部协议、第三方库签名、明确性能/存储边界或既有兼容约束确有必要，不新增 `int`、`int32`、`uint`、`uint64` 等其它数值类型，也不要仅为兼容旧实现保留非 `int64` 数值类型。
 
 ## Pre-Delivery Checklist
 
 - [ ] 已根据任务只加载相关 Go skills，没有无差别加载全部。
 - [ ] 代码符合 `go-code-style` 和已触发的专门 skill。
 - [ ] 行为边界清楚：API/service/DAL/model/logging/comment 职责没有互相侵入。
+- [ ] 数值字段、参数和返回值已默认统一为 `int64`；使用其它数值类型时有明确必要性。
 - [ ] 修改 Go 文件后已运行 `goimport`。
 - [ ] 能运行测试时已运行相关 `go test`；不能运行时已说明原因。
