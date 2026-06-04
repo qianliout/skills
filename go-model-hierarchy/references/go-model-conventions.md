@@ -47,7 +47,7 @@ Rules:
 
 - Do not use database complex types such as JSON/JSONB, arrays, maps, or object columns as persistent model fields.
 - Persistent fields should use broadly compatible primitive database types: signed integers, strings/text, and simple status strings. For newly designed tables or features, time fields use `int64` millisecond timestamps stored in integer columns.
-- Persistent field `gorm` tags only declare the column mapping, such as `gorm:"column:name"`. Do not put schema details in Go model tags: no `type:...`, `index`, `uniqueIndex`, `default`, `not null`, `primaryKey`, `autoCreateTime`, `autoUpdateTime`, or migration/index options.
+- Ordinary persistent field `gorm` tags only declare the column mapping, such as `gorm:"column:name"`. Do not put schema details in ordinary Go model tags: no `type:...`, `index`, `uniqueIndex`, `default`, `not null`, or migration/index options. The standard base fields are the exception and use the fixed `primaryKey`, `autoCreateTime:milli`, and `autoUpdateTime:milli` tags defined below.
 - Runtime-only fields may still use `gorm:"-"` because they are explicitly excluded from persistence.
 - Complex structures may be stored in `string` text columns with `Serialize()` / `Deserialize()`.
 - Split complex structures into normal columns or relation tables when they need frequent filtering, indexing, partial update, or database constraints.
@@ -81,17 +81,36 @@ Rules:
 - `Deserialize()` unmarshals DB string into runtime object.
 - Use split columns or relation tables instead when the data must be filtered, indexed, partially updated, or constrained by the database.
 
+## Base Field Pattern
+
+Every persistent data model must include the standard database base fields:
+
+```go
+ID        int64 `gorm:"primaryKey;column:id" json:"id"`
+CreatedAt int64 `gorm:"autoCreateTime:milli;column:created_at" json:"createdAt"` // milliseconds
+UpdatedAt int64 `gorm:"autoUpdateTime:milli;column:updated_at" json:"updatedAt"` // milliseconds
+DeletedAt int64 `gorm:"column:deleted_at" json:"deletedAt"` // milliseconds
+```
+
+Rules:
+
+- `ID` is the database primary key for the table and uses `int64`.
+- `CreatedAt`, `UpdatedAt`, and `DeletedAt` are millisecond timestamps.
+- Keep this exact `gorm` and `json` tag shape for the four standard base fields.
+- Only `CreatedAt` and `UpdatedAt` use GORM automatic time tags; `DeletedAt` is managed explicitly by delete/update logic.
+- Ordinary persistent fields still use only `gorm:"column:..."` unless an existing external compatibility contract requires otherwise.
+
 ## ID Pattern
 
 Do not use `uint64` in persistent models. PostgreSQL has no native unsigned 64-bit integer type.
 
-Every persistent data model must include the standard unique data identifier:
+Use `ID int64` as the database primary key for persistent models. If a model also needs a globally unique business identity, add a separate `UniqueID` field:
 
 ```go
 UniqueID int64 `gorm:"column:unique_id" json:"uniqueID"`
 ```
 
-Use `UniqueID int64` to represent the globally unique data identity for the model. Do not omit it from a persistent data model, and do not rename it to another field such as `ID`, `DataID`, or `UID` unless an existing external contract explicitly requires compatibility.
+Use `UniqueID int64` to represent a globally unique data identity, not the table primary key. Do not rename a required business identity to `DataID` or `UID` unless an existing external contract explicitly requires compatibility.
 
 Use `int64` for database-backed IDs and business identities that fit PostgreSQL `bigint`.
 
@@ -133,15 +152,15 @@ For newly designed tables or features, every time-related value uses a milliseco
 Every persistent data model must include the standard lifecycle fields:
 
 ```go
-CreatedAt int64 `gorm:"column:created_at" json:"createdAt"` // milliseconds
-UpdatedAt int64 `gorm:"column:updated_at" json:"updatedAt"` // milliseconds
+CreatedAt int64 `gorm:"autoCreateTime:milli;column:created_at" json:"createdAt"` // milliseconds
+UpdatedAt int64 `gorm:"autoUpdateTime:milli;column:updated_at" json:"updatedAt"` // milliseconds
 DeletedAt int64 `gorm:"column:deleted_at" json:"deletedAt"` // milliseconds
 ```
 
 Rules:
 
 - Include `CreatedAt`, `UpdatedAt`, and `DeletedAt` on every persistent data model. Do not omit `DeletedAt` just because a feature has no active soft-delete flow yet.
-- Keep lifecycle field `gorm` tags to `column:...`; do not use GORM automatic time tags such as `autoCreateTime` or `autoUpdateTime`.
+- Use the fixed GORM automatic millisecond tags shown above for `CreatedAt` and `UpdatedAt`; keep `DeletedAt` as an explicit millisecond field managed by delete/update logic.
 - Use Go `int64` for time fields in model, param, response/view, cache/statistic, and helper value-object structs.
 - Store time fields in the database as integer millisecond timestamps, usually PostgreSQL `bigint`; do not introduce second-level timestamp fields for new tables/features.
 - Keep frontend/backend request params, response fields, service inputs/outputs, DAL query params, cache payloads, and serialized data in milliseconds.
@@ -216,7 +235,14 @@ func (vi *Resource) TableName() string {
 }
 ```
 
-`ToUpdater()` returns an initialized map of explicitly updateable columns and updates `updated_at` with `time.Now().UTC().UnixMilli()`. Any model method returning a slice or map must return an initialized empty value instead of nil on every path.
+`ToUpdater()` returns an initialized `map[string]any` of explicitly updateable columns and updates `updated_at` with `time.Now().UTC().UnixMilli()`. Any model method returning a slice or map must return an initialized empty value instead of nil on every path.
+
+Update rules:
+
+- `ToUpdater()` is a full update over the model's allowed update set: include every field that is updateable by contract.
+- Do not skip updateable fields because their value is `0`, `""`, `"false"`, an empty slice/string backing field, or another valid zero value.
+- Do not include immutable or system-owned fields such as `id`, `created_at`, primary identity fields, or fields owned only by `Serialize()` / persistence lifecycle.
+- Keep field selection explicit in `ToUpdater()`; do not build the updater by reflecting over the whole struct or by blindly serializing all columns.
 
 ## Layering Examples
 
