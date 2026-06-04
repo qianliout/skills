@@ -14,8 +14,9 @@ DAL/DAO code lives in the project `store` directory/package. A DAL file contains
 - Constructors/initialization guarantee DAO dependencies are non-nil; methods do not defensively check `dal == nil` or `dal.db == nil`.
 - DAO methods must not skip queries, writes, updates, deletes, cache/index maintenance, or logging because DB/DAO/client/logger dependencies are nil. Missing dependencies are constructor/bootstrap/test fixture failures, not DAL runtime branches.
 - Param structs live with models, not in the DAL package.
-- No recommended `Get` method by default; use `Search(ctx, param)` unless the user explicitly asks for single-record lookup.
+- Query methods use the common `SearchXxx(ctx, param)` shape. Do not add query methods named `FindXxx` or `GetXxx`.
 - GORM queries built from `dal.db.Get().WithContext(cancelCtx).Table(...)`.
+- Each DAL method operates on one primary data model. Use that model's `TableName()` as the query entry table, and return that table model after `Deserialize()`.
 - Model lifecycle calls: `Serialize`, `Check`, `Deserialize`, `ToUpdater`, `TableName`.
 - JSON tags on DAL-related model/param/result structs must not use `omitempty`.
 - For newly designed tables/features, time fields used by DAL filters, inserts, updates, and reads are `int64` millisecond timestamps stored in integer columns; existing tables keep their established unit unless explicitly migrated.
@@ -74,7 +75,7 @@ Rules:
 - `Update` has exactly three inputs: `ctx`, primary key ID, and model data.
 - `Delete` has exactly two inputs: `ctx` and primary key ID; do not add param structs or extra condition arguments.
 - `Create` has exactly two inputs: `ctx` and the data model pointer.
-- Do not provide a `Get` method by default.
+- Do not add query methods named `FindXxx` or `GetXxx`; use `SearchXxx(ctx, param)` even for narrow filters or single-record expectations.
 - Do not create method variants for caller or ownership scenarios, such as `SearchXxxForUser`, `SearchXxxForProject`, `UpdateXxxForUser`, or `UpdateXxxForProject`. Use `SearchXxx(ctx, param)` with typed filter fields, or the standard update signature with validated data, unless the behavior is a genuinely different persistence operation.
 
 ## Param Location Rule
@@ -180,6 +181,11 @@ Rules:
 - Do not check `dal == nil` or `dal.db == nil` inside DAL methods; initialization owns that guarantee.
 - Do not make DAL behavior conditional on injected dependencies being non-nil; dependency absence should fail during wiring, not silently alter query or write behavior.
 - Keep the full query chain in the method whenever practical: setup table, append business filters, count, apply filter/page, find, deserialize, return.
+- Keep one primary model per DAL method. The base `Table(...)` should come from the primary model's `TableName()`, and the method should not mix multiple primary entities into one persistence operation.
+- Return the primary table model from `SearchXxx` after calling `Deserialize()` on each row. Do not return raw DB rows, mixed-table structs, or business-assembled response objects from DAL queries.
+- Query method names stay generic as `SearchXxx`; do not introduce `FindXxx`, `GetXxx`, or scenario-specific query names. GORM's internal `Find(&res)` call remains the query execution step.
+- For cross-table filters, prefer subqueries such as `WHERE ... IN (subquery)` or `EXISTS (subquery)` over `Join`. Use `Join` only when it is clearly necessary or already matches the local project pattern, and add a short comment explaining why the subquery form is not used.
+- If the operation needs complex cross-model aggregation, business decisions, or multiple primary entities, move the orchestration to service and call separate DAL methods instead of making one DAL method own the whole query.
 - Build exact business filters before `Count`.
 - Build GORM queries step by step with assignments like `db = db.Where(...)`; avoid long chained calls.
 - Add `Where` clauses only when the param field is non-zero.

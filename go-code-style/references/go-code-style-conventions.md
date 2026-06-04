@@ -10,7 +10,9 @@ New Go code should follow the currently triggered Go skill rules first. When mul
 
 - Guard invalid input, nil data, permission failures, and errors with early return.
 - Keep the main success path left-aligned.
+- Avoid `if-else` and `else if` unless there is no clearer early-return or `switch` form. Prefer sequential guard clauses: write `if condition { return ... }`, then continue with the next `if`.
 - Avoid nested `if-else`; use `switch case` for one value with several mutually exclusive states.
+- Keep `else` only when both branches must feed a shared later step and early return or `switch` would make the function less clear.
 - Extract complex boolean expressions into named local variables first. Use a small helper only when the expression is reused, hides a stable business concept, or would make the caller much easier to scan.
 
 Before:
