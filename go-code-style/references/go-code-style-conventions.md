@@ -80,6 +80,27 @@ Balance function granularity with these rules:
 - Prefer semantic local variables before helpers for small expressions and one-off transformations.
 - Avoid "helper chains" where `A()` only calls `B()`, `B()` only calls `C()`, and each layer adds no business decision.
 
+## Thin Wrapper Ban
+
+Do not add meaningless thin wrappers. Before adding a helper or method, it must satisfy at least one of these conditions:
+
+- It is reused by two or more call sites with the same business meaning.
+- It names a stable business concept that is clearer than the inline code.
+- It isolates a real side effect, such as a transaction, external call, batch query, cache maintenance, goroutine, or complex conversion.
+- It owns a complex branch or cross-domain aggregation that would distract from the main flow.
+- The main function already has more than 7 same-level business steps and the extraction makes the primary procedure easier to read.
+
+Do not add helpers for these cases:
+
+- The helper only forwards to another service, DAL, client, or function.
+- The body is one or two obvious lines of assignment, nil check, type conversion, or simple condition.
+- The helper only hides a single `if` condition or boolean expression that could be a named local variable.
+- The helper has a vague name such as `processData`, `handleResult`, `buildInfo`, `prepareData`, `doCreate`, or `checkData`.
+- The helper has a single call site and no clear side-effect boundary or stable domain meaning.
+- The helper turns a readable linear flow into a jump chain.
+
+Prefer inline code or semantic local variables when the operation is short and local to one function. Existing thin wrappers may remain for compatibility, but do not copy the pattern or add more.
+
 Prefer methods with receivers for behavior that belongs to a struct. Except for real shared utilities such as `utils` helpers, avoid loose package-level functions with no owner. Put business behavior on the service/API/model/param/helper struct that owns the state or responsibility. If a function's first parameter is the struct that clearly owns the behavior, make it a pointer receiver method unless it is a genuinely generic utility.
 
 Domain normalization belongs to the struct that owns the fields being normalized. If logic trims, fills defaults, normalizes IDs, derives fields, fixes enum aliases, or prepares persisted/query/update fields from a specific struct's data, implement it on that struct's public `Serialize()` method. Do not create `Normalize()`, `FillDefault()`, lower-case normalization helpers, or package-level functions for logic that clearly belongs to one struct. Keep package-level functions only for truly general, domain-neutral utilities with no clear field owner, such as primitive string helpers or generic collection helpers.
@@ -111,6 +132,28 @@ Dependency ownership rules:
 - Avoid method-local `NewXxxSrv`, `NewXxxDao`, `NewClient`, `NewCache`, or `utils.NewLogEvent` calls unless the object is intentionally short-lived and not a service dependency.
 - Long-lived dependencies must be non-nil by construction, initialization, or bootstrap. Do not add branches that skip calls, validation, writes, cache maintenance, or logging just because an injected service, DAL, DB, cache, client, helper, or logger is nil. Fix the wiring or startup validation instead.
 - This dependency rule does not forbid ordinary input nil checks, model/param receiver nil handling, panic recover checks, or explicit contracts where a callee documents `(nil, nil)` as a valid result.
+
+## Defensive Check Boundary
+
+Do not add defensive checks just to make internal code look safer. A defensive check is allowed only when it protects a real boundary or contract:
+
+- API/request boundary: user input from query, body, header, path, files, or auth/session context.
+- External system boundary: HTTP/RPC/MQ responses, file reads, third-party SDK data, DB rows that can be absent, cache misses, or decoded payloads.
+- Real panic risk: map/slice indexing, type assertion, nil pointer from optional input, reflection, unsafe operations, or unmarshalling dynamic data.
+- Public method contract explicitly accepts nil, zero value, empty input, or `(nil, nil)`.
+- Model lifecycle methods that intentionally handle nil receivers, such as `Serialize()` and `Deserialize()`.
+- Goroutine panic recovery and cleanup paths where failure must be observed.
+
+Do not add these defensive checks:
+
+- Checking injected service, DAL, DB, cache, client, helper, or logger for nil and then skipping logic or returning success.
+- Rechecking fields that the current flow already validated through `Check()` or equivalent boundary validation.
+- Checking objects that were just created in the same function with `make`, composite literals, or constructors that must return usable values.
+- Checking a `(value, error)` result for nil when the callee contract says `value` is usable whenever `err == nil`.
+- Changing an initialized empty slice/map into nil or adding special branches for empty results that the caller can already handle.
+- Silently degrading for impossible internal states instead of returning an error or fixing the invariant.
+
+When a check is necessary, keep it close to the boundary that introduces uncertainty. Once a value has crossed validation or construction, downstream code should rely on the contract instead of repeating the same guard.
 
 Good:
 
