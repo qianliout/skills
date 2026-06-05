@@ -1,21 +1,20 @@
 ---
 name: go-logging
-description: "Go 日志规范专家。Use when writing, refactoring, or reviewing logging, logger initialization, module/subModule fields, LogStr, error logs, panic recover logs, service/API logging, avoiding DAL/model logs, duplicate logs, sensitive data, or large payload logging."
+description: "Go 日志规范专家。Use when writing, refactoring, reviewing, or explaining logging, logger initialization, module/subModule fields, LogStr, error logs, panic recover logs, service/API logging, avoiding DAL/model logs, duplicate logs, sensitive data, large payload logging, or log placement boundaries."
 ---
 
 # Go Logging
 
-日志用于定位问题和追踪关键异常，不替代错误返回，不记录敏感信息，不制造重复噪音。DAL/model 层默认不加日志；Agent 不自动在 DAL/model 层新增日志，如确实需要只提醒用户并说明原因。
+日志用于定位问题和追踪关键异常，不替代错误返回，不记录敏感信息，不制造重复噪音。DAL/model 层默认不新增日志；确实需要时先说明原因并让用户决定。
 
 ## Workflow
 
-1. 判断日志边界：确认代码属于 API、service、DAL、model、helper、goroutine、批量任务还是外部调用。
-2. 加载 `references/go-logging-conventions.md`，按项目约定处理 logger、日志字段、敏感信息和重复日志。
-3. 设置 logger：需要记录日志的 struct 自己持有 logger；在构造函数中初始化并设置稳定 module/subModule。
-4. 设计内容：日志 Msg 和操作名使用英文；错误日志包含操作名、错误对象、关键业务 ID 和必要 param 摘要。
-5. 控制信息量：记录 struct 时优先提供 pointer receiver 的 `LogStr() string`；所有日志相关方法都使用指针接收者；同一个 struct 的日志方法和其它方法 receiver 形式与命名保持一致；model 层 Param 的 `LogStr()` receiver 用 `p`，其他 model 层对象用 `vi`；禁止记录 token、secret、password、Authorization、Cookie、原始敏感 body 和大 payload。
-6. 放置日志：谁拥有业务上下文谁记录；私有 helper 默认返回错误给上层记录；goroutine panic 必须 recover 并记录日志。
-7. 交付：修改 Go 文件后遵循 `go-code-style`，运行 `goimport` 和相关测试。
+1. 判断日志边界：API、service、DAL、model、helper、goroutine、批量任务或外部调用。
+2. 加载 `references/go-logging-conventions.md`；同时遵循当前任务触发的 `go-code-style` 和所在层 skill。
+3. 设置 logger：需要日志的 struct 自己持有 logger，并在构造函数中设置稳定 module/subModule。
+4. 设计内容：日志 Msg 和操作名使用英文；结构化字段放关键业务 ID、错误对象和安全 param 摘要。
+5. 控制信息量：需要记录 struct 时优先提供 pointer receiver 的 `LogStr() string`；禁止记录 token、secret、password、Authorization、Cookie、原始敏感 body 和大 payload。
+6. 放置日志：谁拥有业务上下文谁记录；私有 helper 默认返回错误给上层；goroutine panic 必须 recover 并记录日志。
 
 ## Reference Loading
 
@@ -23,8 +22,8 @@ description: "Go 日志规范专家。Use when writing, refactoring, or reviewin
 
 ## Pre-Delivery Checklist
 
-- [ ] 已同时符合 `go-code-style` 以及所在层当前任务涉及的 Go skill 规则。
-- [ ] 需要日志的 API/service 等 struct 自己持有 logger，并在构造函数中设置稳定 module/subModule；没有全局日志或方法内临时 logger。
+- [ ] 需要日志的 API/service 等 struct 自己持有 logger，并在构造函数中设置稳定 module/subModule。
+- [ ] 没有全局日志、方法内临时 logger，或把 logger 作为普通参数层层传递。
 - [ ] DAL/model 层没有被 Agent 自动新增日志。
 - [ ] 错误日志包含操作名、错误对象和关键业务 ID；没有每层重复打印同一个错误。
 - [ ] `LogStr()` 使用指针接收者，只做安全摘要拼装，不包含敏感字段或大 payload。
