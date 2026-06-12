@@ -13,7 +13,9 @@ description: "Go 代码整体入口和规则路由。Use whenever writing, refac
 2. 读取就近上下文：相邻文件、接口、model/param/response、构造函数、调用方、测试和已有同层实现。
 3. 默认加载 `go-code-style` 作为 Go 修改和评审的基础规则。
 4. 只加载实际触及的专门 skill；跨层任务按职责组合，不把一个层的规则搬到另一层。
-5. 修改 Go 文件后运行 `goimport`；能定位包或测试时运行相关 `go test`，不能运行则说明原因。
+5. 任务涉及创建、补全、重构或评审 Go 测试时，优先路由到 `go-test-writer`；只有测试对象明显属于 API、service、DAL、model、logging、comment 等层时，再额外按需组合对应 skill。
+6. Go 测试默认遵循 `go-test-writer`：优先使用 `testify/assert`、`require`、`mock`，默认不使用 `testify/suite`，除非项目已有统一 suite 约定或确有稳定生命周期需求。
+7. 修改 Go 文件后运行 `goimport`；能定位包或测试时运行相关 `go test`，不能运行则说明原因。
 
 ## Skill Routing
 
@@ -23,6 +25,7 @@ description: "Go 代码整体入口和规则路由。Use whenever writing, refac
 - `go-model-hierarchy`：domain/GORM model、param/response/view/cache/stat struct、JSON/GORM tag、TableName、Check、Serialize/Deserialize、ToUpdater、UniqueID、派生字段、常量归属。
 - `go-logging`：logger 初始化、module/subModule、LogStr、错误日志、panic recover、敏感信息、大 payload、重复日志、日志放置边界。
 - `go-comment-style`：Go 注释、doc comment、字段/函数/struct/package 注释，或判断注释是否该保留。
+- `go-test-writer`：创建、补全、重构或评审 Go `_test.go` 文件；默认使用 `testify/assert`、`require`、`mock`，设计 table-driven test、stub/mock/fixture、错误路径、边界场景和回归测试。
 
 ## Cross-Layer Boundaries
 
@@ -32,12 +35,14 @@ description: "Go 代码整体入口和规则路由。Use whenever writing, refac
 - Model 管理字段生命周期、参数规整、校验、序列化、反序列化和更新字段选择。
 - 日志由拥有业务上下文的 API/service/goroutine 等边界记录；DAL/model 默认不新增日志。
 - 代码注释使用中文，日志内容使用英文。
+- 测试任务默认由 `go-test-writer` 负责；主入口只做路由，不在这里重复展开测试实现细节。
 - 项目内数值类型默认使用 `int64`；只有外部协议、第三方库、明确性能/存储边界或既有兼容约束需要时才用其它数值类型。
 
 ## Pre-Delivery Checklist
 
 - [ ] 只加载了任务需要的 Go skills，没有无差别加载全部。
 - [ ] 代码符合 `go-code-style` 和已触发的专门 skill。
+- [ ] 涉及 Go 测试时已优先路由 `go-test-writer`；只有确有需要才叠加其它层级 skill。
 - [ ] API/service/DAL/model/logging/comment 职责没有互相侵入。
 - [ ] 数值字段、参数和返回值默认使用 `int64`；例外有明确理由。
 - [ ] 修改 Go 文件后已运行 `goimport`。

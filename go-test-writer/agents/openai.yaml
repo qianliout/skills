@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go Test Writer"
+  short_description: "Create and extend Go _test.go files"
+  default_prompt: "Use $go-test-writer to create or improve Go test files."
