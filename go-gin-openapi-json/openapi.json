@@ -1,0 +1,220 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "示例服务",
+    "description": "",
+    "version": "1.0.0"
+  },
+  "tags": [],
+  "paths": {
+    "/api/v2/containerSec/scanner/security/detect/policy": {
+      "put": {
+        "summary": "更新安全策略",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "策略ID",
+            "required": true,
+            "example": 123,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "鉴权令牌",
+            "required": false,
+            "example": "Bearer <token>",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSecurityDetectPolicyRequest"
+              },
+              "examples": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityDetectPolicyListResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UpdateSecurityDetectPolicyRequest": {
+        "type": "object",
+        "description": "更新安全检测策略请求",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "策略名称",
+            "example": "默认镜像检测策略"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/SecurityDetectPolicyScope"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "SecurityDetectPolicyScope": {
+        "type": "object",
+        "description": "安全检测策略生效范围",
+        "properties": {
+          "imageRegexp": {
+            "type": "string",
+            "description": "镜像匹配表达式",
+            "example": "registry.example.com/.+"
+          },
+          "clusterKey": {
+            "type": "array",
+            "description": "集群标识列表",
+            "example": [
+              "cluster-a"
+            ],
+            "items": {
+              "type": "string",
+              "description": "集群标识",
+              "example": "cluster-a"
+            }
+          }
+        },
+        "required": [
+          "imageRegexp"
+        ]
+      },
+      "SecurityDetectPolicyListResponse": {
+        "type": "object",
+        "description": "安全检测策略列表响应",
+        "properties": {
+          "apiVersion": {
+            "type": "string",
+            "description": "API版本",
+            "example": "v1"
+          },
+          "data": {
+            "$ref": "#/components/schemas/SecurityDetectPolicyListData"
+          }
+        },
+        "required": [
+          "apiVersion",
+          "data"
+        ]
+      },
+      "SecurityDetectPolicyListData": {
+        "type": "object",
+        "description": "安全检测策略列表数据",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "description": "响应状态",
+            "example": 0
+          },
+          "items": {
+            "type": "array",
+            "description": "策略风险信息列表",
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/SecurityDetectPolicyRiskItem"
+            }
+          },
+          "startIndex": {
+            "type": "integer",
+            "description": "分页起始位置",
+            "example": 0
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "SecurityDetectPolicyRiskItem": {
+        "type": "object",
+        "description": "策略风险信息",
+        "properties": {
+          "riskScore": {
+            "type": "integer",
+            "description": "风险分数",
+            "example": 80
+          },
+          "riskPolicy": {
+            "type": "array",
+            "description": "风险策略列表",
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/SecurityDetectPolicyItem"
+            }
+          }
+        }
+      },
+      "SecurityDetectPolicyItem": {
+        "type": "object",
+        "description": "安全检测策略",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "策略ID",
+            "example": 123
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "是否默认策略",
+            "example": true
+          },
+          "uniqueID": {
+            "type": "string",
+            "description": "策略唯一标识",
+            "example": "policy-123"
+          },
+          "name": {
+            "type": "string",
+            "description": "策略名称",
+            "example": "默认镜像检测策略"
+          },
+          "flag": {
+            "type": "string",
+            "description": "策略标记",
+            "example": "default"
+          }
+        },
+        "required": [
+          "id",
+          "isDefault",
+          "uniqueID",
+          "name",
+          "flag"
+        ]
+      }
+    },
+    "responses": {},
+    "securitySchemes": {}
+  },
+  "servers": [],
+  "security": []
+}
