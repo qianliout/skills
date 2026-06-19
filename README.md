@@ -12,7 +12,8 @@
 - 本地能力和外部能力分开维护
 - 配置尽量声明式，少改脚本，多改清单
 - 默认写入全局配置，避免在仓库根目录产生运行时文件
-- 仍然支持显式写入项目级配置
+- 项目里保留完整模板，但会按不同 client 过滤同步
+- 敏感值和机器路径通过项目根目录的环境变量文件注入
 
 ## 适用场景
 
@@ -32,7 +33,9 @@ skills/
 │   ├── sync-mcp-config.sh
 │   └── manifests/
 │       ├── community-skills.txt
-│       └── mcp-servers.json
+│       ├── mcp-servers.json
+│       └── mcp-sync-profiles.json
+├── .env.example
 ├── alibabacloud-sysom-diagnosis/
 ├── go/
 ├── go-api-layer/
@@ -54,7 +57,8 @@ skills/
 - `agent-stack/` 存放内部实现脚本和清单
 - `agent-stack/manifests/community-skills.txt` 维护社区 `skill` 列表
 - `agent-stack/manifests/mcp-servers.json` 维护标准 `MCP` 配置模板
-- `.mcp.json` 这类运行时文件不建议常驻仓库根目录
+- `agent-stack/manifests/mcp-sync-profiles.json` 决定不同 client 实际会同步哪些 `MCP`
+- `.env` 或 `.env.local` 用于提供真实路径和密钥，不提交真实值
 
 ## 快速开始
 
@@ -80,7 +84,8 @@ chmod +x bootstrap-agent-stack.sh agent-stack/*.sh
 
 - 同步本仓库里的本地 `skill`
 - 安装清单中的社区 `skill`
-- 生成或合并全局 `~/.claude/mcp.json`
+- 生成或合并全局 `~/.claude/mcp.json`、`~/.reasonix/mcp.json`、`~/.codex/config.toml`
+- 同步前自动读取项目根目录的 `.env` 和 `.env.local`
 
 ## 常用命令
 
@@ -108,16 +113,10 @@ chmod +x bootstrap-agent-stack.sh agent-stack/*.sh
 ./bootstrap-agent-stack.sh --no-local-skills --no-community-skills
 ```
 
-写入全局 `Claude` 配置：
+写入全局 `Claude`、`Reasonix`、`Codex` 配置：
 
 ```bash
 ./bootstrap-agent-stack.sh --global
-```
-
-显式写入当前项目 `.mcp.json`：
-
-```bash
-./bootstrap-agent-stack.sh --project
 ```
 
 ## 脚本说明
@@ -132,7 +131,8 @@ chmod +x bootstrap-agent-stack.sh agent-stack/*.sh
 
 - 同步本仓库的本地 `skill` 到 `~/.codex/skills`、`~/.cursor/skills`、`~/.trae/skills`、`~/.zed/skills`、`~/.warp/skills`、`~/.reasonix/skills`
 - 按清单批量安装社区 `skill`，默认只安装到 `codex`、`trae`、`cursor`、`zed`、`warp`、`reasonix`
-- 把标准 `MCP` 配置合并到目标配置文件
+- 把标准 `MCP` 配置合并到目标配置文件，默认写入 `~/.claude/mcp.json`、`~/.reasonix/mcp.json`、`~/.codex/config.toml`
+- `MCP` 同步时会按 client profile 过滤，不适合当前 client 的配置会保留在仓库模板里，但不会写入目标文件
 
 ## 维护方式
 
@@ -173,14 +173,49 @@ chmod +x bootstrap-agent-stack.sh agent-stack/*.sh
 `MCP` 更适合维护“模板”而不是维护真实机器配置：
 
 - 文件位置：`agent-stack/manifests/mcp-servers.json`
+- 同步规则：`agent-stack/manifests/mcp-sync-profiles.json`
 
 维护规则：
 
 - 仓库里只放通用模板
-- 机器相关路径用占位值
-- API Key 用占位值或环境变量，不要提交真实密钥
-- 优先用全局 `mcp.json`
-- 只有确实需要项目隔离时才显式使用 `.mcp.json`
+- 不删除暂时不用或当前 client 不兼容的 `MCP`，只是不把它们同步出去
+- 机器相关路径和 API Key 用环境变量注入，不提交真实值
+- 只维护全局 `MCP` 配置，不维护项目级配置
+- `Claude` 默认路径是 `~/.claude/mcp.json`
+- `Reasonix` 默认路径是 `~/.reasonix/mcp.json`
+- `Codex` 默认路径是 `~/.codex/config.toml`
+
+当前默认同步策略：
+
+- `Claude`: `playwright`、`filesystem`、`figma-developer-mcp`、`supercharged-figma`
+- `Reasonix`: `playwright`、`filesystem`、`figma-developer-mcp`、`supercharged-figma`
+- `Codex`: `playwright`、`filesystem`
+
+以下 `MCP` 仍然保留在 `mcp-servers.json` 中，但默认不会同步到任何 client：
+
+- `neural-memory`
+- `sequential-thinking`
+- `web_reader`
+- `4_5v_mcp`
+
+## 环境变量
+
+脚本会自动读取仓库根目录的 `.env` 和 `.env.local`。
+
+可以从 [`.env.example`](file:///Users/liuqianli/work/skills/.env.example) 复制：
+
+```bash
+cp .env.example .env
+```
+
+当前用到的变量：
+
+- `SKILLS_FILESYSTEM_ROOT`
+  - 用于 `filesystem` MCP 的真实工作目录
+  - 例如：`/Users/liuqianli/work`
+- `FIGMA_API_KEY`
+  - 用于 `figma-developer-mcp`
+  - 不使用 Figma 时可以留空，此时该 MCP 会被自动跳过，不会写入目标配置
 
 ## 推荐的维护流程
 

@@ -18,7 +18,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "/Users/your-name/workspace"
+        "${SKILLS_FILESYSTEM_ROOT}"
       ]
     },
     "sequential-thinking": {
@@ -43,7 +43,7 @@
         "--stdio"
       ],
       "env": {
-        "FIGMA_API_KEY": "replace-with-your-figma-token"
+        "FIGMA_API_KEY": "${FIGMA_API_KEY}"
       }
     },
     "supercharged-figma": {
