@@ -8,6 +8,8 @@ DRY_RUN=0
 LIST_ONLY=0
 ONLY_SKILL=""
 SKILLS_BIN="npx"
+DEFAULT_AGENTS=("codex" "trae" "cursor" "zed" "warp" "reasonix")
+TARGET_AGENTS=("${DEFAULT_AGENTS[@]}")
 
 warn() {
   printf 'warn: %s\n' "$*" >&2
@@ -25,6 +27,7 @@ Options:
   --only <name>      Install one matching manifest entry.
   --manifest <path>  Use a custom manifest file.
   --bin <command>    Override install command. Default: npx
+  --agents <list>    Comma-separated agents. Default: codex,trae,cursor,zed,warp,reasonix
   -h, --help         Show this help.
 
 Manifest format:
@@ -67,6 +70,14 @@ while [[ $# -gt 0 ]]; do
       SKILLS_BIN="$2"
       shift 2
       ;;
+    --agents)
+      if [[ $# -lt 2 || -z "$2" ]]; then
+        warn "--agents requires a comma-separated value"
+        exit 2
+      fi
+      IFS=',' read -r -a TARGET_AGENTS <<< "$2"
+      shift 2
+      ;;
     -h|--help)
       usage
       exit 0
@@ -102,16 +113,41 @@ matches_only() {
   return 1
 }
 
-run_install() {
+resolve_entry() {
   local entry="$1"
+  local resolved
 
-  if [[ "$DRY_RUN" -eq 1 ]]; then
-    printf 'dry-run: %s skills add %s -y -g\n' "$SKILLS_BIN" "$entry"
+  if [[ "$entry" == *"@"* ]]; then
+    printf '%s\n' "$entry"
     return 0
   fi
 
-  printf 'install: %s\n' "$entry"
-  "$SKILLS_BIN" skills add "$entry" -y -g
+  resolved="$("$SKILLS_BIN" skills find "$entry" | perl -pe 's/\e\[[0-9;]*[[:alpha:]]//g' | awk '$1 ~ /@/ { print $1; exit }')"
+  if [[ -z "$resolved" ]]; then
+    warn "cannot resolve short skill name: $entry"
+    return 1
+  fi
+
+  printf '%s\n' "$resolved"
+}
+
+run_install() {
+  local entry="$1"
+  local install_target
+
+  install_target="$(resolve_entry "$entry")"
+
+  if [[ "$entry" != "$install_target" ]]; then
+    printf 'resolved: %s => %s\n' "$entry" "$install_target"
+  fi
+
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    printf 'dry-run: %s skills add %s -y -g --agent %s\n' "$SKILLS_BIN" "$install_target" "${TARGET_AGENTS[*]}"
+    return 0
+  fi
+
+  printf 'install: %s\n' "$install_target"
+  "$SKILLS_BIN" skills add "$install_target" -y -g --agent "${TARGET_AGENTS[@]}"
 }
 
 found=0

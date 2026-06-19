@@ -11,7 +11,8 @@
 - 只保留一个统一入口脚本
 - 本地能力和外部能力分开维护
 - 配置尽量声明式，少改脚本，多改清单
-- 支持项目级和全局级两种使用方式
+- 默认写入全局配置，避免在仓库根目录产生运行时文件
+- 仍然支持显式写入项目级配置
 
 ## 适用场景
 
@@ -53,6 +54,7 @@ skills/
 - `agent-stack/` 存放内部实现脚本和清单
 - `agent-stack/manifests/community-skills.txt` 维护社区 `skill` 列表
 - `agent-stack/manifests/mcp-servers.json` 维护标准 `MCP` 配置模板
+- `.mcp.json` 这类运行时文件不建议常驻仓库根目录
 
 ## 快速开始
 
@@ -78,7 +80,7 @@ chmod +x bootstrap-agent-stack.sh agent-stack/*.sh
 
 - 同步本仓库里的本地 `skill`
 - 安装清单中的社区 `skill`
-- 生成或合并项目级 `.mcp.json`
+- 生成或合并全局 `~/.claude/mcp.json`
 
 ## 常用命令
 
@@ -112,7 +114,7 @@ chmod +x bootstrap-agent-stack.sh agent-stack/*.sh
 ./bootstrap-agent-stack.sh --global
 ```
 
-写入当前项目 `.mcp.json`：
+显式写入当前项目 `.mcp.json`：
 
 ```bash
 ./bootstrap-agent-stack.sh --project
@@ -128,8 +130,8 @@ chmod +x bootstrap-agent-stack.sh agent-stack/*.sh
 
 三个内部脚本分别负责：
 
-- 同步本仓库的本地 `skill` 到 `~/.claude/skills`、`~/.trae/skills`、`~/.agents/skills` 等目录
-- 按清单批量安装社区 `skill`
+- 同步本仓库的本地 `skill` 到 `~/.codex/skills`、`~/.cursor/skills`、`~/.trae/skills`、`~/.zed/skills`、`~/.warp/skills`、`~/.reasonix/skills`
+- 按清单批量安装社区 `skill`，默认只安装到 `codex`、`trae`、`cursor`、`zed`、`warp`、`reasonix`
 - 把标准 `MCP` 配置合并到目标配置文件
 
 ## 维护方式
@@ -162,6 +164,7 @@ chmod +x bootstrap-agent-stack.sh agent-stack/*.sh
 
 - 一行一个安装项
 - 优先写全量包名，例如 `owner/repo@skill`
+- 短名可以使用，但脚本会在安装前自动解析为真实安装坐标
 - 只有在确认稳定且长期使用时才加入清单
 - 临时尝鲜的公共 `skill` 不要直接进主清单
 
@@ -176,7 +179,8 @@ chmod +x bootstrap-agent-stack.sh agent-stack/*.sh
 - 仓库里只放通用模板
 - 机器相关路径用占位值
 - API Key 用占位值或环境变量，不要提交真实密钥
-- 项目差异通过 `.mcp.json` 或全局 `mcp.json` 落地
+- 优先用全局 `mcp.json`
+- 只有确实需要项目隔离时才显式使用 `.mcp.json`
 
 ## 推荐的维护流程
 

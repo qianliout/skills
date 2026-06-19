@@ -4,10 +4,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 CODEX_SKILLS="${CODEX_HOME:-$HOME/.codex}/skills"
-CLAUDE_SKILLS="${CLAUDE_HOME:-$HOME/.claude}/skills"
 CURSOR_SKILLS="${CURSOR_HOME:-$HOME/.cursor}/skills"
 TRAE_SKILLS="${TRAE_HOME:-$HOME/.trae}/skills"
-AGENTS_SKILLS="${AGENTS_HOME:-$HOME/.agents}/skills"
+ZED_SKILLS="${ZED_HOME:-$HOME/.zed}/skills"
+WARP_SKILLS="${WARP_HOME:-$HOME/.warp}/skills"
+REASONIX_SKILLS="${REASONIX_HOME:-$HOME/.reasonix}/skills"
 
 DRY_RUN=0
 LIST_ONLY=0
@@ -31,10 +32,11 @@ Options:
 
 Environment overrides:
   CODEX_HOME         Default: ~/.codex
-  CLAUDE_HOME        Default: ~/.claude
   CURSOR_HOME        Default: ~/.cursor
   TRAE_HOME          Default: ~/.trae
-  AGENTS_HOME        Default: ~/.agents
+  ZED_HOME           Default: ~/.zed
+  WARP_HOME          Default: ~/.warp
+  REASONIX_HOME      Default: ~/.reasonix
 EOF
 }
 
@@ -141,18 +143,20 @@ copy_path() {
 
 TARGET_NAMES=(
   "codex"
-  "claude"
   "cursor"
   "trae"
-  "agents"
+  "zed"
+  "warp"
+  "reasonix"
 )
 
 TARGET_ROOTS=(
   "$CODEX_SKILLS"
-  "$CLAUDE_SKILLS"
   "$CURSOR_SKILLS"
   "$TRAE_SKILLS"
-  "$AGENTS_SKILLS"
+  "$ZED_SKILLS"
+  "$WARP_SKILLS"
+  "$REASONIX_SKILLS"
 )
 
 if [[ "$LIST_ONLY" -eq 1 ]]; then

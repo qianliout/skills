@@ -8,7 +8,7 @@ RUN_LOCAL_SKILLS=1
 RUN_COMMUNITY_SKILLS=1
 RUN_MCP=1
 DRY_RUN=0
-MCP_TARGET_FLAG="--project"
+MCP_TARGET_FLAG="--global"
 
 usage() {
   cat <<'EOF'
@@ -24,8 +24,8 @@ Options:
   --no-local-skills       Skip local repository skill sync.
   --no-community-skills   Skip community skill installation.
   --no-mcp                Skip MCP config sync.
-  --project               Write MCP config to ./.mcp.json. Default.
-  --global                Write MCP config to ~/.claude/mcp.json.
+  --project               Write MCP config to ./.mcp.json.
+  --global                Write MCP config to ~/.claude/mcp.json. Default.
   -h, --help              Show this help.
 EOF
 }
@@ -95,4 +95,4 @@ if [[ "$RUN_MCP" -eq 1 ]]; then
   fi
 fi
 
-printf 'done: review .mcp.json or ~/.claude/mcp.json placeholders before first use\n'
+printf 'done: review ~/.claude/mcp.json or your explicit target file before first use\n'

@@ -6,7 +6,6 @@ SOURCE_PATH="$ROOT/agent-stack/manifests/mcp-servers.json"
 TARGET_PATH="${CLAUDE_HOME:-$HOME/.claude}/mcp.json"
 DRY_RUN=0
 LIST_ONLY=0
-BACKUP=1
 
 warn() {
   printf 'warn: %s\n' "$*" >&2
@@ -24,8 +23,7 @@ Options:
   --source <path>     Use a custom source JSON file.
   --target <path>     Write to a specific target JSON file.
   --project           Write to ./.mcp.json under this repository root.
-  --global            Write to ~/.claude/mcp.json.
-  --no-backup         Do not create a .bak file before overwriting.
+  --global            Write to ~/.claude/mcp.json. Default.
   -h, --help          Show this help.
 
 Notes:
@@ -66,10 +64,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     --global)
       TARGET_PATH="${CLAUDE_HOME:-$HOME/.claude}/mcp.json"
-      shift
-      ;;
-    --no-backup)
-      BACKUP=0
       shift
       ;;
     -h|--help)
@@ -124,11 +118,6 @@ for name in data.get("mcpServers", {}):
     print(f"dry-run: merge server => {name}")
 PY
   exit 0
-fi
-
-if [[ "$BACKUP" -eq 1 && -f "$TARGET_PATH" ]]; then
-  cp "$TARGET_PATH" "$TARGET_PATH.bak"
-  printf 'backup: %s.bak\n' "$TARGET_PATH"
 fi
 
 python3 - "$SOURCE_PATH" "$TARGET_PATH" <<'PY'
