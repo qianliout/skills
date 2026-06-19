@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 CODEX_SKILLS="${CODEX_HOME:-$HOME/.codex}/skills"
 CLAUDE_SKILLS="${CLAUDE_HOME:-$HOME/.claude}/skills"
@@ -19,22 +19,22 @@ warn() {
 
 usage() {
   cat <<'EOF'
-Usage: ./link-skills.sh [options]
+Usage: ./agent-stack/link-local-skills.sh [options]
 
-Copy every skill folder in this repository to local AI tool skill directories.
+Copy every local skill folder in this repository to local AI tool skill directories.
 
 Options:
   --dry-run          Print planned copies without writing files.
-  --list            List detected local skills and target roots, then exit.
-  --only <name>     Copy only one skill folder.
-  -h, --help        Show this help.
+  --list             List detected local skills and target roots, then exit.
+  --only <name>      Copy only one skill folder.
+  -h, --help         Show this help.
 
 Environment overrides:
-  CODEX_HOME        Default: ~/.codex
-  CLAUDE_HOME       Default: ~/.claude
-  CURSOR_HOME       Default: ~/.cursor
-  TRAE_HOME         Default: ~/.trae
-  AGENTS_HOME       Default: ~/.agents
+  CODEX_HOME         Default: ~/.codex
+  CLAUDE_HOME        Default: ~/.claude
+  CURSOR_HOME        Default: ~/.cursor
+  TRAE_HOME          Default: ~/.trae
+  AGENTS_HOME        Default: ~/.agents
 EOF
 }
 
@@ -119,7 +119,6 @@ copy_path() {
     return 0
   fi
 
-  # 先清理旧软链接，再替换已有目录，避免工具继续识别为链接。
   if [[ -L "$destination" ]]; then
     if ! rm -f "$destination"; then
       warn "skip $destination: cannot remove existing symlink"

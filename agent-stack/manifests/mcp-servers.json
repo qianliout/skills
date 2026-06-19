@@ -1,0 +1,69 @@
+{
+  "mcpServers": {
+    "neural-memory": {
+      "command": "neural-memory",
+      "args": [
+        "--mcp"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/your-name/workspace"
+      ]
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "web_reader": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "web-reader-mcp"
+      ]
+    },
+    "figma-developer-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "figma-developer-mcp",
+        "--stdio"
+      ],
+      "env": {
+        "FIGMA_API_KEY": "replace-with-your-figma-token"
+      }
+    },
+    "supercharged-figma": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "supercharged-figma-mcp",
+        "--local",
+        "--relay-host",
+        "127.0.0.1",
+        "--relay-port",
+        "8888"
+      ]
+    },
+    "4_5v_mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "4_5v_mcp"
+      ]
+    }
+  }
+}
