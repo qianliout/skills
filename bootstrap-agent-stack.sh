@@ -85,11 +85,13 @@ if [[ "$RUN_MCP" -eq 1 ]]; then
     "$INTERNAL_DIR/sync-mcp-config.sh" --claude --dry-run
     "$INTERNAL_DIR/sync-mcp-config.sh" --reasonix --dry-run
     "$INTERNAL_DIR/sync-mcp-config.sh" --codex --dry-run
+    "$INTERNAL_DIR/sync-mcp-config.sh" --cursor --dry-run
   else
     "$INTERNAL_DIR/sync-mcp-config.sh" --claude
     "$INTERNAL_DIR/sync-mcp-config.sh" --reasonix
     "$INTERNAL_DIR/sync-mcp-config.sh" --codex
+    "$INTERNAL_DIR/sync-mcp-config.sh" --cursor
   fi
 fi
 
-printf 'done: review ~/.claude/mcp.json, ~/.reasonix/mcp.json, and ~/.codex/config.toml before first use\n'
+printf 'done: review ~/.claude/mcp.json, ~/.reasonix/mcp.json, ~/.codex/config.toml, and ~/.cursor/mcp.json before first use\n'

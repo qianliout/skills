@@ -147,7 +147,7 @@ run_install() {
   fi
 
   printf 'install: %s\n' "$install_target"
-  "$SKILLS_BIN" skills add "$install_target" -y -g --agent "${TARGET_AGENTS[@]}"
+  "$SKILLS_BIN" skills add "$install_target" -y -g --agent "${TARGET_AGENTS[@]}" || warn "failed to install: $install_target"
 }
 
 found=0

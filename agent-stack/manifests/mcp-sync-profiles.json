@@ -15,6 +15,12 @@
     "codex": [
       "playwright",
       "filesystem"
+    ],
+    "cursor": [
+      "playwright",
+      "filesystem",
+      "figma-developer-mcp",
+      "supercharged-figma"
     ]
   }
 }

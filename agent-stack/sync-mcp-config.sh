@@ -44,6 +44,7 @@ Options:
   --claude            Write to ~/.claude/mcp.json.
   --reasonix          Write to ~/.reasonix/mcp.json.
   --codex             Write to ~/.codex/config.toml.
+  --cursor            Write to ~/.cursor/mcp.json.
   -h, --help          Show this help.
 
 Notes:
@@ -119,6 +120,12 @@ while [[ $# -gt 0 ]]; do
       TARGET_PATH="${CODEX_HOME:-$HOME/.codex}/config.toml"
       TARGET_FORMAT="codex_toml"
       TARGET_CLIENT="codex"
+      shift
+      ;;
+    --cursor)
+      TARGET_PATH="${CURSOR_HOME:-$HOME/.cursor}/mcp.json"
+      TARGET_FORMAT="json"
+      TARGET_CLIENT="cursor"
       shift
       ;;
     -h|--help)
