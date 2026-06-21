@@ -1,0 +1,7 @@
+{
+  "command": "npx",
+  "args": [
+    "-y",
+    "4_5v_mcp"
+  ]
+}

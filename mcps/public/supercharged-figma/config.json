@@ -1,0 +1,12 @@
+{
+  "command": "npx",
+  "args": [
+    "-y",
+    "supercharged-figma-mcp",
+    "--local",
+    "--relay-host",
+    "127.0.0.1",
+    "--relay-port",
+    "8888"
+  ]
+}

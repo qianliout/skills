@@ -8,7 +8,7 @@ TARGET="$HOME/.agents/skills"
 
 while IFS='|' read -r category name repository source_path; do
   test -f "$ROOT/.sources/$repository/$source_path/SKILL.md"
-done < "$ROOT/manifests/public-skills.txt"
+done < "$ROOT/skills/manifests/public-skills.txt"
 
 "$ROOT/scripts/clean.sh"
 
@@ -20,6 +20,6 @@ done
 
 while IFS='|' read -r category name repository source_path; do
   cp -R "$ROOT/.sources/$repository/$source_path" "$TARGET/$name"
-done < "$ROOT/manifests/public-skills.txt"
+done < "$ROOT/skills/manifests/public-skills.txt"
 
 printf 'installed: %s skills\n' "$(find "$TARGET" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"

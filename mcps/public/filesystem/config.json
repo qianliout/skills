@@ -1,0 +1,8 @@
+{
+  "command": "npx",
+  "args": [
+    "-y",
+    "@modelcontextprotocol/server-filesystem",
+    "${SKILLS_FILESYSTEM_ROOT}"
+  ]
+}

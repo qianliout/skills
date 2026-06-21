@@ -1,0 +1,6 @@
+{
+  "command": "neural-memory",
+  "args": [
+    "--mcp"
+  ]
+}

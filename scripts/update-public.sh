@@ -12,4 +12,4 @@ while IFS='|' read -r name url; do
   else
     git clone --depth 1 "$url" "$SOURCES/$name"
   fi
-done < "$ROOT/manifests/public-repositories.txt"
+done < "$ROOT/skills/manifests/public-repositories.txt"
