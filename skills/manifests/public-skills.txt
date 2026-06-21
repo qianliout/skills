@@ -1,8 +1,3 @@
-architecture-planning|architecture-decision-records|wshobson-agents|plugins/documentation-generation/skills/architecture-decision-records
-architecture-planning|architecture-patterns|wshobson-agents|plugins/backend-development/skills/architecture-patterns
-architecture-planning|project-planner|shubhamsaboo-awesome-llm-apps|awesome_agent_skills/project-planner
-code-quality|code-review-expert|sanyuan-code-review-expert|skills/code-review-expert
-code-quality|requesting-code-review|obra-superpowers|skills/requesting-code-review
 frontend-web|frontend-design|anthropics-skills|skills/frontend-design
 frontend-web|vercel-react-best-practices|vercel-agent-skills|skills/react-best-practices
 frontend-web|web-design-guidelines|vercel-agent-skills|skills/web-design-guidelines
