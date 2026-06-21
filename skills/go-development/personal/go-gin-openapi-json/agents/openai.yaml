@@ -1,7 +1,0 @@
-interface:
-  display_name: "Go Gin OpenAPI JSON"
-  short_description: "Generate selected Gin APIs as OpenAPI JSON"
-  default_prompt: "Use $go-gin-openapi-json to generate Apifox-importable OpenAPI JSON for the specified Go Gin interfaces."
-
-policy:
-  allow_implicit_invocation: true

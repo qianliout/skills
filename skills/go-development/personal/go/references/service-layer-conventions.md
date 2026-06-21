@@ -2,6 +2,19 @@
 
 Use this reference when generating general Go service layer code.
 
+## Contents
+
+- [Core Shape](#core-shape)
+- [Dependency Management](#dependency-management)
+- [Constructor Pattern](#constructor-pattern)
+- [Public Search Pattern](#public-search-pattern)
+- [Update Pattern](#update-pattern)
+- [Detail Aggregation Pattern](#detail-aggregation-pattern)
+- [Helper Granularity](#helper-granularity)
+- [Batch Association Pattern](#batch-association-pattern)
+- [Logging And Errors](#logging-and-errors)
+- [Service vs DAL vs Model](#service-vs-dal-vs-model)
+
 ## Core Shape
 
 A service file contains:

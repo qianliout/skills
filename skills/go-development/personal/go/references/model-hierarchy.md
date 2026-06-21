@@ -1,8 +1,3 @@
----
-name: go-model-hierarchy
-description: "Go model 层级和数据模型专家。Use when designing, writing, refactoring, reviewing, or explaining domain models, GORM models, DTO/VO/entity structs, params, responses, cache/stat models, JSON/GORM tags, TableName, Check, Serialize/Deserialize, ToUpdater, Same, UniqueID, derived fields, model constants, or field lifecycle."
----
-
 # Go Model Hierarchy
 
 先定义模型层级和字段生命周期，再写 struct。Model 层负责 model、param、校验、序列化、反序列化、派生字段和更新字段选择；常量统一放到项目定义的 `consts` 目录。
@@ -10,7 +5,7 @@ description: "Go model 层级和数据模型专家。Use when designing, writing
 ## Workflow
 
 1. 识别模型职责：实体、param、response/view、cache/statistic，或辅助值对象。
-2. 加载 `references/go-model-conventions.md`；同时遵循当前任务触发的 `go-code-style`、`go-comment-style`、`go-logging`。
+2. 加载 `references/model-hierarchy-conventions.md`；同时遵循当前任务触发的 `references/code-style.md`、`references/comment-style.md`、`references/logging.md`。
 3. 先给模型树，再给 struct：实体优先，param/view/cache/statistic 跟随所属实体或业务域。
 4. 定义字段契约：落库字段使用数据库兼容基础类型；普通持久化字段 `gorm` tag 只写 `column:...`；JSON tag 不写 `omitempty`；运行时字段使用 `gorm:"-"`。
 5. 处理时间和数值：项目默认 `int64`；新表/新功能时间字段使用毫秒级 `int64` 时间戳。
@@ -20,7 +15,7 @@ description: "Go model 层级和数据模型专家。Use when designing, writing
 
 ## Reference Loading
 
-生成、重构或评审 model 层代码时，必须加载 `references/go-model-conventions.md`。
+生成、重构或评审 model 层代码时，必须加载 `references/model-hierarchy-conventions.md`。
 
 ## Pre-Delivery Checklist
 

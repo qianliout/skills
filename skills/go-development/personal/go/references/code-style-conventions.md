@@ -2,9 +2,31 @@
 
 Use this reference when generating, refactoring, or reviewing general Go code style.
 
-## Skill Alignment
+## Contents
 
-New Go code should follow the currently triggered Go skill rules first. When multiple skills apply, combine them by layer responsibility: API adapts HTTP, service orchestrates dependencies and business flow, DAL handles persistence, model owns field lifecycle and domain methods, logging follows `go-logging`, and general readability follows this style guide.
+- [Reference Alignment](#reference-alignment)
+- [Control Flow](#control-flow)
+- [Function Shape](#function-shape)
+- [Thin Wrapper Ban](#thin-wrapper-ban)
+- [Defensive Check Boundary](#defensive-check-boundary)
+- [Domain Method Shape](#domain-method-shape)
+- [File And Line Length](#file-and-line-length)
+- [Constants](#constants)
+- [Naming](#naming)
+- [Variable Declarations](#variable-declarations)
+- [Return Values For Debugging](#return-values-for-debugging)
+- [Types And Interfaces](#types-and-interfaces)
+- [Tags](#tags)
+- [Time Fields](#time-fields)
+- [Error Handling](#error-handling)
+- [Context And Concurrency](#context-and-concurrency)
+- [Comments](#comments)
+- [Log Language](#log-language)
+- [Formatting And Tests](#formatting-and-tests)
+
+## Reference Alignment
+
+New Go code should follow the currently selected Go references first. When multiple references apply, combine them by layer responsibility: API adapts HTTP, service orchestrates dependencies and business flow, DAL handles persistence, model owns field lifecycle and domain methods, logging follows `references/logging.md`, and general readability follows this style guide.
 
 ## Control Flow
 
@@ -121,7 +143,7 @@ For this lifecycle method group, do not introduce lower-case variants such as `s
 
 All methods must use pointer receivers. Do not use value receivers, even for read-only methods or small structs. A single struct must not mix value receiver methods and pointer receiver methods; if both forms exist, convert the value receiver methods to pointer receivers so the whole struct uses one receiver style. The receiver variable name must also be consistent for every method on the same struct. Do not use `s` on one `XxxSrv` method and `srv` on another, or `vi` on one model method and `m` on another. Receiver names are standardized by layer: service uses `s`, DAL uses `dal`, API uses `api`, model-layer types whose names contain `Param` use `p`, and other model-layer objects use `vi`.
 
-Service/API/DAL dependencies should be injected through constructors or explicit struct fields following the corresponding layer skill. Do not create DALs, services, clients, caches, or loggers ad hoc inside business methods when they are long-lived dependencies. Keep dependency field order and constructor parameter order consistent; common order is persistence dependencies first, then cross-domain services, infrastructure/cache/clients, config or small helpers, and logger last.
+Service/API/DAL dependencies should be injected through constructors or explicit struct fields following the corresponding layer reference. Do not create DALs, services, clients, caches, or loggers ad hoc inside business methods when they are long-lived dependencies. Keep dependency field order and constructor parameter order consistent; common order is persistence dependencies first, then cross-domain services, infrastructure/cache/clients, config or small helpers, and logger last.
 
 Dependency ownership rules:
 

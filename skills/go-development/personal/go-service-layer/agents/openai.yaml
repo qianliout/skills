@@ -1,4 +1,0 @@
-interface:
-  display_name: "Go Service Layer"
-  short_description: "Service orchestration and dependency patterns"
-  default_prompt: "Use $go-service-layer to implement or review a Go service method."

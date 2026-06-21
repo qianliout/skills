@@ -1,8 +1,3 @@
----
-name: go-service-layer
-description: "Go service 层业务编排专家。Use when writing, refactoring, reviewing, or explaining service interfaces/structs, dependency injection, constructors, DAL/DAO calls, param.Check, DTO conversion, aggregation, helpers, logging, error wrapping, cache reads, list/detail/create/update/delete service methods."
----
-
 # Go Service Layer
 
 Service 层负责业务编排、参数校验入口、模型转换、结果聚合、日志和错误包装；不直接访问 DB/GORM/SQL，不把 DAL 或 model 的职责搬进 service。
@@ -10,7 +5,7 @@ Service 层负责业务编排、参数校验入口、模型转换、结果聚合
 ## Workflow
 
 1. 确认 service 边界：公开方法、param/response、依赖 DAL/service/cache/client/logger、错误语义和方法类型。
-2. 加载 `references/go-service-conventions.md`；同时遵循当前任务触发的 `go-code-style`、`go-model-hierarchy`、`go-query-dal`、`go-logging`。
+2. 加载 `references/service-layer-conventions.md`；同时遵循当前任务触发的 `references/code-style.md`、`references/model-hierarchy.md`、`references/query-dal.md`、`references/logging.md`。
 3. 定义 interface/struct/constructor：项目使用 interface 时同步更新；依赖按 DAL、其他 service、cache/infra、client、config/helper、logger 顺序声明和注入。
 4. 实现公开方法：涉及 I/O 的方法第一个参数为 `ctx context.Context`；方法名保持资源/动作级别，不按调用场景拆窄接口。
 5. 处理 param：带领域方法的 param 使用指针类型；入口按 `param = param.Serialize()`、`param.Check()` 执行。
@@ -19,7 +14,7 @@ Service 层负责业务编排、参数校验入口、模型转换、结果聚合
 
 ## Reference Loading
 
-生成、重构或评审 service 层代码时，必须加载 `references/go-service-conventions.md`。
+生成、重构或评审 service 层代码时，必须加载 `references/service-layer-conventions.md`。
 
 ## Pre-Delivery Checklist
 

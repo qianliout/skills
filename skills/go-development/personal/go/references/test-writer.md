@@ -1,17 +1,12 @@
----
-name: go-test-writer
-description: "Go `_test.go` 文件生成与补测专家。Use when creating, extending, refactoring, or reviewing Go test files with `testify/assert`, `require`, `mock`, table-driven tests, fixtures, or edge/error-path coverage."
----
-
 # Go Test Writer
 
-这个 skill 负责创建和补全 Go 的 `_test.go` 文件，目标是让测试覆盖真实业务分支、错误路径和边界条件，而不是只为了凑覆盖率。默认使用 `github.com/stretchr/testify` 组织断言与 mock，优先生成可读、稳定、可维护的测试代码。
+这个 reference 模块负责创建和补全 Go 的 `_test.go` 文件，目标是让测试覆盖真实业务分支、错误路径和边界条件，而不是只为了凑覆盖率。默认使用 `github.com/stretchr/testify` 组织断言与 mock，优先生成可读、稳定、可维护的测试代码。
 
 ## Workflow
 
 1. 先确认测试目标：要验证的公开行为、输入输出、副作用、依赖边界、已有测试风格，以及是否只允许新增测试不改生产代码。
-2. 默认加载 `go-code-style`；只有涉及注释规范时再加载 `go-comment-style`；只有测试对象明显属于 API、service、DAL、model 等层时，才按需加载对应 Go 子 skill。
-3. 加载 `references/go-test-conventions.md`，默认使用 `testify`：普通结果断言优先 `assert`，前置条件和必须终止当前 case 的断言优先 `require`，接口依赖优先 `mock`。
+2. 只有任务同时涉及通用代码风格时才读取 `references/code-style.md`；涉及注释规范时再读取 `references/comment-style.md`；测试对象明显属于 API、Service、DAL、Model 等层时，再按需读取对应层 reference。
+3. 加载 `references/test-writer-conventions.md`，默认使用 `testify`：普通结果断言优先 `assert`，前置条件和必须终止当前 case 的断言优先 `require`，接口依赖优先 `mock`。
 4. 先读被测代码与相邻测试：构造函数、接口、调用方、错误语义、时间/随机数/IO 依赖、已有 helper、是否已经在项目里使用 `suite` 或统一断言封装。
 5. 设计测试范围：优先覆盖主流程、错误返回、边界输入、分支条件和回归风险；避免重复验证实现细节。
 6. 编写 `_test.go`：优先 table-driven test；在每个 case 中先用 `require` 校验错误和关键前置，再用 `assert` 校验结果细节；测试名清晰描述场景和预期。
@@ -32,12 +27,12 @@ description: "Go `_test.go` 文件生成与补测专家。Use when creating, ext
 
 ## Reference Loading
 
-生成、补全或评审 Go 测试文件时，必须加载 `references/go-test-conventions.md`。
+生成、补全或评审 Go 测试文件时，必须加载 `references/test-writer-conventions.md`。
 
 ## Pre-Delivery Checklist
 
 - [ ] 已读取被测代码和相邻测试，测试风格与项目保持一致。
-- [ ] 只加载了必要的 Go 子 skill，没有因为是 Go 测试任务就全部加载。
+- [ ] 只加载了必要的 Go reference，没有因为是 Go 测试任务就全部加载。
 - [ ] 默认使用了 `testify/assert`、`require` 或 `mock`，并且各自职责清晰。
 - [ ] 测试覆盖主流程、错误路径和关键边界，而不是复述实现细节。
 - [ ] 新增测试保持确定性，没有引入脆弱的时间、随机或并发依赖。

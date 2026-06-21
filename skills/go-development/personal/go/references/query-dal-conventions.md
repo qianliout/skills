@@ -2,6 +2,20 @@
 
 Use this reference when generating general Go DAL/DAO code.
 
+## Contents
+
+- [Core Shape](#core-shape)
+- [Dependency Management](#dependency-management)
+- [Timeout Pattern](#timeout-pattern)
+- [Method Signature Rules](#method-signature-rules)
+- [Param Location Rule](#param-location-rule)
+- [Param Semantic Naming](#param-semantic-naming)
+- [Search Pattern](#search-pattern)
+- [Create Pattern](#create-pattern)
+- [Update Pattern](#update-pattern)
+- [Delete Pattern](#delete-pattern)
+- [Private Maintenance Helpers](#private-maintenance-helpers)
+
 ## Core Shape
 
 DAL/DAO code lives in the project `store` directory/package. A DAL file contains:

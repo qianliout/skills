@@ -39,7 +39,7 @@ skills/
 | 分类 | Personal | Public |
 | ---- | -------- | ------ |
 | `operations` | alibabacloud-sysom-diagnosis | - |
-| `go-development` | go、go-api-layer、go-code-style、go-comment-style、go-gin-openapi-json、go-logging、go-model-hierarchy、go-query-dal、go-service-layer、go-test-writer | - |
+| `go-development` | go | - |
 | `architecture-planning` | - | architecture-decision-records、architecture-patterns、project-planner |
 | `code-quality` | - | code-review-expert、requesting-code-review |
 | `frontend-web` | - | frontend-design、vercel-react-best-practices、web-design-guidelines |
@@ -47,7 +47,7 @@ skills/
 | `skill-management` | - | find-skills、skill-forge |
 | `ai-learning` | - | sigma |
 
-共维护 25 个不同名称的 Skill，其中 12 个是个人 Skill，13 个是公共 Skill。
+共维护 16 个不同名称的 Skill，其中 3 个是个人 Skill，13 个是公共 Skill。Go 的 API、Service、DAL、Model、Logging、Comment、Test 和 OpenAPI 规则作为 `go` 的 references 按需加载，不再作为独立 Skill 安装。
 
 ## 安装
 

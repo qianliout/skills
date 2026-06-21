@@ -1,4 +1,0 @@
-interface:
-  display_name: "Go Query DAL"
-  short_description: "GORM DAL query and persistence patterns"
-  default_prompt: "Use $go-query-dal to implement or review a Go data access method."

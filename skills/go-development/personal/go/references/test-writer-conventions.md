@@ -2,6 +2,20 @@
 
 Use this reference when creating or extending Go `_test.go` files.
 
+## Contents
+
+- [Default Library](#default-library)
+- [Test Target](#test-target)
+- [File And Naming](#file-and-naming)
+- [Preferred Shape](#preferred-shape)
+- [Assertions](#assertions)
+- [Determinism](#determinism)
+- [Mocks And Fakes](#mocks-and-fakes)
+- [Suite](#suite)
+- [Production Code Changes](#production-code-changes)
+- [Package Choice](#package-choice)
+- [Review Heuristics](#review-heuristics)
+
 ## Default Library
 
 默认使用 `https://github.com/stretchr/testify`。

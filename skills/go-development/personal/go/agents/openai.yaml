@@ -1,4 +1,4 @@
 interface:
   display_name: "Go"
   short_description: "Go code entrypoint and layer routing rules"
-  default_prompt: "Use $go when writing, refactoring, or reviewing Go code, then apply specific Go layer skills only when their layer or feature is involved."
+  default_prompt: "Use $go as the only Go entrypoint, then read only the layer or feature references required by the task."

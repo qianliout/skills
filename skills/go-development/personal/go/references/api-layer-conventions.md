@@ -2,6 +2,18 @@
 
 Use this reference when generating, refactoring, or reviewing general Go API/handler/controller layer code.
 
+## Contents
+
+- [Responsibility](#responsibility)
+- [Structure](#structure)
+- [Request Parsing](#request-parsing)
+- [HTTP Methods](#http-methods)
+- [Update Pattern](#update-pattern)
+- [Response Pattern](#response-pattern)
+- [Handler Complexity](#handler-complexity)
+- [Type Rules](#type-rules)
+- [Formatting And Tests](#formatting-and-tests)
+
 ## Responsibility
 
 API layer owns HTTP adaptation:

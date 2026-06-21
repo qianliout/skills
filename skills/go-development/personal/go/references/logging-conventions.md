@@ -2,6 +2,18 @@
 
 Use this reference when generating, refactoring, or reviewing Go logging code.
 
+## Contents
+
+- [Layer Boundaries](#layer-boundaries)
+- [Logger Ownership](#logger-ownership)
+- [Log Levels](#log-levels)
+- [Log Content](#log-content)
+- [LogStr](#logstr)
+- [Error Logging](#error-logging)
+- [Sensitive Data](#sensitive-data)
+- [Format](#format)
+- [Batch And Loops](#batch-and-loops)
+
 ## Layer Boundaries
 
 API layer:

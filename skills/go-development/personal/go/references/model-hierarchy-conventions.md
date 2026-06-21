@@ -2,6 +2,23 @@
 
 Use this reference when generating general Go model layer definitions. The patterns are extracted from `image.go`, but they are domain-neutral.
 
+## Contents
+
+- [Core Shape](#core-shape)
+- [Database Compatibility](#database-compatibility)
+- [JSON Tag Pattern](#json-tag-pattern)
+- [Serialized Text Pattern](#serialized-text-pattern)
+- [Base Field Pattern](#base-field-pattern)
+- [ID Pattern](#id-pattern)
+- [Time Field Pattern](#time-field-pattern)
+- [Boolean Status Pattern](#boolean-status-pattern)
+- [Validation Pattern](#validation-pattern)
+- [Serialization Pattern](#serialization-pattern)
+- [Deserialization Compatibility](#deserialization-compatibility)
+- [Table and Update Pattern](#table-and-update-pattern)
+- [Layering Examples](#layering-examples)
+- [Constants And Dependencies](#constants-and-dependencies)
+
 ## Core Shape
 
 The sample models use rich domain structs rather than passive DTOs. A persistent entity usually owns:
