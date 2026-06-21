@@ -12,7 +12,9 @@ done < "$ROOT/skills/manifests/public-skills.txt"
 
 "$ROOT/scripts/clean.sh"
 
-find "$ROOT/skills" -mindepth 4 -maxdepth 4 -type f -name SKILL.md -print |
+find "$ROOT/skills" -type f -name SKILL.md \
+  ! -path "$ROOT/skills/manifests/*" \
+  ! -path "$ROOT/skills/*/resources/*" -print |
 while IFS= read -r skill_file; do
   skill_dir="${skill_file%/SKILL.md}"
   cp -R "$skill_dir" "$TARGET/${skill_dir##*/}"

@@ -1,6 +1,4 @@
 anthropics-skills|https://github.com/anthropics/skills.git
-kepano-obsidian-skills|https://github.com/kepano/obsidian-skills.git
-larksuite-cli|https://github.com/larksuite/cli.git
 obra-superpowers|https://github.com/obra/superpowers.git
 sanyuan-code-review-expert|https://github.com/sanyuan0704/code-review-expert.git
 shubhamsaboo-awesome-llm-apps|https://github.com/shubhamsaboo/awesome-llm-apps.git

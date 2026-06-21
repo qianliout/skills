@@ -164,7 +164,7 @@ Rules:
 ### Spacing
 
 - One blank line before and after every heading.
-- No blank line between consecutive headings at different levels (e.g. title + first section).
+- No blank line between consecutive headings at different levels.
 
 ## Paragraphs and Spacing
 
@@ -227,7 +227,7 @@ Avoid raw HTML in Markdown. Use native Markdown constructs.
 
 ## Line Length
 
-- Paragraphs are written as continuous lines (no manual wrapping at a fixed column).
+- Paragraphs are written as continuous lines.
 - Code blocks and tables are the exception: wrap long lines for readability.
 - Source readability matters more than rendered column width.
 

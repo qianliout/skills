@@ -1,0 +1,4 @@
+interface:
+  display_name: "Documents"
+  short_description: "Markdown、飞书 Markdown 与 Obsidian 文档入口"
+  default_prompt: "Use $documents as the single entry for Markdown, Feishu Markdown, and Obsidian note tasks, and load only the references required by the current document workflow."

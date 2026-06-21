@@ -1,4 +1,0 @@
-interface:
-  display_name: "Markdown Style"
-  short_description: "Markdown writing style rules and conventions"
-  default_prompt: "Use $md-style when writing, refactoring, or reviewing Markdown documents to enforce flat lists (no nesting), minimal emphasis, and clean document structure."

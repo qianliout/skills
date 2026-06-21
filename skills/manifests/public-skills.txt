@@ -6,8 +6,6 @@ code-quality|requesting-code-review|obra-superpowers|skills/requesting-code-revi
 frontend-web|frontend-design|anthropics-skills|skills/frontend-design
 frontend-web|vercel-react-best-practices|vercel-agent-skills|skills/react-best-practices
 frontend-web|web-design-guidelines|vercel-agent-skills|skills/web-design-guidelines
-documents|lark-markdown|larksuite-cli|skills/lark-markdown
-documents|obsidian-markdown|kepano-obsidian-skills|skills/obsidian-markdown
 skill-management|find-skills|vercel-skills|skills/find-skills
 skill-management|skill-forge|sanyuan-code-review-expert|skills/skill-forge
 ai-learning|sigma|sanyuan-code-review-expert|skills/sigma
