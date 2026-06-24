@@ -1,0 +1,42 @@
+[
+  {
+    "name": "k8s-master-01",
+    "host": "127.0.0.1",
+    "port": 32222,
+    "username": "k8s-master-01",
+    "privateKey": "~/.orbstack/ssh/id_ed25519",
+    "connectionTimeoutMs": 10000,
+    "keepaliveIntervalMs": 10000,
+    "keepaliveCountMax": 3
+  },
+  {
+    "name": "k8s-master-01-root",
+    "host": "127.0.0.1",
+    "port": 32222,
+    "username": "root@k8s-master-01",
+    "privateKey": "~/.orbstack/ssh/id_ed25519",
+    "connectionTimeoutMs": 10000,
+    "keepaliveIntervalMs": 10000,
+    "keepaliveCountMax": 3
+  },
+  {
+    "name": "k8s-worker-01",
+    "host": "127.0.0.1",
+    "port": 32222,
+    "username": "k8s-worker-01",
+    "privateKey": "~/.orbstack/ssh/id_ed25519",
+    "connectionTimeoutMs": 10000,
+    "keepaliveIntervalMs": 10000,
+    "keepaliveCountMax": 3
+  },
+  {
+    "name": "k8s-worker-01-root",
+    "host": "127.0.0.1",
+    "port": 32222,
+    "username": "root@k8s-worker-01",
+    "privateKey": "~/.orbstack/ssh/id_ed25519",
+    "connectionTimeoutMs": 10000,
+    "keepaliveIntervalMs": 10000,
+    "keepaliveCountMax": 3
+  }
+]
