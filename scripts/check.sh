@@ -4,6 +4,7 @@ set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PUBLIC_REPOS="$ROOT/skills/manifests/public-repositories.txt"
 PUBLIC_SKILLS="$ROOT/skills/manifests/public-skills.txt"
+OPERATIONS_SKILLS="$ROOT/skills/manifests/operations-skills.txt"
 
 fail() {
   printf 'check failed: %s\n' "$1" >&2
@@ -16,6 +17,7 @@ require_file() {
 
 require_file "$PUBLIC_REPOS"
 require_file "$PUBLIC_SKILLS"
+require_file "$OPERATIONS_SKILLS"
 
 duplicate_public_repos="$(
   awk -F'|' 'NF && $0 !~ /^#/ {print $1}' "$PUBLIC_REPOS" | sort | uniq -d
@@ -66,6 +68,29 @@ overlapping_installs="$(
     <(printf '%s\n' "$local_skill_names" | sed '/^$/d' | sort)
 )"
 test -z "$overlapping_installs" || fail "local and public install names overlap: $overlapping_installs"
+
+duplicate_operations_skills="$(
+  awk 'NF && $0 !~ /^#/ {print $1}' "$OPERATIONS_SKILLS" | sort | uniq -d
+)"
+test -z "$duplicate_operations_skills" || fail "duplicate operations skill names: $duplicate_operations_skills"
+
+all_install_names="$(
+  {
+    printf '%s\n' "$local_skill_names"
+    awk -F'|' 'NF && $0 !~ /^#/ {print $2}' "$PUBLIC_SKILLS"
+  } | sed '/^$/d' | sort
+)"
+
+while IFS= read -r operations_skill; do
+  case "$operations_skill" in
+    '' | '#'*)
+      continue
+      ;;
+  esac
+
+  printf '%s\n' "$all_install_names" | grep -Fx "$operations_skill" >/dev/null ||
+    fail "operations skill references unknown install name: $operations_skill"
+done < "$OPERATIONS_SKILLS"
 
 find "$ROOT/skills" -mindepth 2 -maxdepth 2 -type d | sort |
 while IFS= read -r category_dir; do

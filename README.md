@@ -102,6 +102,14 @@ Skill 分类目录不再把 `personal` 和 `public` 作为长期结构规则。�
 
 脚本首先更新公共 Skill 的 Git 上游。全部更新成功并确认 `SKILL.md` 存在后，才会清空 `~/.agents/skills`，再将本地入口 Skill 和公共源码复制到安装目录。分类目录不会出现在安装目录中。
 
+只安装运维相关 Skill：
+
+```bash
+./scripts/install-operations.sh
+```
+
+脚本读取 `skills/manifests/operations-skills.txt`，只安装运维分类视图中需要的诊断、排障、规划、代码质量、文档和 Skill 维护能力。它同样会先更新公共 Skill、运行仓库检查、清空 `~/.agents/skills`，再安装清单中的 Skill。
+
 只更新公共源码：
 
 ```bash

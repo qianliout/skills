@@ -1,0 +1,28 @@
+# Core operating workflow
+using-superpowers
+alibabacloud-sysom-diagnosis
+systematic-debugging
+documents
+
+# Planning, change management, and parallel execution
+brainstorming
+writing-plans
+dispatching-parallel-agents
+subagent-driven-development
+architecture-planning
+
+# Operations platform development and review
+go
+gin-openapi-json
+code-quality
+requesting-code-review
+receiving-code-review
+test-driven-development
+verification-before-completion
+using-git-worktrees
+finishing-a-development-branch
+
+# Skill discovery and knowledge building
+find-skills
+writing-skills
+sigma
