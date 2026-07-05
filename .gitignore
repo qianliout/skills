@@ -1,2 +1,4 @@
 debug-*.md
 .sources/
+.DS_Store
+skills/.DS_Store

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "jenkins": {
+      "command": "bash",
+      "type": "stdio",
+      "args": [
+        "-lc",
+        "test -n \"$JENKINS_MCP_URL\" && test -n \"$JENKINS_MCP_BASIC_AUTH_B64\" && exec npx -y mcp-remote@latest \"$JENKINS_MCP_URL\" --transport http-only --header \"Authorization:Basic ${JENKINS_MCP_BASIC_AUTH_B64}\""
+      ]
+    }
+  }
+}

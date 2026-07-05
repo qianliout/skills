@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "mysql-local-full": {
+      "command": "npx",
+      "type": "stdio",
+      "args": [
+        "-y",
+        "@berthojoris/mcp-mysql-server"
+      ],
+      "env": {
+        "DB_HOST": "127.0.0.1",
+        "DB_PORT": "3306",
+        "DB_USER": "root",
+        "DB_PASSWORD": "<YOUR_MYSQL_PASSWORD>",
+        "DB_NAME": "<YOUR_DATABASE_NAME>",
+        "MCP_PERMISSIONS": "list,read,create,update,delete,execute,ddl,utility,transaction,procedure",
+        "MCP_CATEGORIES": "database_discovery,crud_operations,bulk_operations,seed_operations,custom_queries,schema_management,utilities,transaction_management,stored_procedures,views_management,triggers_management,index_management,constraint_management,table_maintenance,query_optimization,analysis"
+      }
+    }
+  }
+}

@@ -2,3 +2,4 @@ anthropics-skills|https://github.com/anthropics/skills.git
 sanyuan-code-review-expert|https://github.com/sanyuan0704/code-review-expert.git
 vercel-agent-skills|https://github.com/vercel-labs/agent-skills.git
 vercel-skills|https://github.com/vercel-labs/skills.git
+obra-superpowers|https://github.com/obra/superpowers.git

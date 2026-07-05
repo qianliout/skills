@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TARGET="$HOME/.agents/skills"
 
 "$ROOT/scripts/update-public.sh"
+"$ROOT/scripts/check.sh"
 
 while IFS='|' read -r category name repository source_path; do
   test -f "$ROOT/.sources/$repository/$source_path/SKILL.md"

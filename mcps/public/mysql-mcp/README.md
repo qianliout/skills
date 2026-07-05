@@ -96,19 +96,65 @@ FLUSH PRIVILEGES;
   "mcpServers": {
     "mysql": {
       "command": "npx",
+      "type": "stdio",
       "args": ["-y", "@berthojoris/mcp-mysql-server"],
       "env": {
-        "MYSQL_HOST": "localhost",
-        "MYSQL_USER": "ops_user",
-        "MYSQL_PASSWORD": "${MYSQL_PASSWORD}",
-        "MYSQL_DATABASE": "mydb"
+        "DB_HOST": "127.0.0.1",
+        "DB_PORT": "3306",
+        "DB_USER": "ops_user",
+        "DB_PASSWORD": "${MYSQL_PASSWORD}",
+        "DB_NAME": "mydb",
+        "MCP_PERMISSIONS": "list,read,utility,ddl",
+        "MCP_CATEGORIES": "database_discovery,custom_queries,schema_management,analysis"
       }
     }
   }
 }
 ```
 
-> 注意：此版本有多达 14 个工具（包括 DDL），生产环境建议只授予 SELECT 权限。
+> 注意：上游版本已扩展到远超 14 个工具；生产环境建议只授予只读账号，并显式收缩 `MCP_PERMISSIONS` / `MCP_CATEGORIES`。
+
+### 本地 MySQL：全功能配置
+
+如果你就是要连接**本地 MySQL**，并且希望把该 MCP 的能力尽量开满，推荐直接用环境变量方式，避免密码出现在进程参数里。
+
+已提供可直接复制的模板文件：
+
+- `local-mysql-full.mcp.json`
+- `local-mysql-full.env.example`
+
+推荐配置：
+
+```json
+{
+  "mcpServers": {
+    "mysql-local-full": {
+      "command": "npx",
+      "type": "stdio",
+      "args": ["-y", "@berthojoris/mcp-mysql-server"],
+      "env": {
+        "DB_HOST": "127.0.0.1",
+        "DB_PORT": "3306",
+        "DB_USER": "root",
+        "DB_PASSWORD": "<YOUR_MYSQL_PASSWORD>",
+        "DB_NAME": "<YOUR_DATABASE_NAME>",
+        "MCP_PERMISSIONS": "list,read,create,update,delete,execute,ddl,utility,transaction,procedure",
+        "MCP_CATEGORIES": "database_discovery,crud_operations,bulk_operations,seed_operations,custom_queries,schema_management,utilities,transaction_management,stored_procedures,views_management,triggers_management,index_management,constraint_management,table_maintenance,query_optimization,analysis"
+      }
+    }
+  }
+}
+```
+
+说明：
+
+- `MCP_PERMISSIONS` 打开了列表、读写、自定义 SQL、DDL、事务、存储过程等高权限能力
+- `MCP_CATEGORIES` 打开了完整分类集合，对应上游全量工具集
+- 如果账号密码里包含 `@`、`:`、`/` 等特殊字符，优先用 `env` 方式，不要直接拼接连接串
+- 这是**高权限配置**，只适合本地开发库；生产库请改成只读账号 + 精简权限
+- 首次接入后建议先调用 `list_all_tools`，确认实际启用的工具集合
+
+> 备注：上游文档当前版本已经扩展到更高的工具数量，明显多于本 README 前面提到的简化版能力。
 
 ---
 

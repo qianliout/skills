@@ -3,22 +3,26 @@
     "claude": [
       "playwright",
       "filesystem",
+      "jenkins-mcp",
       "figma-developer-mcp",
       "supercharged-figma"
     ],
     "reasonix": [
       "playwright",
       "filesystem",
+      "jenkins-mcp",
       "figma-developer-mcp",
       "supercharged-figma"
     ],
     "codex": [
       "playwright",
-      "filesystem"
+      "filesystem",
+      "jenkins-mcp"
     ],
     "cursor": [
       "playwright",
       "filesystem",
+      "jenkins-mcp",
       "figma-developer-mcp",
       "supercharged-figma"
     ]
