@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go Model Hierarchy"
+  short_description: "Model、Param、Response 与字段生命周期"
+  default_prompt: "Use $go-model-hierarchy to define these Go models and lifecycle methods."

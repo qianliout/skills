@@ -2,7 +2,18 @@
 set -eu
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-TARGET="$HOME/.agents/skills"
+AGENTS_TARGET="$HOME/.agents"
+SKILLS_TARGET="$AGENTS_TARGET/skills"
+MCPS_TARGET="$AGENTS_TARGET/mcps"
+
+install_mcps() {
+  mkdir -p "$MCPS_TARGET"
+
+  find "$ROOT/mcps" -mindepth 1 -maxdepth 1 -print |
+  while IFS= read -r mcp_path; do
+    cp -R "$mcp_path" "$MCPS_TARGET/"
+  done
+}
 
 "$ROOT/scripts/update-public.sh"
 "$ROOT/scripts/check.sh"
@@ -18,11 +29,21 @@ find "$ROOT/skills" -type f -name SKILL.md \
   ! -path "$ROOT/skills/*/resources/*" -print |
 while IFS= read -r skill_file; do
   skill_dir="${skill_file%/SKILL.md}"
-  cp -R "$skill_dir" "$TARGET/${skill_dir##*/}"
+  cp -R "$skill_dir" "$SKILLS_TARGET/${skill_dir##*/}"
 done
 
 while IFS='|' read -r category name repository source_path; do
-  cp -R "$ROOT/.sources/$repository/$source_path" "$TARGET/$name"
+  case "$category" in
+    '' | '#'*)
+      continue
+      ;;
+  esac
+
+  cp -R "$ROOT/.sources/$repository/$source_path" "$SKILLS_TARGET/$name"
 done < "$ROOT/skills/manifests/public-skills.txt"
 
-printf 'installed: %s skills\n' "$(find "$TARGET" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
+install_mcps
+
+printf 'installed: %s skills, %s mcp entries\n' \
+  "$(find "$SKILLS_TARGET" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" \
+  "$(find "$MCPS_TARGET" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')"

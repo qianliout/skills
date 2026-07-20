@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go Test Writer"
+  short_description: "Go 单测、testify 与错误路径覆盖"
+  default_prompt: "Use $go-test-writer to add focused table-driven tests for this Go behavior."

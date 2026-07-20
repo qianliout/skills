@@ -54,7 +54,7 @@ Skill 分类目录不再把 `personal` 和 `public` 作为长期结构规则。�
 | 分类 | 当前入口或已安装 Skill | Git 上游跟踪 |
 | ---- | --------------------- | ------------ |
 | `operations` | alibabacloud-sysom-diagnosis | - |
-| `go-development` | go | - |
+| `go-development` | go、go-api-layer、go-code-style、go-comment-style、go-gin-openapi-json、go-logging、go-model-hierarchy、go-query-dal、go-service-layer、go-test-writer | - |
 | `architecture-planning` | architecture-planning | architecture-decision-records、architecture-patterns、project-planner |
 | `code-quality` | code-quality | code-review-expert、requesting-code-review |
 | `frontend-web` | frontend-design、vercel-react-best-practices、web-design-guidelines | manifest |
@@ -63,7 +63,9 @@ Skill 分类目录不再把 `personal` 和 `public` 作为长期结构规则。�
 | `ai-learning` | sigma | manifest |
 | `development` | brainstorming、dispatching-parallel-agents、finishing-a-development-branch、receiving-code-review、requesting-code-review、subagent-driven-development、systematic-debugging、test-driven-development、using-git-worktrees、using-superpowers、verification-before-completion、writing-plans、writing-skills | manifest（obra/superpowers） |
 
-当前安装 24 个不同名称的 Skill：6 个本地入口 Skill + 18 个 manifest 公共 Skill。Superpowers 是一套完整的软件开发方法论，包含 brainstorming（需求澄清）→ writing-plans（计划编写）→ subagent-driven-development（子代理驱动开发）→ requesting-code-review（代码审查）→ finishing-a-development-branch（完成分支）的完整工作流，外加 systematic-debugging（系统化调试）、test-driven-development（TDD）、writing-skills（Skill 编写）等辅助能力。`executing-plans` 因与 `subagent-driven-development` 功能重叠且仅适用于无子代理的工具，未纳入安装清单。
+当前安装 33 个不同名称的 Skill：15 个本地入口 Skill + 18 个 manifest 公共 Skill。Superpowers 是一套完整的软件开发方法论，包含 brainstorming（需求澄清）→ writing-plans（计划编写）→ subagent-driven-development（子代理驱动开发）→ requesting-code-review（代码审查）→ finishing-a-development-branch（完成分支）的完整工作流，外加 systematic-debugging（系统化调试）、test-driven-development（TDD）、writing-skills（Skill 编写）等辅助能力。`executing-plans` 因与 `subagent-driven-development` 功能重叠且仅适用于无子代理的工具，未纳入安装清单。
+
+`go-development/go` 保持为大而全的 Go 入口 Skill；同目录新增的 `go-*` Skill 是按职责拆分后的细粒度入口，分别覆盖通用风格、API、Service、DAL、Model、日志、注释、测试和 Gin OpenAPI JSON。安装目录是扁平命名空间，因此这些拆分后的 Skill 使用全局唯一名称。
 
 `skill-forge` 已被 Superpowers 的 `writing-skills` 替代，不再单独安装。
 
@@ -77,7 +79,7 @@ Skill 分类目录不再把 `personal` 和 `public` 作为长期结构规则。�
 | 故障排查方法 | `systematic-debugging` | 面对异常现象、测试失败、线上问题时，先收集证据再定位根因 |
 | 变更前规划 | `brainstorming`、`writing-plans` | 新增能力、调整架构、复杂运维自动化前，先明确目标、约束和步骤 |
 | 并行推进任务 | `dispatching-parallel-agents`、`subagent-driven-development` | 多个独立排查、验证或改造任务可以拆开并行处理 |
-| Go 运维平台开发 | `go`、`gin-openapi-json` | 维护 Go 后端、Gin 接口、GORM 查询、日志、测试和 OpenAPI 文档 |
+| Go 运维平台开发 | `go`、`go-api-layer`、`go-service-layer`、`go-query-dal`、`go-model-hierarchy`、`go-logging`、`go-test-writer`、`gin-openapi-json`、`go-gin-openapi-json` | 维护 Go 后端、Gin 接口、GORM 查询、日志、测试和 OpenAPI 文档 |
 | 架构与方案设计 | `architecture-planning` | 设计监控、诊断、发布、自动化平台等系统方案或 ADR |
 | 代码质量与评审 | `code-quality`、`requesting-code-review`、`receiving-code-review` | 合并前审查正确性、安全性、可维护性，或处理 reviewer 反馈 |
 | 交付前验证 | `test-driven-development`、`verification-before-completion` | 重要修复和变更完成前，补齐测试和验证证据 |

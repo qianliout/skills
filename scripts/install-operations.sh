@@ -2,9 +2,20 @@
 set -eu
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-TARGET="$HOME/.agents/skills"
+AGENTS_TARGET="$HOME/.agents"
+SKILLS_TARGET="$AGENTS_TARGET/skills"
+MCPS_TARGET="$AGENTS_TARGET/mcps"
 OPERATIONS_SKILLS="$ROOT/skills/manifests/operations-skills.txt"
 PUBLIC_SKILLS="$ROOT/skills/manifests/public-skills.txt"
+
+install_mcps() {
+  mkdir -p "$MCPS_TARGET"
+
+  find "$ROOT/mcps" -mindepth 1 -maxdepth 1 -print |
+  while IFS= read -r mcp_path; do
+    cp -R "$mcp_path" "$MCPS_TARGET/"
+  done
+}
 
 lookup_local_skill() {
   local name="$1"
@@ -27,7 +38,7 @@ install_skill() {
 
   local_skill_dir="$(lookup_local_skill "$name")"
   if [ -n "$local_skill_dir" ]; then
-    cp -R "$local_skill_dir" "$TARGET/$name"
+    cp -R "$local_skill_dir" "$SKILLS_TARGET/$name"
     return
   fi
 
@@ -37,7 +48,7 @@ install_skill() {
   repository="${public_entry%%|*}"
   source_path="${public_entry#*|}"
 
-  cp -R "$ROOT/.sources/$repository/$source_path" "$TARGET/$name"
+  cp -R "$ROOT/.sources/$repository/$source_path" "$SKILLS_TARGET/$name"
 }
 
 "$ROOT/scripts/update-public.sh"
@@ -54,4 +65,8 @@ while IFS= read -r name; do
   install_skill "$name"
 done < "$OPERATIONS_SKILLS"
 
-printf 'installed operations skills: %s\n' "$(find "$TARGET" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
+install_mcps
+
+printf 'installed operations skills: %s, mcp entries: %s\n' \
+  "$(find "$SKILLS_TARGET" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" \
+  "$(find "$MCPS_TARGET" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')"

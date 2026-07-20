@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go API Layer"
+  short_description: "Gin/HTTP handler 与响应层约定"
+  default_prompt: "Use $go-api-layer to implement this Gin handler following the project API conventions."
