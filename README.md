@@ -29,6 +29,7 @@ skills/
 ├── go-development/
 ├── manifests/
 ├── operations/
+├── productivity/
 └── skill-management/
 ```
 
@@ -62,8 +63,9 @@ Skill 分类目录不再把 `personal` 和 `public` 作为长期结构规则。�
 | `skill-management` | find-skills | manifest |
 | `ai-learning` | sigma | manifest |
 | `development` | brainstorming、dispatching-parallel-agents、finishing-a-development-branch、receiving-code-review、requesting-code-review、subagent-driven-development、systematic-debugging、test-driven-development、using-git-worktrees、using-superpowers、verification-before-completion、writing-plans、writing-skills | manifest（obra/superpowers） |
+| `productivity` | grilling | manifest（mattpocock/skills） |
 
-当前安装 33 个不同名称的 Skill：15 个本地入口 Skill + 18 个 manifest 公共 Skill。Superpowers 是一套完整的软件开发方法论，包含 brainstorming（需求澄清）→ writing-plans（计划编写）→ subagent-driven-development（子代理驱动开发）→ requesting-code-review（代码审查）→ finishing-a-development-branch（完成分支）的完整工作流，外加 systematic-debugging（系统化调试）、test-driven-development（TDD）、writing-skills（Skill 编写）等辅助能力。`executing-plans` 因与 `subagent-driven-development` 功能重叠且仅适用于无子代理的工具，未纳入安装清单。
+当前安装 34 个不同名称的 Skill：15 个本地入口 Skill + 19 个 manifest 公共 Skill。Superpowers 是一套完整的软件开发方法论，包含 brainstorming（需求澄清）→ writing-plans（计划编写）→ subagent-driven-development（子代理驱动开发）→ requesting-code-review（代码审查）→ finishing-a-development-branch（完成分支）的完整工作流，外加 systematic-debugging（系统化调试）、test-driven-development（TDD）、writing-skills（Skill 编写）等辅助能力。`executing-plans` 因与 `subagent-driven-development` 功能重叠且仅适用于无子代理的工具，未纳入安装清单。
 
 `go-development/go` 保持为大而全的 Go 入口 Skill；同目录新增的 `go-*` Skill 是按职责拆分后的细粒度入口，分别覆盖通用风格、API、Service、DAL、Model、日志、注释、测试和 Gin OpenAPI JSON。安装目录是扁平命名空间，因此这些拆分后的 Skill 使用全局唯一名称。
 
