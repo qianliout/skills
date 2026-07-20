@@ -1,12 +1,19 @@
 # Skills
 
-这个仓库统一维护 Skill 和 MCP。Skill 的目标是：尽量复用公共 Skill，按能力类型整理成本地入口，最后通过一个命令安装到 `~/.agents/skills`；MCP 按公共和私有分别维护服务与配置。
+这个仓库同时维护 Skill 和 MCP。目标不是把所有能力都手写一遍，而是把可复用的公共 Skill 整理成稳定的本地入口，再统一安装到 `~/.agents/skills`。
 
-## 维护目标
+当前仓库一共管理 34 个可安装 Skill：15 个本地入口 Skill，19 个通过 manifest 跟踪的公共 Skill；另外还有 7 个仅作为分类资源镜像保留的上游 Skill，不会直接安装。
 
-1. 公共优先：已有可靠公共 Skill 时，优先跟踪上游，不重复手写。
-2. 类型整理：面向 Agent 安装的是按类型聚合后的入口 Skill；细粒度公共 Skill 可以作为入口 Skill 的 `references/` 或 `resources/`。
-3. 一键安装：`./scripts/install.sh` 是唯一安装入口，负责更新公共来源、校验、清空并重装 `~/.agents/skills`。
+## 这仓库在管什么
+
+| 类型 | 位置 | 会不会安装到 `~/.agents/skills` | 作用 |
+| ---- | ---- | ------------------------------- | ---- |
+| 本地入口 Skill | `skills/<category>/<skill>/SKILL.md` | 会 | 按主题聚合后的正式入口 |
+| manifest 公共 Skill | `skills/manifests/*.txt` + `.sources/<repo>` | 会 | 仍适合独立安装的上游 Skill |
+| 分类资源镜像 | `skills/<category>/resources/` | 不会 | 给入口 Skill 提供上游设计参考和素材 |
+| MCP 配置 | `mcps/` | 会安装到 `~/.agents/mcps` | 维护公共和私有 MCP 服务配置 |
+
+安装目录是扁平命名空间：最终只有 `~/.agents/skills/<skill-name>`，不会保留分类层级。
 
 ## 目录结构
 
@@ -18,6 +25,7 @@ mcps/
 scripts/
 ├── check.sh
 ├── clean.sh
+├── install-operations.sh
 ├── install.sh
 └── update-public.sh
 skills/
@@ -26,144 +34,122 @@ skills/
 ├── code-quality/
 ├── documents/
 ├── frontend-web/
+├── gin-openapi-json/
 ├── go-development/
 ├── manifests/
 ├── operations/
+├── productivity/
 └── skill-management/
 ```
 
-`skills/` 和 `mcps/` 是两个独立的维护边界。Skill manifest 只放在 `skills/manifests/`，MCP 配置只放在 `mcps/`。
+`skills/` 和 `mcps/` 是两个独立边界。Skill 的安装清单只放在 `skills/manifests/`，MCP 的启动配置和 profile 只放在 `mcps/`。
 
-Skill 分类目录不再把 `personal` 和 `public` 作为长期结构规则。已经迁移到新结构的分类，直接在分类目录下放入口 Skill 目录和 `resources/`；仍未迁移的历史目录会逐步清理。
+## 当前可安装 Skill
 
-有 Git 上游且仍以独立 Skill 安装的能力，继续通过 `skills/manifests/` 管理，源码拉取到项目根目录的 `.sources`。已经迁移为“分类入口 Skill + references”的分类，则在各自目录下使用 `resources/README.md`、`resources/update.sh` 和本地镜像目录跟踪上游 Skill 目录。Codex、Claude 等工具自带的 Skill 不在本仓库登记或维护。
+### 本地入口 Skill
 
-## 来源模型
+这些目录是仓库里直接维护、会被复制到安装目录的正式入口。
 
-| 类型 | 位置 | 是否安装 | 是否提交上游源码 | 用途 |
-| ---- | ---- | -------- | ---------------- | ---- |
-| 本地入口 Skill | `skills/<category>/<skill>/SKILL.md` | 是 | 是 | 按类型聚合后的 Agent 入口 |
-| manifest 公共 Skill | `skills/manifests/*.txt` + `.sources/<repo>` | 是 | 否 | 仍适合独立安装的公共 Skill |
-| 分类资源 Skill | `skills/<category>/resources/` | 否 | 是，仅同步所需上游 Skill 子目录 | 给入口 Skill 追溯设计、提炼 reference |
-| 工具内置 Skill | Codex/Claude/插件目录 | 否 | 否 | 由对应工具维护 |
+| 分类 | Skill |
+| ---- | ----- |
+| `operations` | `alibabacloud-sysom-diagnosis` |
+| `gin-openapi-json` | `gin-openapi-json` |
+| `architecture-planning` | `architecture-planning` |
+| `code-quality` | `code-quality` |
+| `documents` | `documents` |
+| `go-development` | `go`、`go-api-layer`、`go-code-style`、`go-comment-style`、`go-gin-openapi-json`、`go-logging`、`go-model-hierarchy`、`go-query-dal`、`go-service-layer`、`go-test-writer` |
 
-安装目录是扁平命名空间：`~/.agents/skills/<skill-name>`。分类目录不会被复制到安装目录。
+说明：
 
-## Skill 清单
+- `go` 是大而全的 Go 入口。
+- `go-*` 是按职责拆分的细粒度 Go Skill，分别覆盖 API、Service、DAL、Model、日志、注释、测试和 Gin OpenAPI JSON。
+- `gin-openapi-json` 是唯一没有分类目录包装的本地入口 Skill，直接位于 `skills/gin-openapi-json/`。
 
-| 分类 | 当前入口或已安装 Skill | Git 上游跟踪 |
-| ---- | --------------------- | ------------ |
-| `operations` | alibabacloud-sysom-diagnosis | - |
-| `go-development` | go | - |
-| `architecture-planning` | architecture-planning | architecture-decision-records、architecture-patterns、project-planner |
-| `code-quality` | code-quality | code-review-expert、requesting-code-review |
-| `frontend-web` | frontend-design、vercel-react-best-practices、web-design-guidelines | manifest |
-| `documents` | documents | lark-markdown、obsidian-markdown |
-| `skill-management` | find-skills | manifest |
-| `ai-learning` | sigma | manifest |
-| `development` | brainstorming、dispatching-parallel-agents、finishing-a-development-branch、receiving-code-review、requesting-code-review、subagent-driven-development、systematic-debugging、test-driven-development、using-git-worktrees、using-superpowers、verification-before-completion、writing-plans、writing-skills | manifest（obra/superpowers） |
+### manifest 公共 Skill
 
-当前安装 24 个不同名称的 Skill：6 个本地入口 Skill + 18 个 manifest 公共 Skill。Superpowers 是一套完整的软件开发方法论，包含 brainstorming（需求澄清）→ writing-plans（计划编写）→ subagent-driven-development（子代理驱动开发）→ requesting-code-review（代码审查）→ finishing-a-development-branch（完成分支）的完整工作流，外加 systematic-debugging（系统化调试）、test-driven-development（TDD）、writing-skills（Skill 编写）等辅助能力。`executing-plans` 因与 `subagent-driven-development` 功能重叠且仅适用于无子代理的工具，未纳入安装清单。
+这些 Skill 的安装来源由 `skills/manifests/public-skills.txt` 决定，真实源码更新到 `.sources/`，不会提交到当前仓库。
 
-`skill-forge` 已被 Superpowers 的 `writing-skills` 替代，不再单独安装。
+| 分类 | Skill | 来源仓库 |
+| ---- | ----- | -------- |
+| `frontend-web` | `frontend-design`、`vercel-react-best-practices`、`web-design-guidelines` | `anthropics-skills`、`vercel-agent-skills` |
+| `skill-management` | `find-skills` | `vercel-skills` |
+| `ai-learning` | `sigma` | `sanyuan-code-review-expert` |
+| `development` | `using-superpowers`、`brainstorming`、`writing-plans`、`test-driven-development`、`subagent-driven-development`、`requesting-code-review`、`systematic-debugging`、`finishing-a-development-branch`、`verification-before-completion`、`using-git-worktrees`、`receiving-code-review`、`dispatching-parallel-agents`、`writing-skills` | `obra-superpowers` |
+| `productivity` | `grilling` | `mattpocock-skills` |
 
-## 面向运维工作的分类视图
+说明：
 
-这部分不改变安装结构，只作为日常选择 Skill 的场景索引。运维任务优先从“诊断、变更、交付、复盘”四类进入，再按实际技术栈补充开发和文档能力。
+- `requesting-code-review` 当前既作为 `development` 的独立公共 Skill 安装，也被 `code-quality` 分类在 `resources/` 中镜像一份上游内容，供本地入口 Skill 提炼 reference。
+- `skill-forge` 已不再安装，当前由 `writing-skills` 承担 Skill 编写方法论。
 
-| 运维场景 | 推荐 Skill | 使用边界 |
-| -------- | ---------- | -------- |
-| 云主机系统诊断 | `alibabacloud-sysom-diagnosis` | ECS CPU、内存、IO、网络、负载、内核和稳定性问题，优先使用 SysOM 诊断结论 |
-| 故障排查方法 | `systematic-debugging` | 面对异常现象、测试失败、线上问题时，先收集证据再定位根因 |
-| 变更前规划 | `brainstorming`、`writing-plans` | 新增能力、调整架构、复杂运维自动化前，先明确目标、约束和步骤 |
-| 并行推进任务 | `dispatching-parallel-agents`、`subagent-driven-development` | 多个独立排查、验证或改造任务可以拆开并行处理 |
-| Go 运维平台开发 | `go`、`gin-openapi-json` | 维护 Go 后端、Gin 接口、GORM 查询、日志、测试和 OpenAPI 文档 |
-| 架构与方案设计 | `architecture-planning` | 设计监控、诊断、发布、自动化平台等系统方案或 ADR |
-| 代码质量与评审 | `code-quality`、`requesting-code-review`、`receiving-code-review` | 合并前审查正确性、安全性、可维护性，或处理 reviewer 反馈 |
-| 交付前验证 | `test-driven-development`、`verification-before-completion` | 重要修复和变更完成前，补齐测试和验证证据 |
-| 分支收尾 | `finishing-a-development-branch`、`using-git-worktrees` | 分支完成后整理提交、PR、合并或隔离实验工作区 |
-| 运维文档沉淀 | `documents` | 编写故障复盘、操作手册、变更说明、飞书 Markdown 或 Obsidian 笔记 |
-| Skill 体系维护 | `find-skills`、`writing-skills` | 查找可复用 Skill，或把高频运维流程沉淀为新的 Skill |
-| 学习与知识补齐 | `sigma` | 系统学习云原生、Linux、网络、数据库、SRE 方法论等主题 |
+### 分类资源镜像
 
-### 运维优先级建议
+这些 Skill 保留在分类目录的 `resources/` 下，只用于同步、核对和追溯设计，不会直接安装。
 
-日常使用时，优先把 `alibabacloud-sysom-diagnosis` 作为线上 ECS 性能和稳定性问题入口；把 `systematic-debugging` 作为通用排障方法入口；把 `documents` 作为故障复盘和操作文档入口。
+| 分类 | 镜像 Skill | 说明 |
+| ---- | ---------- | ---- |
+| `architecture-planning` | `architecture-decision-records`、`architecture-patterns`、`project-planner` | `project-planner` 已冻结保留，上游已删除 |
+| `code-quality` | `code-review-expert`、`requesting-code-review` | 用于本地入口 Skill 提炼评审 reference |
+| `documents` | `lark-markdown`、`obsidian-markdown` | 用于本地入口 Skill 路由到对应文档场景 |
 
-涉及代码改动时，再组合 `go`、`code-quality`、`test-driven-development` 和 `verification-before-completion`。涉及方案设计、自动化平台或流程建设时，再组合 `architecture-planning`、`writing-plans` 和 `subagent-driven-development`。
+## 面向运维的常用组合
 
-## 安装
+`install-operations.sh` 会从全部 Skill 中挑出一组偏运维的常用集合。它不改变仓库结构，只是提供一条更窄的安装路径。
 
-更新公共源码并全量重新安装：
+| 场景 | 推荐 Skill |
+| ---- | ---------- |
+| 系统诊断 | `alibabacloud-sysom-diagnosis`、`systematic-debugging` |
+| 变更规划 | `brainstorming`、`writing-plans`、`architecture-planning` |
+| 并行执行 | `dispatching-parallel-agents`、`subagent-driven-development` |
+| Go 平台开发 | `go`、`go-api-layer`、`go-service-layer`、`go-query-dal`、`go-model-hierarchy`、`go-logging`、`go-test-writer`、`gin-openapi-json`、`go-gin-openapi-json` |
+| 质量与交付 | `code-quality`、`requesting-code-review`、`receiving-code-review`、`test-driven-development`、`verification-before-completion`、`finishing-a-development-branch` |
+| 文档与知识 | `documents`、`find-skills`、`writing-skills`、`sigma` |
 
-```bash
-./scripts/install.sh
-```
+## 安装与更新
 
-脚本首先更新公共 Skill 的 Git 上游。全部更新成功并确认 `SKILL.md` 存在后，才会清空 `~/.agents/skills`，再将本地入口 Skill 和公共源码复制到安装目录。分类目录不会出现在安装目录中。
+| 命令 | 作用 |
+| ---- | ---- |
+| `./scripts/install.sh` | 更新公共来源、校验仓库、清空并重装全部 Skill 和 MCP |
+| `./scripts/install-operations.sh` | 只安装 `skills/manifests/operations-skills.txt` 中列出的运维相关 Skill，并同步 MCP |
+| `./scripts/update-public.sh` | 只更新公共 Skill 源码和分类资源镜像，不执行安装 |
+| `./scripts/check.sh` | 只读校验仓库状态，不修改任何文件 |
+| `./scripts/clean.sh` | 只清空 `~/.agents/skills` |
 
-只安装运维相关 Skill：
+安装流程说明：
 
-```bash
-./scripts/install-operations.sh
-```
+1. `install.sh` 先执行 `update-public.sh`。
+1. 然后执行 `check.sh`，确保 manifest、资源目录和安装名都合法。
+1. 校验通过后清空 `~/.agents/skills`。
+1. 再复制本地入口 Skill 和 manifest 公共 Skill 到扁平安装目录。
+1. 最后复制 `mcps/` 到 `~/.agents/mcps`。
 
-脚本读取 `skills/manifests/operations-skills.txt`，只安装运维分类视图中需要的诊断、排障、规划、代码质量、文档和 Skill 维护能力。它同样会先更新公共 Skill、运行仓库检查、清空 `~/.agents/skills`，再安装清单中的 Skill。
+## 维护约定
 
-只更新公共源码：
-
-```bash
-./scripts/update-public.sh
-```
-
-仍以公共 Skill 安装的 Git 仓库与 Skill 子目录映射维护在 `skills/manifests/`。拉取结果位于 `.sources/`，不会提交到当前 Git 仓库。分类入口 Skill 自己维护的上游仓库位于对应分类目录下的 `resources/README.md`、`resources/update.sh` 和同目录镜像副本中，目前包括 `skills/architecture-planning/resources/`、`skills/code-quality/resources/` 和 `skills/documents/resources/`。
-
-只检查仓库维护状态：
-
-```bash
-./scripts/check.sh
-```
-
-这个脚本不修改文件，只检查安装名重复、manifest 指向、入口 Skill、资源同步说明和错误的 gitlink/submodule 状态。
-
-## 卸载
-
-只清空 `~/.agents/skills`：
-
-```bash
-./scripts/clean.sh
-```
-
-该脚本不会删除或修改这个仓库中的源码。
-
-## 开发工具
-
-Trae、Zed、Reasonix 和 Warp 的 Skill 目录统一指向 `~/.agents/skills`。Codex 原生读取 `~/.agents/skills`，同时继续保留自己的 `.system` 和插件 Skill。`~/.agents/skills` 中保存部署副本，不链接回当前仓库。
-
-## 维护规则
-
-- 只在这个仓库中修改 Skill 源码。
-- Skill 目录名必须全局唯一。
+- 只在这个仓库里修改 Skill 源码，不直接编辑 `~/.agents/skills`。
 - 本地维护并需要安装的 Skill 必须包含 `SKILL.md`。
-- Git 来源的公共 Skill 目录只保留 README，安装前从 `.sources` 读取 `SKILL.md`。
-- 已入口化分类的上游 Skill 通过分类目录下的 `resources/` 跟踪，不作为独立 Skill 安装。
-- 公共 Skill 必须保留 `README.md`。
-- 仍独立安装的公共 Skill 通过 manifest 管理，不提交上游源码副本。
-- 入口 Skill 使用的公共资源只同步需要的上游 Skill 子目录，不提交完整上游仓库，不使用 git submodule。
-- 没有 Git 上游的公共 Skill 不进入本仓库。
-- Codex、Claude 等工具自带的 Skill 由各工具自行维护。
-- 本仓库不登记、不复制、不安装工具自带 Skill。
-- `skill-creator` 只使用 Codex 内置版本，本仓库不再维护公共版本。
-- 更新或安装前可运行 `./scripts/check.sh` 做只读校验。
-- 更新后运行 `./scripts/install.sh` 重新部署。
-- 不直接编辑 `~/.agents/skills`。
+- 目录名必须对应最终安装名，且全局唯一。
+- 仍以独立 Skill 安装的公共能力统一走 `skills/manifests/`，不要把上游源码直接提交进仓库。
+- 已经入口化的分类，统一在分类目录下用 `resources/README.md` 和 `resources/update.sh` 跟踪上游素材。
+- `resources/` 下的镜像内容不直接修改；需要调整行为时，改对应入口 Skill 下的 `references/`。
+- 只同步真正需要的上游 Skill 子目录，不提交完整上游仓库，不使用 git submodule。
+- 公共 Skill 必须保留 `README.md` 说明来源和用途。
+- `skill-creator` 只使用工具内置版本，本仓库不再维护公共版本。
+- `go-development/go` 与同目录 `go-*` Skill 中的同名 reference 文件是物理拷贝，修改其中一份后要同步所有副本。
+
+## 开发工具约定
+
+Trae、Zed、Reasonix 和 Warp 的 Skill 目录统一指向 `~/.agents/skills`。Codex 也会读取这个目录，但仍保留自己的内置 Skill 和插件 Skill。
+
+`~/.agents/skills` 里保存的是部署副本，不反向链接回当前仓库。
 
 ## MCP
 
-MCP 服务和配置维护在 `mcps/`：
+MCP 服务和配置统一维护在 `mcps/`。
 
-- `mcps/public/<mcp-name>`：公共 MCP
-- `mcps/private/<mcp-name>`：私有 MCP
-- `mcps/profiles.json`：不同客户端启用的 MCP 列表
+| 位置 | 用途 |
+| ---- | ---- |
+| `mcps/public/<mcp-name>` | 公共 MCP |
+| `mcps/private/<mcp-name>` | 私有 MCP |
+| `mcps/profiles.json` | 不同客户端启用的 MCP 列表 |
 
-每个 MCP 使用独立目录，目录中至少保存说明和不含密钥的启动配置。真实密钥通过环境变量提供。
+每个 MCP 目录至少保留说明和不含密钥的启动配置。真实密钥通过环境变量注入。

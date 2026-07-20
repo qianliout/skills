@@ -13,6 +13,15 @@ architecture-planning
 
 # Operations platform development and review
 go
+go-api-layer
+go-code-style
+go-comment-style
+go-gin-openapi-json
+go-logging
+go-model-hierarchy
+go-query-dal
+go-service-layer
+go-test-writer
 gin-openapi-json
 code-quality
 requesting-code-review

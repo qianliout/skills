@@ -20,13 +20,13 @@
 - Local Reference: `skills/architecture-planning/architecture-planning/references/architecture-patterns.md`
 - Sync Mode: `repo cache + subtree sync`
 
-### project-planner
+### project-planner（已冻结，上游已删除）
 
 - Source Repository: `https://github.com/shubhamsaboo/awesome-llm-apps.git`
-- Upstream Skill Path: `awesome_agent_skills/project-planner`
+- Upstream Skill Path（历史路径，已不存在）: `awesome_agent_skills/project-planner`
 - Local Mirror Directory: `skills/architecture-planning/resources/project-planner`
 - Local Reference: `skills/architecture-planning/architecture-planning/references/project-planner.md`
-- Sync Mode: `repo cache + subtree sync`
+- Sync Mode: `frozen mirror`（上游仓库已在 2026-07-08 的 commit `26f859f`《chore: remove 19 basic prompt-dump skills》中删除该 Skill，`update.sh` 无法再同步，只会保留本地镜像并打印警告；如需继续保留这份内容，应视为静态素材而非"跟踪中的上游 Skill"）
 
 ## Update
 

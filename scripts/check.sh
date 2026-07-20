@@ -101,9 +101,11 @@ while IFS= read -r category_dir; do
   fi
 done
 
-gitlinks="$(
-  git -C "$ROOT" ls-files -s | awk '$1 == "160000" {print $4}'
-)"
-test -z "$gitlinks" || fail "gitlinks are not allowed; use resource-cache + subtree sync: $gitlinks"
+if git -C "$ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  gitlinks="$(
+    git -C "$ROOT" ls-files -s | awk '$1 == "160000" {print $4}'
+  )"
+  test -z "$gitlinks" || fail "gitlinks are not allowed; use resource-cache + subtree sync: $gitlinks"
+fi
 
 printf 'check passed\n'

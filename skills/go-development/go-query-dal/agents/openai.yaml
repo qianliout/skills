@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go Query DAL"
+  short_description: "DAL/DAO、GORM 查询与持久化边界"
+  default_prompt: "Use $go-query-dal to write this GORM query layer with the repository conventions."

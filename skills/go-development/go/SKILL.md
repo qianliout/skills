@@ -31,7 +31,7 @@ description: "Go 代码唯一入口和按需规则路由。Use whenever writing,
 
 - 不默认读取任何 reference；只在任务匹配时读取。
 - 不因调用链存在某层就加载该层，只在任务实际修改、评审或解释该层时加载。
-- 不把 reference 当作独立 Skill，也不搜索已移除的 `go-*` Skill 名称。
+- 不把 reference 当作独立 Skill；`go-*` 拆分 Skill（如 `go-api-layer`、`go-service-layer` 等）是按职责拆分出的独立可安装入口，其 reference 内容与本 Skill 对应文件是各自维护的物理拷贝而非共享文件，修改一处后需要同步另一处，避免内容漂移。
 - 多层任务按职责组合 reference，不把一个层的规则搬到另一层。
 
 ## Layer Boundaries

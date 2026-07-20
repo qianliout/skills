@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go Service Layer"
+  short_description: "Service 接口、构造注入与业务编排"
+  default_prompt: "Use $go-service-layer to design this service method and keep dependencies explicit."
