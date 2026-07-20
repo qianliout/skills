@@ -26,12 +26,15 @@ skills/
 ├── code-quality/
 ├── documents/
 ├── frontend-web/
+├── gin-openapi-json/
 ├── go-development/
 ├── manifests/
 ├── operations/
 ├── productivity/
 └── skill-management/
 ```
+
+`skills/gin-openapi-json/` 是唯一没有分类目录包装的本地入口 Skill，直接以 `skills/gin-openapi-json/SKILL.md` 的形式存在。
 
 `skills/` 和 `mcps/` 是两个独立的维护边界。Skill manifest 只放在 `skills/manifests/`，MCP 配置只放在 `mcps/`。
 
@@ -55,6 +58,7 @@ Skill 分类目录不再把 `personal` 和 `public` 作为长期结构规则。�
 | 分类 | 当前入口或已安装 Skill | Git 上游跟踪 |
 | ---- | --------------------- | ------------ |
 | `operations` | alibabacloud-sysom-diagnosis | - |
+| （无分类目录） | gin-openapi-json | - |
 | `go-development` | go、go-api-layer、go-code-style、go-comment-style、go-gin-openapi-json、go-logging、go-model-hierarchy、go-query-dal、go-service-layer、go-test-writer | - |
 | `architecture-planning` | architecture-planning | architecture-decision-records、architecture-patterns、project-planner |
 | `code-quality` | code-quality | code-review-expert、requesting-code-review |
@@ -161,6 +165,7 @@ Trae、Zed、Reasonix 和 Warp 的 Skill 目录统一指向 `~/.agents/skills`�
 - 更新或安装前可运行 `./scripts/check.sh` 做只读校验。
 - 更新后运行 `./scripts/install.sh` 重新部署。
 - 不直接编辑 `~/.agents/skills`。
+- `go-development/go` 与同目录 `go-*` 细粒度 Skill 之间的同名 reference 文件是各自维护的物理拷贝，不是共享文件；修改其中一份内容后必须同步到所有对应副本。
 
 ## MCP
 

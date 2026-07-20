@@ -106,6 +106,8 @@ sync_subtree_from_cache \
   "plugins/backend-development/skills/architecture-patterns" \
   "$ROOT/skills/architecture-planning/resources/architecture-patterns"
 
+# project-planner 已在上游 2026-07-08 的 commit 26f859f 中被删除（不是路径迁移）。
+# 下面这次调用预期会一直打印 "missing upstream path" 警告并保留本地镜像，这是已知的永久状态，不是需要修的 bug。
 sync_subtree_from_cache \
   "https://github.com/shubhamsaboo/awesome-llm-apps.git" \
   "awesome_agent_skills/project-planner" \
