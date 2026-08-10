@@ -110,7 +110,7 @@ fi
 
 # --- Go skills consolidation invariants ---
 GO_DEV="$ROOT/skills/go-development"
-ALLOWED_go_skills='go
+allowed_go_skills='go
 go-api-layer
 go-code-style
 go-gin-openapi-json
