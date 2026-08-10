@@ -17,7 +17,7 @@ Go 测试必须验证可观察行为。每个测试必须覆盖输入、行为�
 - 同类输入与预期必须写成 table-driven test；每个 case 必须有描述输入和预期的 `name`，禁止使用 `case1`、`test2`。
 - 每个 case 必须通过 `t.Run` 独立执行，并声明必要输入和期望；禁止把不相关行为塞进同一个 case。
 - 表中必须同时含成功、错误和边界 case；被测行为不存在错误路径时，必须明确该事实并覆盖可达边界。
-- 测试是否并行必须由共享状态决定。读取或修改全局变量、环境变量、临时资源、mock、数据库或共享 fixture 时，禁止 `t.Parallel()`。
+- 测试共享可变全局或包级状态、非隔离资源、环境变量、数据库或共享 fixture 时，禁止 `t.Parallel()`。每个 case 独立创建的 local mock 与 `t.TempDir()` 隔离的临时目录必须允许 `t.Parallel()`。
 
 ```go
 func TestCheckStatus(t *testing.T) {
@@ -53,7 +53,9 @@ func TestCheckStatus(t *testing.T) {
 - `assert` 用于同一 case 内可继续收集的结果细节；必须断言真实结果，禁止把 `assert` 返回值当作已终止保护。
 - `require` 必须在运行 test 或 subtest 的 goroutine 中调用；禁止在测试自行启动的 goroutine 中调用。
 - 断言错误前必须先处理或断言错误；禁止在错误路径继续读取无效结果。
-- 错误链必须用 `require.ErrorIs` 或 `assert.ErrorIs`；稳定错误文本必须用 `ErrorContains`，禁止断言未约定的完整错误文案。
+- sentinel 错误或其包装链必须用 `require.ErrorIs` 或 `assert.ErrorIs` 验证错误身份。
+- typed error 必须用 `require.ErrorAs` 或 `assert.ErrorAs` 提取并验证类型与字段。
+- 稳定错误文本必须用 `ErrorContains`，禁止断言未约定的完整错误文案。
 - slice、map 和无序集合必须分别使用 `Len`、键值断言或 `ElementsMatch`；禁止依赖 map 遍历顺序。
 - 结构体必须断言业务关键字段；整体 `Equal` 仅在完整结构是稳定外部契约时使用。
 
@@ -71,7 +73,9 @@ func TestCheckStatus(t *testing.T) {
 - 并发同步必须使用 channel、`sync.WaitGroup`、`context`、可观测回调或受控同步点；异步结果必须有断言。
 - 时间必须注入时钟、固定时间戳或 stub `now`；随机性必须固定 seed 或注入随机源。
 - 网络、文件、数据库和 IO 必须使用接口注入、fake、stub、fixture 或项目既有测试设施；临时资源必须使用 `t.TempDir()`、`t.Setenv()` 等隔离能力。
-- `assert.Eventually`、`EventuallyWithT` 或 `Never` 只能等待可观测条件，不能替代同步设计；条件本身必须包含断言。
+- `assert.Eventually` 的回调类型是 `func() bool`；回调必须只返回可观测条件结果，禁止在回调内调用断言。
+- 需要在等待条件中断言时，必须使用 `EventuallyWithT` 的 `CollectT`；断言必须写在接收 `CollectT` 的回调内。
+- `assert.Eventually`、`EventuallyWithT` 或 `Never` 只能等待可观测条件，不能替代同步设计。
 - `testify/suite` 禁止作为新测试默认结构。项目统一使用 suite 或稳定共享生命周期确有必要时才可使用；使用 suite 时禁止 `t.Parallel()`。
 
 ## 包与交付
