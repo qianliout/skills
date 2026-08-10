@@ -1,4 +1,4 @@
 interface:
   display_name: "Go"
-  short_description: "Go code entrypoint and layer routing rules"
-  default_prompt: "Use $go as the only Go entrypoint, then read only the layer or feature references required by the task."
+  short_description: "Go 强制总入口与分层路由"
+  default_prompt: "必须先使用 $go，再按任务加载对应 go-* Skill；禁止跳过路由。"

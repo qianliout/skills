@@ -1,51 +1,52 @@
 ---
 name: go
-description: "Go 代码唯一入口和按需规则路由。Use whenever writing, refactoring, reviewing, debugging, testing, or explaining Go code, Go packages, Gin handlers, service/DAL/model layers, GORM queries, OpenAPI JSON, logging, comments, or repository-wide Go conventions. Always start here and load only the reference files required by the task."
+description: "用于编写、重构、评审、排查、测试或解释任何 Go 代码时；必须先加载本 Skill，再按任务层加载对应 go-* Skill。"
 ---
 
 # Go
 
-把这个 Skill 作为全部 Go 任务的唯一入口。先识别任务涉及的层和领域，再读取对应 reference；不要一次性读取全部 Go reference。
+把本 Skill 当作全部 Go 任务的强制总入口。禁止跳过本 Skill 直接凭印象改 Go 代码。本 Skill 不含各层细则；细则只在对应 `go-*` Skill 中。
 
-## Workflow
+## 强制工作流
 
-1. 识别任务类型和范围：实现、重构、评审、排查、测试、解释或生成接口文档。
-1. 读取就近代码：相邻文件、接口、model/param/response、构造函数、调用方、测试和同层实现。
-1. 根据下方路由读取当前任务需要的 reference。跨层任务只组合实际修改或分析到的层。
-1. 遵循项目现有约定；除非用户明确要求，不改变无关业务行为。
-1. 修改 Go 文件后运行 `goimport`；能定位包或测试时运行最小范围的 `go test`，不能运行时说明原因。
+1. 识别任务类型与实际触及的层（实现 / 重构 / 评审 / 排查 / 测试 / 解释 / 单接口 OpenAPI）。
+2. 读取就近代码：相邻文件、接口、构造函数、调用方、测试。
+3. 按下方路由表加载**且仅加载**实际需要的 `go-*` Skill（先读其 `SKILL.md`，再读其 reference）。
+4. 禁止因调用链上存在某层就加载该层。
+5. 修改 Go 文件后必须运行 `goimport`；能定位包或测试时必须跑最小范围 `go test`；不能跑时必须说明原因。未满足不得宣称完成。
 
-## Reference Routing
+## 路由表
 
-- 新增或重构普通 Go 代码、审查可维护性、错误处理、命名和控制流：读取 `references/code-style.md` 和 `references/code-style-conventions.md`。
-- Gin/HTTP handler、请求绑定、响应 DTO、分页和 response helper：读取 `references/api-layer.md` 和 `references/api-layer-conventions.md`。
-- Service 接口、构造注入、业务编排、聚合、缓存和错误包装：读取 `references/service-layer.md` 和 `references/service-layer-conventions.md`。
-- Store、DAL、DAO、GORM、CRUD、分页和数据库查询：读取 `references/query-dal.md` 和 `references/query-dal-conventions.md`。
-- Domain/GORM model、param、response、字段生命周期和序列化：读取 `references/model-hierarchy.md` 和 `references/model-hierarchy-conventions.md`。
-- Logger、错误日志、panic recover、敏感信息和日志边界：读取 `references/logging.md` 和 `references/logging-conventions.md`。
-- Go 注释、doc comment、字段或函数注释：读取 `references/comment-style.md` 和 `references/comment-style-conventions.md`。
-- `_test.go`、testify、mock、table-driven test 和覆盖错误路径：读取 `references/test-writer.md` 和 `references/test-writer-conventions.md`；测试对象属于特定层时再加载该层 reference。
-- Gin OpenAPI、Apifox、`openapi.json` 和接口 schema：读取 `references/gin-openapi-json.md`、`references/gin-openapi-json-conventions.md`、`references/api-layer.md` 和 `references/api-layer-conventions.md`；需要模板时使用 `assets/openapi.json`。
+| 任务信号 | 必须加载 |
+|----------|----------|
+| 控制流、命名、错误处理、依赖注入、receiver、import、可维护性 | `go-code-style` |
+| 注释、doc comment、字段注释 | `go-code-style`（`references/comment-style.md`） |
+| 日志、logger、recover 日志、敏感信息 | `go-code-style`（`references/logging.md`） |
+| Gin/HTTP handler、绑定、响应 DTO、分页响应 | `go-api-layer` |
+| Service 接口/编排/聚合/错误包装 | `go-service-layer` |
+| Store/DAL/DAO/GORM/CRUD/分页查询 | `go-query-dal` |
+| Domain/GORM model、param、response、Serialize/生命周期 | `go-model-hierarchy` |
+| `_test.go`、testify、mock、表驱动 | `go-test-writer` |
+| OpenAPI / Apifox / `openapi.json` / 单接口文档 | `go-gin-openapi-json`；需要对齐 handler 形态时再加 `go-api-layer` |
 
-## Routing Rules
+## 层边界（违规即停）
 
-- 不默认读取任何 reference；只在任务匹配时读取。
-- 不因调用链存在某层就加载该层，只在任务实际修改、评审或解释该层时加载。
-- 不把 reference 当作独立 Skill；`go-*` 拆分 Skill（如 `go-api-layer`、`go-service-layer` 等）是按职责拆分出的独立可安装入口，其 reference 内容与本 Skill 对应文件是各自维护的物理拷贝而非共享文件，修改一处后需要同步另一处，避免内容漂移。
-- 多层任务按职责组合 reference，不把一个层的规则搬到另一层。
+- API 只做 HTTP 适配；禁止在 handler 写复杂业务、聚合、DB/GORM/SQL。
+- Service 只做业务编排；禁止直接访问 DB、GORM、SQL。
+- DAL 只做持久化；禁止承载业务规则。
+- Model 管理字段生命周期、校验、序列化/反序列化、更新字段选择。
+- 日志由拥有业务上下文的 API、Service 或 goroutine 边界记录；DAL 与 Model 默认禁止新增日志。
+- 代码注释必须中文；日志 Msg 必须英文。
 
-## Layer Boundaries
+## 禁止清单
 
-- API 只做 HTTP 适配；复杂业务和聚合放到 Service。
-- Service 只做业务编排和依赖调用；不直接访问 DB、GORM 或 SQL。
-- DAL 只做持久化访问；不承载业务规则。
-- Model 管理字段生命周期、校验、序列化、反序列化和更新字段选择。
-- 日志由拥有业务上下文的 API、Service 或 goroutine 边界记录；DAL 和 Model 默认不新增日志。
-- 代码注释使用中文，日志内容使用英文。
+- 禁止在本 Skill 内维护或粘贴各层细则正文。
+- 禁止读取或恢复 `go/references/` 拷贝。
+- 禁止再使用已删除 Skill：`go-comment-style`、`go-logging`、`gin-openapi-json`。
+- 禁止一次 OpenAPI 生成多个接口；OpenAPI 只能走 `go-gin-openapi-json`。
 
-## Pre-Delivery Checklist
+## 交付门禁
 
-- 只读取了任务需要的 Go reference。
-- API、Service、DAL、Model、Logging 和 Comment 职责没有互相侵入。
-- 修改 Go 文件后已运行 `goimport`。
-- 能运行测试时已运行相关 `go test`；不能运行时已说明原因。
+- 已加载本 Skill 与路由表要求的全部 `go-*`。
+- 层职责未互相侵入。
+- 已运行 `goimport`；能测则已 `go test`，不能则已说明原因。
