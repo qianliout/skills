@@ -56,10 +56,15 @@ Service 的长期依赖必须声明为 struct 字段，经 constructor 显式注
 
 ## 日志与错误包装
 
+- 日志所有权必须遵守 `$go-code-style` 的 `logging.md`：仅拥有最完整业务上下文的层必须记录错误日志。
 - 公有方法输入需要记录时，必须使用安全的 `LogStr()` 摘要，禁止直接记录完整敏感 struct。
-- DAL、service、cache 或 client 调用失败时，日志必须包含操作名与可用的 param/ID 上下文，并保留原始 error。
+- 私有 helper 默认只返回错误，禁止在 helper 内记录已由上层或下游记录的同一 error；上层必须附带当前操作名、业务 ID 与可用 param 摘要记录。
+- 当前 service 作为编排入口且拥有最完整业务上下文时，必须记录 DAL、cache、client 或外部调用失败；日志必须包含稳定英文操作名、原始 error、关键业务 ID 与可用 param 摘要。
+- 调用其他 service 时，若下游 service 已按 `logging.md` 记录完整业务上下文，当前 service 禁止再次记录同一 error；必须包装并向上返回。
+- 调用其他 service 时，若当前 service 追加了下层无法感知的业务上下文（如跨域聚合步骤、组合 param、事务边界），必须由当前 service 记录一次，禁止与下游重复打印同一 error。
+- 禁止在每一层嵌套 service 都对同一失败重复打 Error 日志。
 - 存在项目错误 wrapper 时，必须将底层错误包装为 user/API/service 层错误；禁止把原始低层错误文本直接暴露给调用方。
-- 错误包装不得丢失日志中的原始 error。
+- 错误包装不得丢失可供上层或日志使用的原始 error。
 
 ## 与 DAL、Model 的边界
 
