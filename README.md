@@ -34,7 +34,6 @@ skills/
 ├── code-quality/
 ├── documents/
 ├── frontend-web/
-├── gin-openapi-json/
 ├── go-development/
 ├── manifests/
 ├── operations/
@@ -53,17 +52,16 @@ skills/
 | 分类 | Skill |
 | ---- | ----- |
 | `operations` | `alibabacloud-sysom-diagnosis` |
-| `gin-openapi-json` | `gin-openapi-json` |
 | `architecture-planning` | `architecture-planning` |
 | `code-quality` | `code-quality` |
 | `documents` | `documents` |
-| `go-development` | `go`、`go-api-layer`、`go-code-style`、`go-comment-style`、`go-gin-openapi-json`、`go-logging`、`go-model-hierarchy`、`go-query-dal`、`go-service-layer`、`go-test-writer` |
+| `go-development` | `go`、`go-api-layer`、`go-code-style`、`go-gin-openapi-json`、`go-model-hierarchy`、`go-query-dal`、`go-service-layer`、`go-test-writer` |
 
 说明：
 
-- `go` 是大而全的 Go 入口。
-- `go-*` 是按职责拆分的细粒度 Go Skill，分别覆盖 API、Service、DAL、Model、日志、注释、测试和 Gin OpenAPI JSON。
-- `gin-openapi-json` 是唯一没有分类目录包装的本地入口 Skill，直接位于 `skills/gin-openapi-json/`。
+- `go` 是薄路由总入口，必须先加载。
+- `go-*` 是分层细则；注释与日志在 `go-code-style`。
+- OpenAPI 唯一入口是 `go-gin-openapi-json`（单接口）。
 
 ### manifest 公共 Skill
 
@@ -101,7 +99,7 @@ skills/
 | 系统诊断 | `alibabacloud-sysom-diagnosis`、`systematic-debugging` |
 | 变更规划 | `brainstorming`、`writing-plans`、`architecture-planning` |
 | 并行执行 | `dispatching-parallel-agents`、`subagent-driven-development` |
-| Go 平台开发 | `go`、`go-api-layer`、`go-service-layer`、`go-query-dal`、`go-model-hierarchy`、`go-logging`、`go-test-writer`、`gin-openapi-json`、`go-gin-openapi-json` |
+| Go 平台开发 | `go`、`go-api-layer`、`go-code-style`、`go-gin-openapi-json`、`go-model-hierarchy`、`go-query-dal`、`go-service-layer`、`go-test-writer` |
 | 质量与交付 | `code-quality`、`requesting-code-review`、`receiving-code-review`、`test-driven-development`、`verification-before-completion`、`finishing-a-development-branch` |
 | 文档与知识 | `documents`、`find-skills`、`writing-skills`、`sigma` |
 
@@ -134,7 +132,6 @@ skills/
 - 只同步真正需要的上游 Skill 子目录，不提交完整上游仓库，不使用 git submodule。
 - 公共 Skill 必须保留 `README.md` 说明来源和用途。
 - `skill-creator` 只使用工具内置版本，本仓库不再维护公共版本。
-- `go-development/go` 与同目录 `go-*` Skill 中的同名 reference 文件是物理拷贝，修改其中一份后要同步所有副本。
 
 ## 开发工具约定
 

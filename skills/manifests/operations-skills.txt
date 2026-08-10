@@ -15,14 +15,11 @@ architecture-planning
 go
 go-api-layer
 go-code-style
-go-comment-style
 go-gin-openapi-json
-go-logging
 go-model-hierarchy
 go-query-dal
 go-service-layer
 go-test-writer
-gin-openapi-json
 code-quality
 requesting-code-review
 receiving-code-review
