@@ -90,6 +90,9 @@ param := &model.UpdateXxxAPIParam{
 - `JSONError` 后必须立即 `return`。
 - 成功的空列表必须返回空切片，禁止返回 `nil`。
 - 分页响应必须包含 `items`、`total`、`itemsPerPage` 与 `startIndex`。
+- 单条/详情成功响应必须通过 `response.JSONOK(ctx, response.WithItem(item))` 返回；禁止直接调用 `ctx.JSON`、`c.JSON` 或绕过项目 response helper。
+
+列表响应：
 
 ```go
 items, cnt, err := api.xxxSrv.SearchXxx(ctx, param)
@@ -105,6 +108,18 @@ response.JSONOK(ctx,
     response.WithItemsPerPage(param.Filter.Limit),
     response.WithStartIndex(param.Filter.Offset),
 )
+```
+
+单条响应：
+
+```go
+item, err := api.xxxSrv.GetXxxDetail(ctx, param)
+if err != nil {
+    response.JSONError(ctx, err)
+    return
+}
+
+response.JSONOK(ctx, response.WithItem(item))
 ```
 
 ## handler 复杂度
