@@ -1,6 +1,6 @@
 ---
 name: go-gin-openapi-json
-description: "手动调用：从 Gin 框架 Go 代码为单个接口生成 OpenAPI 3.1.0 JSON 文档。仅在用户明确指定 method+path 或 handler 名时使用。"
+description: "用于用户明确指定单个 Gin 接口并要求生成或刷新 OpenAPI JSON 时。"
 runAs: subagent
 argument-hint: "<method+path|handler-name> [--output <filepath>]"
 ---

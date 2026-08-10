@@ -156,9 +156,12 @@ test -f "$GO_DEV/go-gin-openapi-json/assets/openapi.json" || fail "missing go-gi
 conv_hits="$(find "$GO_DEV" -type f -name '*-conventions.md' | sort)"
 test -z "$conv_hits" || fail "conventions files must be merged away: $conv_hits"
 
-# go-* 不得再嵌入 go/references 指引
-if rg -n 'go/references/' "$GO_DEV" --glob 'SKILL.md' --glob '*.md' >/dev/null; then
-  fail "Go skills must not reference go/references/"
-fi
+# go-* 不得再要求读取或加载已删除的 go/references 副本；禁止性说明可以提及该路径。
+go_reference_guidance="$(
+  rg -n -P '^(?!.*(?:禁止|不得|不要|不可|不应|无需|不再).*go/references/).*(?:读取|加载)(?:(?!\n).)*go/references/' \
+    "$GO_DEV" --glob 'SKILL.md' --glob '*.md' || true
+)"
+test -z "$go_reference_guidance" ||
+  fail "Go skills must not instruct loading go/references/: $go_reference_guidance"
 
 printf 'check passed\n'

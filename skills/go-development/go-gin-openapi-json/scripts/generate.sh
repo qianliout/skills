@@ -94,8 +94,17 @@ fi
 mkdir -p "$(dirname "$OUTPUT")"
 
 # 输出解析后的配置，供调用方读取。
-printf '{\n'
-printf '  "selector":      "%s",\n'  "$SELECTOR"
-printf '  "output":        "%s",\n'  "$OUTPUT"
-printf '  "project_root":  "%s"\n'    "$PROJECT_ROOT"
-printf '}\n'
+python3 -c '
+import json
+import sys
+
+print(json.dumps(
+    {
+        "selector": sys.argv[1],
+        "output": sys.argv[2],
+        "project_root": sys.argv[3],
+    },
+    ensure_ascii=False,
+    indent=2,
+))
+' "$SELECTOR" "$OUTPUT" "$PROJECT_ROOT"
