@@ -3,3 +3,4 @@ debug-*.md
 .DS_Store
 skills/.DS_Store
 .worktrees/
+.superpowers/
