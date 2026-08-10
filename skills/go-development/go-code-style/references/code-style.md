@@ -1,43 +1,97 @@
-# Go Code Style
+# Go 通用代码风格硬约束
 
-Go 代码优先简单、清晰、可维护。主流程尽量左对齐，错误和边界条件优先返回；不到万不得已不要使用 `if-else` 或 `else if`，优先 guard clause 或 `switch`。
+本文件规定 Go 通用代码风格。必须保持业务行为和层职责不变；API 只适配 HTTP，Service 只编排业务，DAL 只访问持久化，Model 只管理字段生命周期。注释规则必须读取 `comment-style.md`，日志规则必须读取 `logging.md`。
 
-## Workflow
+## 控制流
 
-1. 识别代码意图：职责、输入输出、错误语义、已有项目风格、触发的 Go reference，以及是否允许改变业务逻辑。
-2. 加载 `references/code-style-conventions.md`；除非用户明确要求，不改变业务行为。
-3. 优化控制流：错误、空值、权限、非法状态使用 early return；复杂条件优先抽语义变量，只有明显降低阅读成本时才抽 helper。
-4. 优化职责归属：行为优先挂到拥有状态或职责的 struct pointer receiver；除真正通用 `utils` 外，少写无归属包级函数。
-5. 平衡函数粒度：主流程保留 3-7 个同抽象层级业务步骤；只在复用、稳定语义、隔离副作用、复杂分支或明显改善阅读时拆 helper。
-6. 审核防御分支：只在输入边界、外部系统、真实 panic 风险、明确允许 nil/zero 的 public contract 或 model nil receiver 生命周期方法里新增防御检查。
-7. 收敛领域生命周期：规整逻辑归属到拥有字段的 `Serialize()`；`Serialize()`、`Deserialize()`、`ToUpdater()`、`Check()`、`Same()` 不互相调用。
-8. 应用项目硬约束：指针接收者、receiver 命名、`int64` 默认数值类型、毫秒级时间戳、JSON tag 不写 `omitempty`、slice/map 返回前初始化、I/O 传递上游 `ctx`、业务函数入参 `ctx + param` 且返回值 `error` 或 `res + error`（工具函数除外）、新 goroutine 必须 recover。
-9. 修改 Go 文件后运行 `goimport`；能运行时执行相关 `go test`。
+- 必须对非法输入、空值、权限失败和错误使用 early return，使成功主流程左对齐。
+- 禁止使用无必要的 `if-else`、`else if` 和嵌套分支；单值多状态必须使用 `switch`。
+- 仅当两个分支都必须进入同一后续步骤，且 early return 或 `switch` 更难读时，才允许保留 `else`。
+- 复杂布尔条件必须先抽为具名局部变量；仅当表达式复用、代表稳定业务概念或显著改善调用点可读性时，才允许抽 helper。
 
-## Shared Rules
+## 函数形态与职责
 
-- 多层同时涉及时，按 API 适配 HTTP、service 编排业务、DAL 访问持久化、model 管理字段生命周期、logging 管理日志边界来组合。
-- 长期依赖必须通过构造函数或明确字段注入；业务方法内不临时创建 service、DAL、client、cache、logger，也不能用 nil 依赖跳过业务逻辑。
-- 所有方法使用指针接收者；同一个 struct 的接收者形式和变量名必须一致。常用命名：service=`s`、DAL=`dal`、API=`api`、名字含 Param 的 model 类型=`p`、其他 model 对象=`vi`。
-- 除工具函数外，业务函数/方法的入参只能是 `ctx + param`，返回值只能是 `error` 或 `res, error`；不要用一长串位置参数，也不要返回约定之外的多余值。已有多参数/多返回值函数默认保留，不主动改造；超出该形状的新签名必须先征得用户确认。分层 Skill 已规定的标准签名除外：store 层 `UpdateXxx(ctx, id, data)` 是三个入参，`SearchXxx(ctx, param)` 返回 `(res, count, error)` 三个返回值；框架强制签名和构造函数同样除外。
-- 常量统一放到项目定义的 `consts` 目录；不要散落在 model、API、service、DAL、helper 或函数体中。
-- 字段、参数、返回值和层间传递默认使用 `int64`；只有外部协议、第三方库、明确性能/存储边界或既有兼容约束需要时才使用其它数值类型。
-- 新表或新功能的时间字段统一使用毫秒级 `int64` 时间戳。
-- 任何 JSON tag 都不能写 `omitempty`。
+- 一个函数必须处于同一抽象层级。主流程应包含 3 至 7 个有序业务步骤；步骤过多必须按真实子任务拆分，步骤很少时必须保持内联。
+- 仅在复用、稳定业务语义、隔离副作用、复杂分支、跨领域聚合或显著改善主流程可读性时拆分 helper。
+- 禁止新增仅转发参数、仅含一两行显然赋值/判空/转换、仅隐藏单个条件、单调用点且无稳定语义或副作用边界的薄包装。
+- 禁止创建 `processData`、`handleResult`、`buildInfo`、`prepareData`、`doCreate`、`checkData` 等模糊 helper；禁止形成无业务决策的 helper 链。
+- 短小本地操作必须内联或使用具名局部变量。既有薄包装可为兼容保留，但禁止复制该模式。
+- 归属明确的行为必须使用所属 struct 的指针接收者；除真正通用的 `utils` 外，禁止新增无所有者的包级业务函数。
 
-## Reference Loading
+## 入参与返回值
 
-生成、重构或评审 Go 代码风格时，必须加载 `references/code-style-conventions.md`。
+- 新增带请求上下文的业务函数/方法必须使用 `ctx context.Context` 与一个具名 `param` 指针；`ctx` 必须位于首位。
+- 新增业务函数/方法只能返回 `error` 或一个结果加 `error`。工具函数可按清晰度使用普通参数；receiver 不计入入参数量。
+- 禁止新增多个位置业务参数或额外返回值；必须将调用字段放入具名 param/request struct。
+- 既有多参数、多返回值函数必须保留，除非用户明确要求重构。新增超出上述形态的签名必须先取得用户明确确认。
+- 以下例外不需逐次确认：既有分层标准签名、框架/接口强制签名、生成适配器、构造函数与依赖装配。DAL 的 `UpdateXxx(ctx, id, data)`、`CreateXxx(ctx, data)`、`DeleteXxx(ctx, id)` 与返回 `(list, count, error)` 的 `SearchXxx(ctx, param)` 属于分层标准签名。
+- 返回业务调用、I/O、DAL/Service/Client 调用、复杂构造/转换、链式调用、错误包装或调试价值高的结果前，必须赋给局部变量并处理后返回。
+- 仅字面量、常量、字段访问、`nil`、`err`、布尔值、简单零值、`fmt.Errorf`、`errors.New` 与稳定适配器值允许直接返回。
+- `(value, error)` 调用必须拆开：先接收、处理 `err`，再返回结果。
 
-## Pre-Delivery Checklist
+## 防御检查与依赖
 
-- [ ] 已结合当前任务触发的 Go reference；职责没有跨层侵入。
-- [ ] 控制流左对齐：错误、空值、权限和非法状态优先返回；没有不必要的 `if-else` / `else if`。
-- [ ] 函数职责清晰，主流程保持同一抽象层级；没有薄 helper 链或无归属裸函数。
-- [ ] 业务函数入参为 `ctx + param`、返回值 `error` 或 `res + error`（工具函数与既有例外除外）；未擅自新增超宽签名；未无故改写已有多参数/多返回值函数。
-- [ ] 新增 helper 和防御检查都有明确必要性；没有用静默降级掩盖内部错误。
-- [ ] 长期依赖由构造、初始化或启动阶段保证；业务方法内没有依赖 nil 跳过逻辑。
-- [ ] 所有方法使用一致的指针接收者和层级 receiver 命名。
-- [ ] 领域规整归属到拥有字段的 `Serialize()`；生命周期方法不互相调用。
-- [ ] 常量、时间字段、JSON tag、数值类型、slice/map 返回值、ctx、goroutine recovery、import 均符合 reference 规则。
-- [ ] Go 文件已运行 `goimport`；能运行测试时已运行相关 `go test`。
+- 仅允许在请求边界、外部系统边界、真实 panic 风险、明确接受 nil/零值/空值或 `(nil, nil)` 的公开契约、允许 nil receiver 的 Model 生命周期方法、goroutine 恢复与清理路径添加防御检查。
+- 防御检查必须紧邻引入不确定性的边界；值通过验证或构造后，下游必须信任契约。
+- 禁止对已由 `Check()` 或边界校验通过的字段重复校验，禁止检查本函数刚 `make`、字面量创建或保证可用的构造结果。
+- 禁止对 `err == nil` 时保证可用的 `(value, error)` 结果重复判空，除非该函数明确允许 `(nil, nil)`。
+- 禁止把初始化后的空 slice/map 改为 nil，禁止为调用方可处理的空结果增设特殊分支，禁止对不可能内部状态静默降级。
+- 长期依赖必须通过构造函数、初始化或启动阶段注入并保证非 nil；字段、构造参数和启动调用点必须同步更新，字段与构造参数顺序必须一致。
+- struct 字段只能存放长期协作者；业务方法只能创建请求级对象。
+- 禁止在业务方法临时创建 Service、DAL、Client、Cache、Logger 或同类长期依赖；禁止因注入依赖为 nil 而跳过验证、写入、缓存维护、日志或返回成功。必须修复装配或启动校验。
+- 常见依赖字段顺序必须为持久化、跨领域服务、基础设施/缓存/Client、配置或小 helper、Logger。
+
+## 领域生命周期方法
+
+- trim、默认值、规范化、ID 修正、派生字段、查询/更新字段准备必须归属字段所有者的公有 `Serialize()`；禁止创建 `Normalize()`、`FillDefault()`、同职责私有 helper 或包级函数。
+- 已有 `Serialize()` 或 `Deserialize()` 时，禁止新增职责重叠的别名、包装、迁移 shim 或小写变体。
+- 生命周期方法必须使用固定签名：`Serialize() *Xxx`、`Deserialize() *Xxx`、`ToUpdater() map[string]any`、`Check() error`、`Same(after *Xxx) bool`。
+- `Serialize()` 与 `Deserialize()` 必须修改并返回 receiver；nil receiver 时必须新建对象返回，非 nil 时必须返回原 receiver。调用方必须接收返回值。
+- `ToUpdater()` 必须返回已初始化的 `map[string]any`；`Check()` 只校验，禁止 trim、默认、派生或填充。
+- `Serialize()`、`Deserialize()`、`ToUpdater()`、`Check()`、`Same()` 禁止互相调用；组合顺序必须由调用方决定。
+- 单个生命周期方法必须在本方法完成其职责；禁止为同一 struct 拆私有规范化、校验、比较或 updater helper。框架/接口适配方法按其强制签名执行。
+
+## 接收者、命名与声明
+
+- 所有方法必须使用指针接收者；同一 struct 禁止混用值接收者与指针接收者，必须统一 receiver 名称。
+- receiver 命名必须固定：Service 用 `s`，DAL 用 `dal`，API 用 `api`，名称含 `Param` 的 Model 用 `p`，其他 Model 用 `vi`。
+- 类型、函数、接口和局部变量必须表达业务职责；公共方法不得把当前调用者、租户或场景编码入名称，必须通过 typed param 的筛选字段表达。
+- 只有行为确实不同、稳定且无法表示为筛选或命令字段时，才允许专用方法名。
+- 禁止在非极小作用域使用 `data`、`tmp`、`obj`、`res` 等宽泛名称；短生命周期变量允许使用 `res`、`ans`、`input`、`output`、`cnt`。
+- 禁止冗余 `Is` 前缀、过长局部变量名、与函数/receiver/type/package 重复的名称，以及 `max`、`min`、`len`、`cap`、`error`、`slices`、`maps`、`strings` 等内建或常用包名。
+- `ID`、`URL`、`HTTP`、`JSON` 等缩写必须保持一致。
+- 必须优先声明即初始化；仅在故意声明 nil 指针/接口、跨分支累积零值或扩大作用域能提升清晰度时使用 `var`。
+
+## 类型、集合、常量与数据字段
+
+- 函数输入输出必须使用已定义 struct 或具体类型；数据形态稳定时必须定义 struct。
+- 输出通常不得超过三个值；超过时必须使用具名结果 struct，既有本地约定除外。
+- 调用参数只能是变量、常量、字面量或简单字段/索引访问；禁止直接传入另一个函数/方法调用结果，必须先赋给具名局部变量。
+- 返回 slice/map 前必须初始化；所有返回路径，包括错误路径，必须返回非 nil slice/map。
+- 字段、参数、返回值、计数、分页、ID、时间戳与层间数值默认使用 `int64`。仅外部协议、第三方签名、字节数据、已证明的性能/存储需求或兼容约束允许其他数值类型。
+- 禁止仅因范围小使用 `int`、`int32`、`uint`、`uint64` 等，禁止仅为旧实现兼容保留非 `int64`，除非外部契约或迁移风险要求。
+- 禁止为普通业务数据使用 `any`、`interface{}`、`map[string]any`；`ToUpdater()`、泛型 helper、原始 JSON、日志字段与第三方边界除外，进入业务域后必须尽快转为强类型。
+- 仅调用方确实按行为变化时才允许小行为接口。
+- 常量必须统一放入项目定义的 `consts` 目录，按业务职责组织；禁止在 Model、API、Service、DAL、Helper、Handler 或函数体定义常量。重复魔法值必须使用具名常量。
+- 新表和新功能的所有时间字段必须使用毫秒 `int64`，数据库、模型、参数、响应、前后端载荷、Service、DAL、缓存与序列化必须保持单位一致。当前时间必须使用 `time.Now().UTC().UnixMilli()`；禁止擅自迁移既有时间单位。
+- JSON tag 禁止使用 `omitempty`；必须以显式零值维持契约。
+
+## 文件、格式化与并发
+
+- 文件必须按类型组、职责、路由组、方法族或既有本地约定拆分；禁止单文件承担过多职责，也禁止仅为行数拆成碎片文件。
+- 非 Model 的公共 struct 可放入统一 `structs` 目录；Model 语义、参数校验、序列化或数据库映射必须保留在 Model 层。
+- 过长函数调用、链式调用、struct 字面量、slice/map 与复杂条件必须在自然边界换行；禁止挤成难读单行。
+- I/O、DB、Cache、RPC、Queue 与长任务必须传递上游 `ctx`；禁止在请求或任务流中替换为 `context.Background()`。
+- 仅为新增 timeout/cancel 范围时创建 child context，且必须调用 `cancel`。
+- goroutine 必须有退出条件、ctx 取消、受限工作量或明确生命周期；必须 `recover`，并将 panic 与 stack 记录到项目可观测错误路径。
+- 共享可变状态必须遵循项目既有同步方式。
+- import 必须使用分组语法，即使仅一个 import；修改 Go 文件后必须运行 `goimport`。
+- 必须先执行最小范围 `go test`；变更行为或共享代码时必须扩大范围。因依赖或环境无法测试时，必须明确报告原因。
+
+## 错误处理
+
+- 错误必须立即返回，除非存在明确恢复路径。
+- 必须按项目约定包装或转换错误；日志或错误包装必须包含有用上下文，且不得泄露敏感值。
+- 次要清理或维护错误被故意忽略时，必须明确说明原因。
+- 项目使用标准错误包装时，比较包装错误必须使用 `errors.Is` 或 `errors.As`。
+- 禁止将注入依赖为 nil 视为可恢复运行时状态；禁止以判空分支隐藏装配错误。

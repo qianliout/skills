@@ -1,4 +1,0 @@
-interface:
-  display_name: "Go Logging"
-  short_description: "Go 日志边界、字段与敏感信息规则"
-  default_prompt: "Use $go-logging to review these logs for ownership, signal, and sensitive data."

@@ -1,4 +1,4 @@
 interface:
   display_name: "Go Code Style"
-  short_description: "Go 通用风格、控制流与维护性约定"
-  default_prompt: "Use $go-code-style to refactor this Go code for clearer control flow and maintainability."
+  short_description: "Go 风格、注释与日志硬约束"
+  default_prompt: "使用 $go-code-style，按任务读取 code-style / comment-style / logging reference，严格执行禁止清单。"

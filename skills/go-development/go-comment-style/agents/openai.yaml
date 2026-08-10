@@ -1,4 +1,0 @@
-interface:
-  display_name: "Go Comment Style"
-  short_description: "Go 中文注释与字段注释规范"
-  default_prompt: "Use $go-comment-style to clean up these Go comments without losing important constraints."
