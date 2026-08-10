@@ -41,7 +41,7 @@ description: "用于编写、重构、评审、排查、测试或解释任何 Go
 ## 禁止清单
 
 - 禁止在本 Skill 内维护或粘贴各层细则正文。
-- 禁止读取或恢复 `go/references/` 拷贝。
+- 禁止在本 Skill 下恢复已删除的各层细则副本。
 - 禁止再使用已删除 Skill：`go-comment-style`、`go-logging`、`gin-openapi-json`。
 - 禁止一次 OpenAPI 生成多个接口；OpenAPI 只能走 `go-gin-openapi-json`。
 
