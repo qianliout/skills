@@ -18,6 +18,7 @@ description: "Go 通用代码风格 Skill。Use when writing, refactoring, revie
 ## Core Boundaries
 
 - 主流程尽量左对齐；错误、空值、权限和非法状态优先 early return。
+- 新业务函数/方法入参默认 `ctx + param`；已有多参数函数默认保留；超宽新签名需用户确认。
 - 依赖通过构造函数、初始化或启动阶段保证；业务方法内不临时创建长期依赖，也不用 nil 依赖跳过业务逻辑。
 - 所有方法使用一致的指针接收者；同一 struct 的 receiver 名称保持一致。
 - 代码注释用中文，日志内容用英文。
@@ -25,6 +26,6 @@ description: "Go 通用代码风格 Skill。Use when writing, refactoring, revie
 ## Pre-Delivery Checklist
 
 - 已读取本 Skill 的两个 reference。
-- 控制流、命名、receiver、错误处理、依赖注入和 import 符合 reference。
+- 控制流、命名、receiver、错误处理、依赖注入、函数入参形状和 import 符合 reference。
 - 没有改变无关业务行为或把某层职责搬到另一层。
 - 修改 Go 文件后已运行 `goimport`；能运行时已执行相关 `go test`。

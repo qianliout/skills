@@ -91,6 +91,7 @@ Rules:
 - `Create` has exactly two inputs: `ctx` and the data model pointer.
 - Do not add query methods named `FindXxx` or `GetXxx`; use `SearchXxx(ctx, param)` even for narrow filters or single-record expectations.
 - Do not create method variants for caller or ownership scenarios, such as `SearchXxxForUser`, `SearchXxxForProject`, `UpdateXxxForUser`, or `UpdateXxxForProject`. Use `SearchXxx(ctx, param)` with typed filter fields, or the standard update signature with validated data, unless the behavior is a genuinely different persistence operation.
+- These CRUD shapes are the pre-approved DAL exceptions to the general code-style `ctx + param` rule. Do not invent additional multi-parameter DAL methods without user confirmation. Preserve existing non-standard signatures unless the user asks to reshape them.
 
 ## Param Location Rule
 

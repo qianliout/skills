@@ -23,7 +23,7 @@ A service file contains:
 - A concrete implementation named `XxxSrv` or the local project convention.
 - A constructor `NewXxxSrv(...) *XxxSrv`.
 - Injected dependencies: DAL interfaces, other services, cache handles, logger, small in-memory state.
-- Public methods that receive `ctx context.Context`.
+- Public methods that receive `ctx context.Context`. Business method inputs are `ctx + param` and outputs are `error` or `(res, error)`, per code-style `Function Parameters`; keep existing multi-parameter/multi-return methods unless the user asks to reshape them. The paginated `SearchXxx` with total count keeps its established `(res, count, error)` return; only store/DAL `UpdateXxx(ctx, id, data)` and `SearchXxx(ctx, param)` three-value shapes are pre-approved exceptions to the general rule.
 - Private helper methods for domain-specific aggregation.
 
 Service does not talk to the database directly. Persistence goes through DAL interfaces or established repository abstractions.

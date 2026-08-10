@@ -12,7 +12,7 @@ description: "Go DAL/DAO/GORM 查询层 Skill。Use when writing, refactoring, r
 1. 确认 DAL 边界、主要实体 model、param、目标表、依赖 DAO/client 和方法类型。
 2. 读取 `references/query-dal.md` 和 `references/query-dal-conventions.md`。
 3. 涉及 model、service、logging、code style 或测试时，再按需使用对应 Go 分类 Skill。
-4. 定义窄接口和 DAO 实现；公开方法第一个参数为 `ctx context.Context`，receiver 统一为 `dal`。
+4. 定义窄接口和 DAO 实现；公开方法遵循本层标准签名（`Create/Search`=`ctx+data/param`，`Update`=`ctx+id+data`，`Delete`=`ctx+id`），receiver 统一为 `dal`。
 5. 每个 DB 方法创建 timeout context，使用 `WithContext(cancelCtx)`，表名来自主要 model 的 `TableName()`。
 6. 修改 Go 文件后运行 `goimport`；能定位包或测试时运行最小范围 `go test`。
 

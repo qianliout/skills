@@ -6,7 +6,7 @@ DAL 代码放在 `store` 目录/package，只编排持久化访问。一个 DAL 
 
 1. 确认 DAL 边界：`store` 目录/package、主要实体 model、model 层 param、目标表名、依赖 DAO/client、方法类型。
 2. 加载 `references/query-dal-conventions.md`；同时遵循当前任务触发的 `references/code-style.md`、`references/model-hierarchy.md`、`references/logging.md`。
-3. 定义接口和实现：公开方法第一个参数为 `ctx context.Context`；字段和构造参数按 DB、依赖 DAO/client、logger 顺序；实现 receiver 统一为 `dal`。
+3. 定义接口和实现：公开方法遵循本层标准签名（`Create/Search` 为 `ctx + data/param`，`Update` 为 `ctx + id + data`，`Delete` 为 `ctx + id`）；新的超宽签名需用户确认；字段和构造参数按 DB、依赖 DAO/client、logger 顺序；实现 receiver 统一为 `dal`。
 4. 处理 param/data：带领域方法的 param/data 使用指针类型；写入或查询前按需要执行 `Serialize()` / `Check()`。
 5. 建立 DB 链路：每个 DB 方法创建 timeout context，并使用 `WithContext(cancelCtx)`；表名来自主要 model 的 `TableName()`。
 6. 查询流程：初始化空结果切片；先业务过滤，再 `Count`，再 `AddFilter`，最后 `Find` 和 `Deserialize()`。

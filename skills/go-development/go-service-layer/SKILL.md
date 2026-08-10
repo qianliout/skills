@@ -13,7 +13,7 @@ description: "Go Service 层 Skill。Use when writing, refactoring, reviewing, d
 2. 读取 `references/service-layer.md` 和 `references/service-layer-conventions.md`。
 3. 涉及 model、DAL、logging、code style 或测试时，再按需使用对应 Go 分类 Skill。
 4. 同步 interface、struct、constructor；依赖按项目约定显式注入。
-5. 实现公开方法：`ctx context.Context` 优先，资源/动作级方法名，按需要执行 `Serialize()` / `Check()`，再编排依赖。
+5. 实现公开方法：签名固定 `ctx + param`（工具函数除外），返回值 `error` 或 `res + error`，资源/动作级方法名，按需要执行 `Serialize()` / `Check()`，再编排依赖；已有多参数方法默认保留。
 6. 修改 Go 文件后运行 `goimport`；能定位包或测试时运行最小范围 `go test`。
 
 ## Layer Boundaries

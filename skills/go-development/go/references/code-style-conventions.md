@@ -7,6 +7,7 @@ Use this reference when generating, refactoring, or reviewing general Go code st
 - [Reference Alignment](#reference-alignment)
 - [Control Flow](#control-flow)
 - [Function Shape](#function-shape)
+- [Function Parameters](#function-parameters)
 - [Thin Wrapper Ban](#thin-wrapper-ban)
 - [Defensive Check Boundary](#defensive-check-boundary)
 - [Domain Method Shape](#domain-method-shape)
@@ -101,6 +102,54 @@ Balance function granularity with these rules:
 - Do not split when the helper name is vague, the body is only one or two obvious lines, the helper only forwards arguments, or the reader must jump through several helpers to understand one simple operation.
 - Prefer semantic local variables before helpers for small expressions and one-off transformations.
 - Avoid "helper chains" where `A()` only calls `B()`, `B()` only calls `C()`, and each layer adds no business decision.
+
+## Function Parameters
+
+Default signature for business functions and methods with request-scoped inputs:
+
+```go
+func (s *XxxSrv) DoXxx(ctx context.Context, param *XxxParam) (*XxxResult, error)
+```
+
+Rules:
+
+- Business functions and methods take exactly two inputs: `ctx context.Context` and one typed `param` (or equivalent request/data struct pointer) that carries all call fields. Pure utility/helper functions are exempt and may take plain values when that is clearer.
+- Business function and method outputs are exactly `error`, or one result plus `error` such as `(res, error)`. Do not add extra return values beyond that shape.
+- The method receiver does not count toward that budget.
+- Do not grow signatures with multiple positional business arguments such as `service`, `tail`, `previous`, `sinceSeconds`. Put those fields on a named param/request struct.
+- When the call involves I/O, cancellation, deadlines, or request tracing, `ctx` is required and should be the first parameter.
+- Pure local helpers with no I/O may omit `ctx` and take a single value or param when that is clearer; still avoid long positional lists.
+- **Preserve existing multi-parameter functions.** Do not reshape them to `ctx + param` unless the user explicitly asks for that refactor.
+- **New** functions that need more than `ctx + param` (or returns beyond `error` / `(res, error)`) require **explicit user confirmation** before implementation. Propose the exception reason and wait; do not silently invent a wider signature.
+
+Pre-approved exceptions that do not need per-call confirmation:
+
+- Layer-standard signatures already defined by other Go skills, and the only pre-approved multi-input/multi-return business shapes:
+  - store/DAL `UpdateXxx(ctx, id, data)` takes three inputs: `ctx`, primary key ID, and model data.
+  - store/DAL `SearchXxx(ctx, param)` returns three outputs: result slice, total count, error, such as `([]*model.Xxx, int64, error)`.
+  - store/DAL `CreateXxx(ctx, data)` and `DeleteXxx(ctx, id)` keep their standard two-input shapes.
+- Framework or interface-required signatures, such as Gin handlers, GORM hooks, `http.Handler`, and generated adapters.
+- Constructors and dependency wiring such as `NewXxx(...)`.
+
+Good:
+
+```go
+func (s *LogsFeature) pullPodLogs(ctx context.Context, param *pullPodLogsParam) (
+	currentLines, previousLines, notes []string, err error,
+)
+```
+
+Avoid for new code:
+
+```go
+func (s *LogsFeature) pullPodLogs(
+	ctx context.Context,
+	service string,
+	tail int64,
+	previous bool,
+	sinceSeconds int64,
+) (currentLines, previousLines, notes []string, err error)
+```
 
 ## Thin Wrapper Ban
 
@@ -366,7 +415,8 @@ return db.Updates(updater).Error
 ## Types And Interfaces
 
 - Function inputs and outputs should prefer defined structs or concrete types.
-- Function inputs and outputs should each usually stay within 3 values. If a signature needs more, prefer a named param struct, result struct, or option pattern.
+- For new business functions and methods, prefer the `ctx + param` input shape described in [Function Parameters](#function-parameters). Do not invent long positional parameter lists.
+- Function outputs should each usually stay within 3 values. If a result needs more, prefer a named result struct.
 - Function and method call arguments should be variables, constants, literals, or simple field/index access. Do not pass another function or method call result directly as an argument; assign it to a meaningful local variable first so the value can be named, inspected, and debugged.
 - Slice/map return values must be non-nil by contract. This includes error paths such as `(items, 0, err)` instead of `(nil, 0, err)` when `items` is a slice return value.
 - Prefer plain primitive fields and params such as `string` and `int64`.
