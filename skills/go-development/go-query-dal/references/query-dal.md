@@ -18,7 +18,7 @@ DAL 只负责持久化访问。禁止承载业务规则、跨资源业务聚合�
 
 ## 方法签名与命名
 
-- 公开 CRUD 方法必须使用下列签名：
+- 新增公开 CRUD 方法必须使用下列签名：
 
 ```go
 CreateXxx(ctx context.Context, data *model.Xxx) error
@@ -27,12 +27,12 @@ UpdateXxx(ctx context.Context, id int64, data *model.Xxx) error
 DeleteXxx(ctx context.Context, id int64) error
 ```
 
-- `SearchXxx` 必须只有 `ctx` 与指针 `param` 两个输入，且必须返回结果 slice、总数、error 三个输出。
-- `CreateXxx` 必须只有 `ctx` 与 data model 指针两个输入。
-- `UpdateXxx` 必须只有 `ctx`、主键 ID、data model 指针三个输入。
-- `DeleteXxx` 必须只有 `ctx` 与主键 ID 两个输入。
+- 新增 `SearchXxx` 必须只有 `ctx` 与指针 `param` 两个输入，且必须返回结果 slice、总数、error 三个输出。
+- 新增 `CreateXxx` 必须只有 `ctx` 与 data model 指针两个输入。
+- 新增 `UpdateXxx` 必须只有 `ctx`、主键 ID、data model 指针三个输入。
+- 新增 `DeleteXxx` 必须只有 `ctx` 与主键 ID 两个输入。
 - 查询方法必须命名为 `SearchXxx`。禁止新增 `FindXxx`、`GetXxx`、`SearchXxxForUser`、`SearchXxxForProject`、`UpdateXxxForUser`、`UpdateXxxForProject` 等调用方、所有者、租户或项目场景化方法。
-- 调用方、所有者、租户、项目、状态、权限过滤必须写入 typed model param。既有非标准公开签名必须原样保留，除非用户要求改形。
+- 调用方、所有者、租户、项目、状态、权限过滤必须写入 typed model param。既有非标准公开签名必须原样保留；只有用户明确要求时才能改形。
 - 带 `Serialize()`、`Check()` 等领域方法的 param 与 data 必须使用指针类型。
 - 查询字段必须按被过滤的 model 或关联 model 命名。跨 model 查询禁止使用含义不明的 `ID`、`Type`、`Name`、`Keyword`；必须使用 `ProjectID`、`UserID`、`PolicyID`、`RelatedName` 等语义字段。单一明确 model 的字段可使用 `Status` 等直接名称。
 
@@ -54,9 +54,10 @@ defer cancelFunc()
 
 ## 数据生命周期与查询
 
-- DAL 必须调用 model/param 提供的 `Serialize()`、`Check()`、`Deserialize()`、`ToUpdater()`、`TableName()`；禁止在 DAL 重复 trim、ID 归一化、默认值、派生查询字段、lowercase、字段清洗或领域校验。
+- DAL 只能调用当前 CRUD 操作需要的 model/param 生命周期方法：`CreateXxx` 调用 `Serialize()`、`Check()`、`TableName()`；`SearchXxx` 调用 param 的 `Serialize()`、`Check()`、主要 model 的 `TableName()`，并对每条结果调用 `Deserialize()`；`UpdateXxx` 调用 `Serialize()`、`Check()`、`ToUpdater()`、`TableName()`；`DeleteXxx` 只调用 `TableName()`。不得要求每个 DAL 方法调用全部生命周期方法。
+- 禁止在 DAL 重复 trim、ID 归一化、默认值、派生查询字段、lowercase、字段清洗或领域校验。
 - `SearchXxx` 必须先执行 `param = param.Serialize()`，再执行 `param.Check()`，再创建查询条件。
-- `SearchXxx` 必须在校验前初始化空结果 slice；所有返回路径必须返回初始化后的空 slice，禁止返回 nil slice。
+- `SearchXxx` 必须在校验前初始化结果 slice。成功返回时 slice 必须非 nil；无记录时返回空 slice。参数校验或查询出错时必须返回该初始化空 slice，禁止返回 nil slice。
 - 参数归一化必须由所属 param 的公开 `Serialize()` 完成。禁止在 DAL 定义 `Normalize()`、`FillDefault()`、lowercase 方法或 `NormalizeSearchXxxParam` 等 package helper。
 - `SearchXxx` 必须在同一方法内按下列顺序完成：建表、追加查询条件、`Count`、`model.AddFilter(db, param.Filter)`、`Find`、逐行 `Deserialize()`、返回结果。
 - `Count` 前必须完成全部查询条件；`AddFilter` 必须在 `Count` 后调用。
@@ -64,6 +65,7 @@ defer cancelFunc()
 - `Where` 必须只在 param 字段非零时追加。零值表示查询全部或特殊语义时，必须在该分支写短注释。
 - 调用方排序与分页必须只经 model 层 `AddFilter(db, param.Filter)` 进入查询。DAL 禁止自行选择默认排序，禁止直接调用 `Order`、`Limit`、`Offset`，禁止定义替代 `AddFilter` 的本地 helper。
 - 既有 param 使用 `Filed` 拼写时必须保留该拼写。
+- `param.Filed` 非空时必须执行 `db = db.Select(param.Filed)`，再继续 `Count` 与 `Find`；不得忽略字段投影。
 - 状态字段必须使用字符串 `"true"`/`"false"`，禁止改为 `bool`。
 
 ## 跨表与 SQL 约束

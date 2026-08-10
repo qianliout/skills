@@ -7,3 +7,5 @@
 - DAL 规则明确禁止业务决策、跨资源业务聚合与业务日志。
 - `test ! -f .../query-dal-conventions.md` 及 soft wording 扫描通过。
 - `bash scripts/check.sh` 未通过：现存 `skills/gin-openapi-json` 违反仓库全局收敛门禁，与本任务改动无关。
+- 已恢复 `param.Filed` 的 `db.Select(param.Filed)` 投影规则。
+- 已按 CRUD 明确生命周期方法、slice 返回规则与新增/既有公开签名边界。
