@@ -1,31 +1,28 @@
 ---
 name: go-model-hierarchy
-description: "Go Model/Param/Response 层级 Skill。Use when writing, refactoring, reviewing, debugging, or explaining Go domain models, GORM models, params, responses/views, validation, serialization, deserialization, ToUpdater, field lifecycle, tags, and model ownership."
+description: "用于编写、重构、评审、排查或解释 Go domain/GORM model、param、response、校验或字段生命周期时。"
 ---
 
 # Go Model Hierarchy
 
-用于 Go model、param、response/view、cache/statistic 和字段生命周期任务。Model 层负责字段契约、校验、序列化、反序列化、派生字段和更新字段选择。
+Model 层拥有字段契约与生命周期。禁止把 HTTP 适配或 DB 会话管理塞进 model。
 
-## Workflow
+## 强制工作流
 
-1. 先识别模型职责：实体、param、response/view、cache/statistic 或辅助值对象。
-2. 读取 `references/model-hierarchy.md` 和 `references/model-hierarchy-conventions.md`。
-3. 涉及 code style、comment、logging、DAL/service/API 或测试时，再按需使用对应 Go 分类 Skill。
-4. 先给模型树，再写 struct；实体优先，param/view/cache/statistic 跟随所属实体或业务域。
-5. 定义字段契约、tag、时间和数值类型；复杂结构优先文本列配合 `Serialize()` / `Deserialize()`。
-6. 修改 Go 文件后运行 `goimport`；能定位包或测试时运行最小范围 `go test`。
+1. 必须先经 `$go`。
+1. 必须读 `references/model-hierarchy.md`。
+1. 触及注释/风格/DAL/service/API/测试时必须加载对应 `go-*`。
+1. 先定模型树再写 struct；`Serialize`/`Deserialize`/`ToUpdater`/`Check`/`Same` 禁止互相调用。
+1. 修改后必须 `goimport`；能测必须 `go test`。
 
-## Layer Boundaries
+## 禁止清单
 
-- 领域规整统一归属到拥有字段的公有 `Serialize()`。
-- `Serialize()` / `Deserialize()` / `ToUpdater()` / `Check()` / `Same()` 不互相调用，组合顺序由外部决定。
-- Model 层不依赖 API、service、DAL 等业务层。
-- 常量统一放到项目定义的 `consts` 目录，不散落在 model 文件中。
+- 禁止 JSON tag `omitempty`。
+- 禁止生命周期方法互相调用。
+- 禁止在 model 默认路径打业务日志。
 
-## Pre-Delivery Checklist
+## 交付门禁
 
-- 已读取本 Skill 的两个 reference。
-- 模型层级、字段生命周期、tag、时间/数值类型和复杂结构存储策略清楚。
-- Param、校验、序列化、反序列化、派生字段和更新字段选择都归属正确。
-- 修改 Go 文件后已运行 `goimport`；能运行时已执行相关 `go test`。
+- 已读 model-hierarchy reference 与所需跨层 Skill。
+- 字段契约与生命周期符合 reference。
+- 已 `goimport`；能测则已测。
