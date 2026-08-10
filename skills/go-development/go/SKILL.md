@@ -1,6 +1,6 @@
 ---
 name: go
-description: "用于编写、重构、评审、排查、测试或解释任何 Go 代码时；必须先加载本 Skill，再按任务层加载对应 go-* Skill。"
+description: "用于编写、重构、评审、排查、测试或解释任何 Go 代码时。"
 ---
 
 # Go
