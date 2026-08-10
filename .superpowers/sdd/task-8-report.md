@@ -7,3 +7,5 @@
 - Ruby YAML 校验与 `git diff --check` 通过。
 - `bash scripts/check.sh` 仍因既有独立 `skills/gin-openapi-json` 被全局门禁拒绝，与本任务无关。
 - 提交信息：`Consolidate go-model-hierarchy into a single Chinese hard-rule reference.`
+- 已明确 `Serialize()` 只负责写入前规整；旧枚举、秒级时间、历史默认值等存储读取兼容只归 `Deserialize()`。
+- 已恢复业务 ID 硬规则：按来源类型使用稳定业务键生成；未生成业务 ID 的类型必须说明业务原因。

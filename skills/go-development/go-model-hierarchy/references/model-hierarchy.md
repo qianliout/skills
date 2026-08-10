@@ -25,8 +25,8 @@ func (vi *Xxx) Same(after *Xxx) bool
 - `Serialize()`、`Deserialize()`、`ToUpdater()`、`Check()`、`Same()` 禁止互相调用。调用顺序完全由 API、service 或 DAL 外部调用方决定。
 - `Serialize()` 与 `Deserialize()` 必须返回 receiver。nil receiver 必须分配并返回新对象；非 nil receiver 必须原地修改并返回自身。调用方必须接收返回值，例如 `data = data.Serialize()`。
 - `Check()` 必须拒绝 nil receiver，且只验证字段；禁止规整、填默认值、派生字段、修改数据或调用其他生命周期方法。
-- `Serialize()` 是 trim、默认值、字段规整、派生字段、兼容修正、文本序列化、显示/搜索字段、唯一标识和校验和的唯一归属；禁止新增 `Normalize()`、`FillDefault()`、`GenUniqueID()`、`GenUUID()`、`GenCheckSum()` 或同职责私有 helper。
-- `Deserialize()` 只处理存储数据兼容：旧枚举规整、秒级时间转毫秒、历史默认值补齐和文本列还原运行时字段。
+- `Serialize()` 只负责写入前字段规整：trim、默认值、派生字段、文本序列化、显示/搜索字段、唯一标识和校验和；禁止处理旧枚举、旧时间单位、历史默认值或其他存储读取兼容。禁止新增 `Normalize()`、`FillDefault()`、`GenUniqueID()`、`GenUUID()`、`GenCheckSum()` 或同职责私有 helper。
+- `Deserialize()` 专属存储读取兼容：旧枚举规整、秒级时间转毫秒、历史默认值补齐和文本列还原运行时字段。任何旧数据修正必须在拥有字段的 `Deserialize()` 中完成。
 - `ToUpdater()` 必须返回已初始化的 `map[string]any`，显式列出全部允许更新的列，并写入 `updated_at: time.Now().UTC().UnixMilli()`。
 - `Same()` 只比较字段，不校验、不规整、不序列化、不生成 updater。
 - 返回 slice 或 map 的任意 model 方法必须在所有路径返回已初始化的空值，禁止返回 nil。
@@ -77,6 +77,9 @@ DeletedAt int64 `gorm:"column:deleted_at" json:"deletedAt"`
 - 默认数值类型必须为 `int64`，覆盖 ID、时间、计数、分页、cache/statistic 与层间数值。
 - 禁止使用 `uint`、`uint64`、大于 `int64` 的数值类型、`big.Int`、decimal 大整数或自定义大数类型。外部雪花、无符号 hash、超出 `int64` 或需保留字面量的标识必须为 `string`。
 - 全局业务身份使用独立的 `UniqueID int64`；禁止用 `DataID` 或 `UID` 替代，除非外部兼容契约明确要求。
+- 生成业务 ID 必须基于稳定业务键，同一来源类型的相同业务键必须生成相同 ID；禁止用随机值、请求时刻或进程状态作为 ID 来源。
+- 租户范围资源的业务键必须包含 tenant ID、业务 code 和资源 type；父级范围资源必须包含 parent ID、name 或 code、version 和资源 type；内容寻址资源必须包含规整后的 display name、digest 或 checksum 和资源 type。
+- 不生成业务 ID 的类型必须在类型定义或模型说明中写明不生成的业务原因；未说明原因禁止省略业务 ID。
 - 枚举和状态默认使用基础类型字段与 `consts` 中的命名常量；禁止无外部边界时创建命名基础类型包装。
 - 禁止使用 `bool` 字段。二元状态必须为 `string`，取值只能是 `"true"` 或 `"false"`；`Check()` 负责校验必填状态，`Serialize()` 负责填入默认 `"false"`。
 
