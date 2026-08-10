@@ -1,19 +1,18 @@
 #!/usr/bin/env bash
-# Generate OpenAPI 3.1.0 JSON for a single Gin interface.
-# Deterministic pre-flight: validates input, locates project root, resolves output path.
-# The subagent (SKILL.md) handles code analysis and JSON generation.
+# 为单个 Gin 接口生成 OpenAPI 3.1.0 JSON 的预检配置。
+# 校验输入、定位项目根目录并确定输出路径；SKILL.md 负责代码分析与 JSON 生成。
 set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: generate.sh <METHOD> <PATH> [--output <filepath>]
-       generate.sh <HANDLER_FUNC> [--output <filepath>]
+用法：generate.sh <METHOD> <PATH> [--output <filepath>]
+      generate.sh <HANDLER_FUNC> [--output <filepath>]
 
-  METHOD + PATH   HTTP method and route path (e.g. PUT /api/v2/scanner/detect/policy)
-  HANDLER_FUNC    Handler function name (e.g. UserAPI.CreateUser)
-  --output <path> Write to <path> instead of auto-naming
+  METHOD + PATH   HTTP 方法和路由路径（例如 PUT /api/v2/scanner/detect/policy）
+  HANDLER_FUNC    handler 函数名（例如 UserAPI.CreateUser）
+  --output <path> 写入指定路径，不使用自动命名
 
-Examples:
+示例：
   generate.sh PUT /api/v2/scanner/detect/policy
   generate.sh PUT /api/v2/scanner/detect/policy --output docs/policy.json
   generate.sh UserAPI.CreateUser
@@ -21,7 +20,7 @@ EOF
   exit 1
 }
 
-# ── parse arguments ────────────────────────────────────────────────
+# 解析参数。
 OUTPUT=""
 SELECTOR=""
 METHOD=""
@@ -30,16 +29,16 @@ PATH_SPEC=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --output)
-      [ $# -gt 1 ] || { echo "ERROR: --output requires a value" >&2; exit 1; }
+      [ $# -gt 1 ] || { echo "错误：--output 需要一个值" >&2; exit 1; }
       shift; OUTPUT="$1" ;;
     --help|-h) usage ;;
     -*)
-      echo "ERROR: unknown flag: $1" >&2; usage ;;
+      echo "错误：未知选项：$1" >&2; usage ;;
     *)
       if [ -z "$SELECTOR" ]; then
         SELECTOR="$1"
       else
-        # Two positional args = METHOD + PATH
+        # 两个位置参数代表 METHOD + PATH。
         METHOD="$SELECTOR"
         PATH_SPEC="$1"
         SELECTOR="${METHOD} ${PATH_SPEC}"
@@ -49,11 +48,11 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$SELECTOR" ]; then
-  echo "ERROR: no interface selector specified" >&2
+  echo "错误：未指定接口选择器" >&2
   usage
 fi
 
-# ── locate project root (go.mod) ───────────────────────────────────
+# 向上查找包含 go.mod 的项目根目录。
 PROJECT_ROOT=""
 SEARCH_DIR="$PWD"
 while [ "$SEARCH_DIR" != "/" ]; do
@@ -65,16 +64,16 @@ while [ "$SEARCH_DIR" != "/" ]; do
 done
 
 if [ -z "$PROJECT_ROOT" ]; then
-  echo "ERROR: go.mod not found in $PWD or any parent directory" >&2
+  echo "错误：在 $PWD 或其父目录中未找到 go.mod" >&2
   exit 2
 fi
 
-# ── resolve output path ────────────────────────────────────────────
+# 确定输出路径。
 if [ -n "$OUTPUT" ]; then
-  # Make absolute if relative
+  # 相对路径以项目根目录为基准。
   [[ "$OUTPUT" != /* ]] && OUTPUT="${PROJECT_ROOT}/${OUTPUT}"
 else
-  # Auto-generate filename from last 2-3 path segments or handler name
+  # 使用路径末尾 2 至 3 段或 handler 名生成文件名。
   SAFE_NAME="$(echo "${SELECTOR}" \
     | sed 's/^[A-Z]\+ //' \
     | tr '/' '.' \
@@ -91,10 +90,10 @@ else
   OUTPUT="${PROJECT_ROOT}/openapi_${SAFE_NAME}.json"
 fi
 
-# ensure parent directory exists
+# 确保输出目录存在。
 mkdir -p "$(dirname "$OUTPUT")"
 
-# ── emit resolved config ───────────────────────────────────────────
+# 输出解析后的配置，供调用方读取。
 printf '{\n'
 printf '  "selector":      "%s",\n'  "$SELECTOR"
 printf '  "output":        "%s",\n'  "$OUTPUT"

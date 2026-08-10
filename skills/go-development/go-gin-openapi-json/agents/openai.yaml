@@ -1,4 +1,4 @@
 interface:
   display_name: "Go Gin OpenAPI JSON"
-  short_description: "从 Gin 代码生成 OpenAPI 3.1 JSON"
-  default_prompt: "Use $go-gin-openapi-json to generate OpenAPI JSON for this Gin route."
+  short_description: "从 Gin 代码生成单接口 OpenAPI 3.1 JSON"
+  default_prompt: "使用 $go-gin-openapi-json 为指定的单个 Gin 接口生成 OpenAPI JSON。"

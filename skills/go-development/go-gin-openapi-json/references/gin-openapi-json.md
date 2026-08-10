@@ -1,38 +1,49 @@
-# Go Gin OpenAPI JSON
+# Gin 单接口 OpenAPI JSON 规则
 
-只为用户明确指定的接口生成文档。以当前 Go 代码为事实来源，不因扫描到相邻路由就把它们加入最终文档。
+每次执行只能产出一个 operation。当前 Go 代码是唯一事实来源；扫描发现的其它路由不得写入输出。
 
-## Rule Priority
+## 强制范围
 
-- 现有路由、handler、DTO、校验和 response helper 决定真实 HTTP 契约。
-- `references/api-layer.md` 和 `references/api-layer-conventions.md` 用于理解项目默认约定；现有代码有明确证据时，以代码为准。
-- 解析现有 `PATCH` 或 path 参数只是记录真实接口，不代表允许新接口绕过 API 层设计约定。
-- 无法从代码确认的路由、响应模型或 envelope 不得猜测。
+- selector 必须唯一命中一个 `METHOD path` 或一个 handler。
+- selector 缺失、含糊或命中不止一个接口时，立即停止并要求精确输入。
+- 禁止把相邻路由、同一注册范围中的接口或同一 handler 的其它方法写入 `paths`。
+- 每次必须从当前代码全量重建，禁止合并、diff 或继承旧 JSON。
+- 已从代码删除的字段、路由和 schema 必须从输出消失。
 
-## Workflow
+## 执行顺序
 
-1. 确认目标接口范围、Go 项目根目录和输出路径。
-1. 目标范围缺失或存在多个合理匹配时，要求用户提供 route、method + path、handler、route group 或 module 中最小可用的 selector。
-1. 加载 `references/gin-openapi-json-conventions.md`、`references/api-layer.md` 和 `references/api-layer-conventions.md`。
-1. 用户要求 Apifox 兼容、示例对齐或项目没有专用模板时，读取 `assets/openapi.json`。
-1. 优先用项目代码图工具定位选定路由、handler、model 和 response helper；图工具不足时再使用 `rg`、Go AST 和直接文件读取。
-1. 只追踪选定接口需要的参数来源、DTO、校验、序列化、service 返回类型和响应 envelope。
-1. 只为选定 operation 构建 `paths` 和被引用的 `components.schemas`。
-1. 生成 OpenAPI `3.1.0` JSON，使用两空格缩进写入一个最终文件。
-1. 验证 JSON 可解析、所有 `$ref` 有目标、path 参数完整、请求和响应结构与代码一致。
-1. 返回输出路径、operation 数量、schema 数量、验证结果和仍未解析的事实。
+1. 先运行 `bash scripts/generate.sh <SELECTOR> [--output <path>]`。脚本失败立即停止。
+1. 读取目标路由、handler、参数 DTO、校验、response helper 和关联类型。
+1. 将 Gin `:param` 转为 `{param}`；无法静态解析注册关系时停止，不得编造。
+1. 只为该 operation 创建参数、request body、responses 和 `components.schemas`。
+1. 使用 `assets/openapi.json` 的顶层结构与对象形状；全部具体值必须来自目标代码。
+1. 写入脚本返回的 `output`，使用两空格缩进。
+1. 解析 JSON，检查 `$ref` 和 path 参数后再报告成功。
 
-## Reference Loading
+## HTTP 契约
 
-生成、刷新、评审或解释 Gin OpenAPI、Apifox、`openapi.json` 和接口 schema 时，必须加载 `references/gin-openapi-json-conventions.md`、`references/api-layer.md` 和 `references/api-layer-conventions.md`。
+- 代码的路由、handler、DTO、校验和 response helper 决定最终契约。
+- 需要对齐 API 层默认形态时加载 `go-api-layer`；代码有明确证据时始终以代码为准。
+- `POST`、`PUT`、`PATCH` 的 body 使用命名 schema 和 `$ref`，不得在 operation 内联大型对象。
+- 每个 `{param}` 必须有同名、`required: true` 的 path 参数。
+- schema 依据 Go `json` tag、验证 tag 和代码检查构建；`json:"-"` 不得输出。
+- 无法确认的字段、状态码、envelope 或注册关系必须报告为缺失事实，不得猜测。
 
-`assets/openapi.json` 是输出结构示例，不是需要完整加载并照搬的规范。只在生成任务需要示例对齐或缺少项目模板时读取。
+## JSON 形状
 
-## Pre-Delivery Checklist
+- `openapi` 固定为 `3.1.0`。
+- `paths` 只能包含一个 path，且该 path 只能包含一个 HTTP method。
+- `components.schemas` 必须包含每个 `$ref` 的目标。
+- 顶层保留 `info`、`tags`、`paths`、`components`、`servers` 和 `security`。
+- 输出仅为 JSON，不生成 YAML、Swagger UI、Markdown 文档或客户端 SDK。
 
-- [ ] 目标接口范围明确，最终 `paths` 不包含未选中的路由。
-- [ ] 真实代码与默认 API 约定不一致时，文档忠实反映代码。
-- [ ] 输出只有 JSON，`openapi` 为 `3.1.0`，并且可成功解析。
-- [ ] 请求参数、body、响应 envelope 和 schema 均有代码依据。
-- [ ] 所有 `$ref`、path 参数和 request body schema 完整有效。
-- [ ] 最终只写入一个完整文档，并报告验证结果。
+## 交付检查
+
+- [ ] selector 唯一命中。
+- [ ] 预检脚本已成功执行。
+- [ ] `paths` 只有一个 operation。
+- [ ] JSON 可解析。
+- [ ] 每个 `$ref` 有效。
+- [ ] 每个 path 参数完整。
+- [ ] 输出完全来自当前代码。
+- [ ] 已报告输出路径与校验结果。
