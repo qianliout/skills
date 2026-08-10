@@ -108,4 +108,57 @@ if git -C "$ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   test -z "$gitlinks" || fail "gitlinks are not allowed; use resource-cache + subtree sync: $gitlinks"
 fi
 
+# --- Go skills consolidation invariants ---
+GO_DEV="$ROOT/skills/go-development"
+ALLOWED_go_skills='go
+go-api-layer
+go-code-style
+go-gin-openapi-json
+go-model-hierarchy
+go-query-dal
+go-service-layer
+go-test-writer'
+
+test -d "$GO_DEV" || fail "missing go-development category"
+
+forbidden_go_dirs='go-comment-style
+go-logging'
+while IFS= read -r d; do
+  test -n "$d" || continue
+  test ! -e "$GO_DEV/$d" || fail "forbidden go skill directory still present: go-development/$d"
+done <<< "$forbidden_go_dirs"
+
+test ! -e "$ROOT/skills/gin-openapi-json" || fail "forbidden standalone skill still present: skills/gin-openapi-json"
+test ! -e "$ROOT/scripts/go-reference-pairs.txt" || fail "forbidden sync map still present: scripts/go-reference-pairs.txt"
+
+test ! -d "$GO_DEV/go/references" || fail "go must not contain references/ (thin router only)"
+test ! -d "$GO_DEV/go/assets" || fail "go must not contain assets/ (OpenAPI assets live under go-gin-openapi-json)"
+
+go_skill_dirs="$(find "$GO_DEV" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort)"
+while IFS= read -r d; do
+  test -n "$d" || continue
+  printf '%s\n' "$allowed_go_skills" | grep -Fx "$d" >/dev/null ||
+    fail "unexpected go-development skill directory: $d"
+done <<< "$go_skill_dirs"
+
+while IFS= read -r d; do
+  test -n "$d" || continue
+  test -f "$GO_DEV/$d/SKILL.md" || fail "missing SKILL.md for go-development/$d"
+done <<< "$allowed_go_skills"
+
+test -f "$GO_DEV/go-code-style/references/code-style.md" || fail "missing go-code-style/references/code-style.md"
+test -f "$GO_DEV/go-code-style/references/comment-style.md" || fail "missing go-code-style/references/comment-style.md"
+test -f "$GO_DEV/go-code-style/references/logging.md" || fail "missing go-code-style/references/logging.md"
+test -f "$GO_DEV/go-gin-openapi-json/scripts/generate.sh" || fail "missing go-gin-openapi-json/scripts/generate.sh"
+test -f "$GO_DEV/go-gin-openapi-json/assets/openapi.json" || fail "missing go-gin-openapi-json/assets/openapi.json"
+
+# 叶子不得再持有 *-conventions.md；go 除外已无 references
+conv_hits="$(find "$GO_DEV" -type f -name '*-conventions.md' | sort)"
+test -z "$conv_hits" || fail "conventions files must be merged away: $conv_hits"
+
+# go-* 不得再嵌入 go/references 指引
+if rg -n 'go/references/' "$GO_DEV" --glob 'SKILL.md' --glob '*.md' >/dev/null; then
+  fail "Go skills must not reference go/references/"
+fi
+
 printf 'check passed\n'
