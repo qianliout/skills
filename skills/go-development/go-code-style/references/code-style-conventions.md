@@ -443,12 +443,12 @@ go func() {
 
 ## Comments
 
-Write code comments in Chinese. Use comments for intent, constraints, and surprising behavior. Do not narrate obvious code.
+Write code comments in English. Comment on why — constraints, non-obvious intent, surprising behavior — never on what the code does. Keep each comment to one line where possible, and prefer a better name over a comment.
 
 Good:
 
 ```go
-// ProjectID 为 0 表示查询全局模板。
+// ProjectID 0 means the caller wants global templates.
 if param.ProjectID != 0 {
     db = db.Where("project_id = ?", param.ProjectID)
 }
@@ -457,14 +457,16 @@ if param.ProjectID != 0 {
 Avoid:
 
 ```go
-// 返回错误。
+// Return the error.
 return err
 ```
+
+See `../../go-comment-style/references/comment-style-conventions.md` for the full comment rules.
 
 ## Log Language
 
 - Log messages use English, especially `Msg(...)` text and stable operation names.
-- Code comments use Chinese.
+- Code comments use English too.
 - Keep structured log field names consistent with project conventions, such as `projectID`.
 
 ## Formatting And Tests

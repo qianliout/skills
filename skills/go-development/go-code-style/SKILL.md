@@ -20,7 +20,7 @@ description: "Go 通用代码风格 Skill。Use when writing, refactoring, revie
 - 主流程尽量左对齐；错误、空值、权限和非法状态优先 early return。
 - 依赖通过构造函数、初始化或启动阶段保证；业务方法内不临时创建长期依赖，也不用 nil 依赖跳过业务逻辑。
 - 所有方法使用一致的指针接收者；同一 struct 的 receiver 名称保持一致。
-- 代码注释用中文，日志内容用英文。
+- 代码注释和日志内容都用英文；注释只写 why，默认单行。
 
 ## Pre-Delivery Checklist
 

@@ -41,7 +41,7 @@ description: "Go 代码唯一入口和按需规则路由。Use whenever writing,
 - DAL 只做持久化访问；不承载业务规则。
 - Model 管理字段生命周期、校验、序列化、反序列化和更新字段选择。
 - 日志由拥有业务上下文的 API、Service 或 goroutine 边界记录；DAL 和 Model 默认不新增日志。
-- 代码注释使用中文，日志内容使用英文。
+- 代码注释和日志内容都使用英文；注释只写 why，尽量单行。
 
 ## Pre-Delivery Checklist
 
