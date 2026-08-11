@@ -1,81 +1,154 @@
 # Go Service Layer
 
-Service 只负责业务编排、跨领域聚合、响应组合、日志与错误包装。持久化必须经 DAL/repository；Service 禁止访问 DB、GORM、SQL，禁止导入 API/controller 包，禁止承载 Model 或 DAL 的职责。
+Service 只负责业务编排、跨领域聚合、响应组合、日志与错误包装。禁止访问 DB、GORM、SQL；禁止导入 API/controller；禁止承担 Model/DAL 职责。通用 DI/nil/receiver/日志字段写法遵守 `$go-code-style`；字段生命周期定义遵守 `$go-model-hierarchy`。
 
-## 职责与结构
+## 结构与命名
 
-- 项目定义 service interface 时，必须定义 `XxxService`；实现必须使用 `XxxSrv` 或项目既有命名。
-- 每个 service 必须提供 `NewXxxSrv(...) *XxxSrv` 或项目既有构造入口。
-- 实现方法必须使用指针接收者 `s`。同一 service 禁止混用值接收者、`srv`、`service` 等 receiver。
-- interface、struct、constructor、新增依赖及全部调用点必须同步修改。
-- Service 公开接口必须按资源/动作命名，如 `SearchXxx`、`CreateXxx`、`UpdateXxx`、`DeleteXxx`。
-- 禁止按调用方、租户、项目、所有者或权限拆出 `SearchXxxForUser`、`UpdateXxxForProject` 等窄接口；约束必须放入 typed param/command 并由 `Check()` 校验。
+- interface 必须 `XxxService`，实现 `XxxSrv`，构造 `NewXxxSrv(...) *XxxSrv`。同包已有其它命名/构造时可沿用，新建否则禁止偏离。
+- 方法指针接收者必须为 `s`；禁止混用值接收者或其它 receiver 名。
+- interface、struct、constructor、新增依赖与全部调用点必须同步修改。
+- 公开方法按资源/动作命名：`SearchXxx`、`CreateXxx`、`UpdateXxx`、`DeleteXxx`。禁止 `SearchXxxForUser`、`UpdateXxxForProject` 等按调用方拆分的窄接口；约束写入 typed param 的 `Check()`。
 
 ## 依赖注入
 
-Service 的长期依赖必须声明为 struct 字段，经 constructor 显式注入。禁止在公有或私有业务方法内调用 `NewXxxDao`、`NewXxxSrv`、`NewClient`、`logger.New` 或同类工厂。
+长期依赖必须为 struct 字段并经 constructor 注入。禁止在业务方法内 `NewXxxDao`/`NewXxxSrv`/`NewClient`/`logger.New`。
 
-字段与 constructor 参数必须保持同一顺序：
+字段与 constructor 参数顺序固定：
 
-1. 主模型 DAL/repository，再关联模型 DAL/repository。
-1. 跨领域编排所需的其他 service。
-1. cache、queue、lock 等基础设施。
-1. HTTP、RPC、对象存储等外部 client/gateway。
-1. config、clock、ID generator、feature flag、无状态 helper。
-1. logger 或 log event。
+1. 主模型 DAL，再关联 DAL
+1. 其它 service
+1. cache / queue / lock
+1. HTTP / RPC / 对象存储等 client
+1. config / clock / ID generator / feature flag / 无状态 helper
+1. logger
 
-- 项目存在 service/DAL interface 时必须依赖 interface；否则必须遵循项目既有构造约定。
-- constructor 参数必须使用表达依赖含义的名称，如 `policyDal`、`projectSrv`、`cache`。
-- constructor 仅能初始化不隐藏外部依赖的轻量自有 helper、logger 或 cache；项目要求时必须在构造或 bootstrap 阶段校验依赖。
-- 禁止在每个业务方法重复检查 `s == nil` 或长期依赖是否为 nil。
-- 禁止用 `if s.cache != nil`、`if s.primaryDal == nil`、`if s.log != nil` 等分支静默跳过缓存、持久化、日志或业务。必须修复 constructor、bootstrap 或测试装配。
-- 请求级对象、param、结果容器、事务、timer 和短生命周期数据允许在方法内创建。
-- Service 只能依赖 DAL/repository interface、其他 service interface、基础设施、外部 client、config/helper 与 logger。
+- 有 interface 必须依赖 interface；否则依赖同包既有具体类型。
+- 参数名必须表达依赖含义（`policyDal`、`projectSrv`）。
+- constructor 内仅允许 `logger.New(...)`；其余长期依赖必须注入。
+- 请求级对象、param、结果容器、事务、timer 允许方法内创建。
 
-## 方法签名与参数
+## 签名
 
-- 业务公开方法必须使用 `ctx context.Context` 加一个 typed param；工具函数除外。
-- 业务公开方法必须返回 `error` 或 `(res, error)`。
-- 已存在的多参数或多返回值导出方法必须原样保留，除非用户确认改形或分层规则明确规定例外。
-- 分页 `SearchXxx` 的既有 `(res, count, error)` 返回是允许例外；DAL 的 `UpdateXxx(ctx, id, data)` 与 `SearchXxx(ctx, param)` 三值形式也是允许例外。
-- 带 `Serialize()`、`Check()` 等领域方法的 param 必须使用指针类型。
-- 公有 service 边界必须先执行 `param = param.Serialize()`，再执行 `param.Check()`；无对应方法时不得伪造调用。
-- Service 必须调用 Model/Param 所有者提供的 `Serialize()`、`Deserialize()`、`Check()`、`ToUpdater()` 或纯转换方法；禁止在 Service 重复 trim、默认值、归一化、派生字段、lowercase 或字段清洗。
-- API 与 DAL DTO 不同且映射非平凡时，必须使用转换方法；转换方法禁止重复序列化、反序列化、归一化或派生字段职责。
+- 业务公开方法：`ctx` + 一个 typed param，返回 `error` 或 `(res, error)`。
+- 无 `ctx`、不返回业务 `error`、且不编排 DAL/service/cache/client 的包内函数，不受上条约束。
+- 分页 `SearchXxx` 允许 `(res, count, error)`。
+- 调用 DAL 时允许 DAL 保持既有签名；禁止把 DAL 签名复制为新的 Service 公开签名，除非用户确认或既有 Service 契约已是该形状。
 
-## 编排与聚合
+## 生命周期（按需）
 
-- Service 必须经 DAL/service/cache/client 编排业务；持久化必须委托 DAL。
-- 更新必须先校验操作 param，再委托 DAL；禁止在 Service 手工构造 update map，禁止修改应由 Model `Serialize()` 或 `ToUpdater()` 处理的持久化字段。
-- 返回值含 slice 或 map 时，必须在校验前初始化，并在全部返回路径返回初始化后的空集合；契约明确声明为可选指针字段时除外。
-- 详情聚合跨越多个数据域时，必须按数据域或副作用拆分私有 `addXxxData` helper。
-- 禁止把单次转调、单字段赋值、单个 map 写入或单次错误包装拆成 helper，禁止 helper 链只互相转调。
-- 主流程必须保持同一抽象层的有序业务步骤；复杂阶段必须按真实业务概念、数据域、外部调用、事务、异步入队或缓存刷新拆分。
-- 列表关联数据必须收集 ID、去重、按关联 DAL 批量查询、构建 ID map、再回填响应。禁止在逐项循环内执行可批量化的关联 DAL 查询。
-- 仅当项目既有契约明确要求时，详情聚合错误才能返回部分结果与聚合错误。
+不强制每个入口调用生命周期方法；无方法时禁止伪造。禁止在 Service 做 trim/默认值/归一化/派生字段/字段清洗。
 
-## 日志与错误包装
+| 方法 | 何时调用 | 禁止 |
+| --- | --- | --- |
+| `Serialize()` | 下游前需要消费规整字段（分支、状态机、组装写入/响应） | 纯转调仍调用 |
+| `Check()` | 本方法要拒非法输入并继续编排 | 纯转调仍调用 |
+| `Deserialize()` | 本方法持有尚未反序列化的存储形态 | DAL/service 已返回业务形态后仍调用 |
+| `ToUpdater()` | 不在 Service 调用（DAL `Updates` 负责） | 手工 update map；改应由 Model 处理的持久化字段 |
 
-- 日志所有权必须遵守 `$go-code-style` 的 `logging.md`：仅拥有最完整业务上下文的层必须记录错误日志。
-- 公有方法输入需要记录时，必须使用安全的 `LogStr()` 摘要，禁止直接记录完整敏感 struct。
-- 私有 helper 默认只返回错误，禁止在 helper 内记录已由上层或下游记录的同一 error；上层必须附带当前操作名、业务 ID 与可用 param 摘要记录。
-- 当前 service 作为编排入口且拥有最完整业务上下文时，必须记录 DAL、cache、client 或外部调用失败；日志必须包含稳定英文操作名、原始 error、关键业务 ID 与可用 param 摘要。
-- 调用其他 service 时，若下游 service 已按 `logging.md` 记录完整业务上下文，当前 service 禁止再次记录同一 error；必须包装并向上返回。
-- 调用其他 service 时，若当前 service 追加了下层无法感知的业务上下文（如跨域聚合步骤、组合 param、事务边界），必须由当前 service 记录一次，禁止与下游重复打印同一 error。
-- 禁止在每一层嵌套 service 都对同一失败重复打 Error 日志。
-- 存在项目错误 wrapper 时，必须将底层错误包装为 user/API/service 层错误；禁止把原始低层错误文本直接暴露给调用方。
-- 对外可见的错误包装、语义转换与 i18n 必须在 Service 完成；禁止留给 API/handler 再做 `wrapXxxErr`。
-- 错误包装不得丢失可供上层或日志使用的原始 error。
+- 调用 `Serialize` 必须 `obj = obj.Serialize()`。
+- 字段名/类型非一一对应或需组合多字段时用转换方法；转换禁止再做序列化/归一化/派生。一一赋值可内联。
 
-## 与 DAL、Model 的边界
+## 编排
 
-- Model 负责类型、`Serialize`、`Deserialize`、`ToUpdater`、`Check`、`Same` 与不重复序列化职责的纯跨类型转换。
-- DAL 负责持久化、超时、SQL/GORM、`AddFilter`、CRUD 与 search。
-- Service 负责编排、跨 DAL 聚合、响应组合、日志与错误包装。
-- 包级 helper 只能承载没有明确所属 struct 的通用领域无关逻辑。
+- 持久化必须委托 DAL；更新先完成所需校验与业务判断再调 DAL。
+- 跨多个 DAL 写且需原子提交时，由 Service 用已注入的 DB/事务入口开事务；禁止把跨资源事务藏进单个 DAL。
+- 返回 slice/map 必须先 `make`，全路径返回非 nil 空集合；契约为可选指针且允许 nil 除外。
+- 满足任一即拆私有 `addXxxData`（或同等业务名）：编排步骤 ≥5；跨 ≥2 个 DAL/service/client；含事务/异步入队/缓存刷新。禁止为单次转调、单字段赋值、单次 map 写入或单次错误包装拆 helper。
+- 列表关联：收集 ID → 去重 → 批量查 → ID map → 回填。禁止在逐项循环内做可批量化的关联查询。
+- 详情聚合返回部分结果仅当项目既有契约明确要求。
 
-## 测试门禁
+## 日志与错误
 
-- 修改 Go 文件后必须运行 `goimport`。
-- 可定位包或测试时必须运行最小范围 `go test`。
-- 测试装配必须注入完整长期依赖；禁止以 nil 依赖绕过行为。
+遵守 `$go-code-style` 的 `logging.md`。helper 禁止打 Error。同一 error 只允许一层打 Error：
+
+| 失败来源 | 本 service |
+| --- | --- |
+| 直接 DAL/cache/client/外部依赖 | 必须打：英文操作名 + `.Err(err)` + 业务 ID；有 `LogStr()` 用其，否则只打 ID |
+| 其它 service，无追加下游不知的上下文 | 禁止打；包装返回 |
+| 其它 service，追加了跨域步骤/组合业务 ID/事务边界 | 打一次；包装返回 |
+
+- 对外错误包装、语义转换、i18n 必须在 Service 完成；禁止留给 API `wrapXxxErr`；不得丢失原始 error。
+
+## 示例
+
+按需 `Serialize`/`Check`、构造注入、批量回填。`addXxxData` 见编排节规则，形状同私有方法只返回 `error`、由入口记日志。
+
+```go
+type XxxService interface {
+	CreateXxx(ctx context.Context, param *model.CreateXxxParam) (*model.Xxx, error)
+	SearchXxx(ctx context.Context, param *model.SearchXxxParam) ([]*model.XxxView, int64, error)
+}
+
+type XxxSrv struct {
+	xxxDal     dal.XxxDal
+	projectDal dal.ProjectDal
+	log        *logger.Logger
+}
+
+func NewXxxSrv(xxxDal dal.XxxDal, projectDal dal.ProjectDal) *XxxSrv {
+	return &XxxSrv{
+		xxxDal:     xxxDal,
+		projectDal: projectDal,
+		log:        logger.New(logger.WithModule("service"), logger.WithSubModule("xxx")),
+	}
+}
+
+// CreateXxx：本方法要消费规整字段，因此先 Serialize/Check；持久化仍交给 DAL。
+func (s *XxxSrv) CreateXxx(ctx context.Context, param *model.CreateXxxParam) (*model.Xxx, error) {
+	param = param.Serialize()
+	if err := param.Check(); err != nil {
+		return nil, err
+	}
+
+	data := &model.Xxx{
+		ProjectID: param.ProjectID,
+		Name:      param.Name,
+	}
+	if err := s.xxxDal.CreateXxx(ctx, data); err != nil {
+		s.log.Error(ctx).Err(err).Int64("projectID", param.ProjectID).Str("param", param.LogStr()).Msg("createXxx failed")
+		return nil, err
+	}
+	return data, nil
+}
+
+// SearchXxx：纯查询转调不在 Service 重复 Serialize/Check；关联数据批量回填。
+func (s *XxxSrv) SearchXxx(ctx context.Context, param *model.SearchXxxParam) ([]*model.XxxView, int64, error) {
+	result := make([]*model.XxxView, 0)
+	rows, total, err := s.xxxDal.SearchXxx(ctx, param)
+	if err != nil {
+		s.log.Error(ctx).Err(err).Str("param", param.LogStr()).Msg("searchXxx failed")
+		return result, 0, err
+	}
+
+	ids := make([]int64, 0, len(rows))
+	seen := make(map[int64]struct{}, len(rows))
+	for _, row := range rows {
+		if _, ok := seen[row.ProjectID]; ok {
+			continue
+		}
+		seen[row.ProjectID] = struct{}{}
+		ids = append(ids, row.ProjectID)
+	}
+
+	projectMap := make(map[int64]*model.Project, len(ids))
+	if len(ids) > 0 {
+		projects, _, err := s.projectDal.SearchProject(ctx, &model.SearchProjectParam{IDs: ids})
+		if err != nil {
+			s.log.Error(ctx).Err(err).Str("param", param.LogStr()).Msg("searchXxx load projects failed")
+			return result, 0, err
+		}
+		for _, p := range projects {
+			projectMap[p.ID] = p
+		}
+	}
+
+	for _, row := range rows {
+		view := &model.XxxView{Xxx: row}
+		if p := projectMap[row.ProjectID]; p != nil {
+			view.ProjectName = p.Name
+		}
+		result = append(result, view)
+	}
+	return result, total, nil
+}
+```
