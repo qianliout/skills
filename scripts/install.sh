@@ -2,6 +2,9 @@
 set -eu
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=agent-links.sh
+. "$ROOT/scripts/agent-links.sh"
+
 AGENTS_TARGET="$HOME/.agents"
 SKILLS_TARGET="$AGENTS_TARGET/skills"
 MCPS_TARGET="$AGENTS_TARGET/mcps"
@@ -43,6 +46,7 @@ while IFS='|' read -r category name repository source_path; do
 done < "$ROOT/skills/manifests/public-skills.txt"
 
 install_mcps
+link_agent_skills
 
 printf 'installed: %s skills, %s mcp entries\n' \
   "$(find "$SKILLS_TARGET" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" \

@@ -23,6 +23,7 @@ mcps/
 ├── public/
 └── profiles.json
 scripts/
+├── agent-links.sh
 ├── check.sh
 ├── clean.sh
 ├── install-operations.sh
@@ -111,15 +112,16 @@ skills/
 | `./scripts/install-operations.sh` | 只安装 `skills/manifests/operations-skills.txt` 中列出的运维相关 Skill，并同步 MCP |
 | `./scripts/update-public.sh` | 只更新公共 Skill 源码和分类资源镜像，不执行安装 |
 | `./scripts/check.sh` | 只读校验仓库状态，不修改任何文件 |
-| `./scripts/clean.sh` | 只清空 `~/.agents/skills` |
+| `./scripts/clean.sh` | 清空 `~/.agents/skills` / `~/.agents/mcps`，并拆除 Claude / Cursor / Trae / Reasonix / Codex 的 Skill 链接 |
 
 安装流程说明：
 
 1. `install.sh` 先执行 `update-public.sh`。
 1. 然后执行 `check.sh`，确保 manifest、资源目录和安装名都合法。
-1. 校验通过后清空 `~/.agents/skills`。
+1. 校验通过后清空 `~/.agents/skills`，并拆除各客户端 Skill 链接。
 1. 再复制本地入口 Skill 和 manifest 公共 Skill 到扁平安装目录。
-1. 最后复制 `mcps/` 到 `~/.agents/mcps`。
+1. 复制 `mcps/` 到 `~/.agents/mcps`。
+1. 最后把安装结果链接到 Claude Code、Cursor、Trae、Reasonix、Codex。
 
 ## 维护约定
 
@@ -135,9 +137,17 @@ skills/
 
 ## 开发工具约定
 
-Trae、Zed、Reasonix 和 Warp 的 Skill 目录统一指向 `~/.agents/skills`。Codex 也会读取这个目录，但仍保留自己的内置 Skill 和插件 Skill。
+权威安装目录是 `~/.agents/skills`（部署副本，不反向链接回本仓库）。安装脚本会额外同步到这些客户端：
 
-`~/.agents/skills` 里保存的是部署副本，不反向链接回当前仓库。
+| 客户端 | 路径 | 方式 |
+| ------ | ---- | ---- |
+| Claude Code | `~/.claude/skills` | 整目录软链 → `~/.agents/skills` |
+| Cursor | `~/.cursor/skills/<skill>` | **复制**到真实目录（Cursor 对软链 Skill 发现不可靠） |
+| Trae | `~/.trae/skills` | 整目录软链 → `~/.agents/skills` |
+| Reasonix | `~/.reasonix/skills` | 整目录软链 → `~/.agents/skills` |
+| Codex | `~/.codex/skills/<skill>` | 逐 Skill 软链；保留内置 `.system` |
+
+不修改 `~/.cursor/skills-cursor`（Cursor 内置 Skill）。MCP 仍只安装到 `~/.agents/mcps`。
 
 ## MCP
 
