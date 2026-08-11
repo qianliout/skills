@@ -1,13 +1,12 @@
 # Go API Layer
 
-API 层只负责 HTTP 适配：读取框架上下文、构造类型化参数、执行参数校验、调用 service、转换错误并使用项目响应 helper 返回结果。API 层不得承担领域决策、持久化、跨资源聚合或模型生命周期。
+API 层只负责 HTTP 适配：读取框架上下文、构造类型化参数、执行参数校验、调用 service，并使用项目响应 helper 返回结果。API 层不得承担领域决策、持久化、跨资源聚合或模型生命周期。
 
 ## 职责边界
 
-- handler 必须只完成“解析、构造、规整、校验、调用、响应”的线性流程。
+- handler 必须只完成「handler 复杂度」规定的线性流程。
 - handler 必须调用注入的 service；禁止直接访问 DB、GORM、SQL、DAL、缓存或外部 client。
-- service 错误必须使用项目既有 wrapper 或 i18n 规则转换；禁止直接暴露底层错误。
-- handler 不得承担复杂参数组装、业务编排、跨 DAL 聚合、复杂响应组装、长流程、事务、重试、异步任务或缓存协调。
+- 错误返回必须遵守「错误处理边界」。
 - param/DTO 生命周期、领域规整与 service 编排分别归属 `go-model-hierarchy` 和 `go-service-layer`。
 
 ## 结构与依赖
@@ -73,8 +72,7 @@ func NewXxxAPI(xxxSrv service.XxxService) *XxxAPI {
 id := util.GetInt64FromQuery(ctx, "id")
 body := model.UpdateXxxBody{}
 if err := ctx.ShouldBindJSON(&body); err != nil {
-    httpErr := response.NewHttpError(http.StatusBadRequest, err)
-    response.JSONError(ctx, httpErr)
+    response.JSONError(ctx, response.NewErr(err))
     return
 }
 
@@ -97,8 +95,7 @@ param := &model.UpdateXxxAPIParam{
 ```go
 items, cnt, err := api.xxxSrv.SearchXxx(ctx, param)
 if err != nil {
-    searchErr := wrapSearchXxxErr(err)
-    response.JSONError(ctx, searchErr)
+    response.JSONError(ctx, err)
     return
 }
 
@@ -122,18 +119,20 @@ if err != nil {
 response.JSONOK(ctx, response.WithItem(item))
 ```
 
+## 错误处理边界
+
+- 解析/绑定/校验失败必须 `response.JSONError(ctx, response.NewErr(err))`。
+- service 返回的 error 必须原样 `response.JSONError(ctx, err)`，禁止再处理。
+
 ## handler 复杂度
 
-- handler 必须保持短小且可一遍读完。
-- handler 复杂度超过解析、构造、`Serialize()`、`Check()`、调用 service、写响应时，必须迁移复杂逻辑到 service 或 model。
-- 多 service 调用、循环调用、复杂中间值组装、跨数据源响应、关联 map、复杂分支、持久化变更、事务、重试、异步与缓存协调必须迁移出 handler。
-- 仅有少量直观代码的 `parseXxxParam`、`buildXxxResponse`、`writeXxxOK` 私有 helper 必须删除；禁止用它们隐藏线性 HTTP 流程。
-- 仅当逻辑复用、属于稳定框架关注点，或提取名称确实降低认知负担时，才允许拆分 helper。
+- handler 只允许：解析请求、构造 param、`Serialize()`、`Check()`、调用 service、写响应。
+- 超出上列的逻辑必须迁到 service 或 model。
+- 禁止拆分 `parseXxxParam`、`buildXxxResponse`、`writeXxxOK` 等仅转发上述步骤的私有 helper。
 
 ## 类型规则
 
 - 必须使用类型化 param 与 DTO；禁止使用 `any`、`interface{}` 或 `map[string]any` 承载 API 请求与响应。
-- 函数输入与输出通常不得超过 3 个值；超过时必须使用 param 或 result struct。
 - 禁止使用 `uint64`、`uint`、`bool` 或大于 `int64` 的数值类型；类型约束以 `go-model-hierarchy` 为准。
 - 项目不使用 bool 字段时，状态必须使用 `"true"` 与 `"false"` 字符串。
 

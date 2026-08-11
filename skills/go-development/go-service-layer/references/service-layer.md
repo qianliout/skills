@@ -64,6 +64,7 @@ Service 的长期依赖必须声明为 struct 字段，经 constructor 显式注
 - 调用其他 service 时，若当前 service 追加了下层无法感知的业务上下文（如跨域聚合步骤、组合 param、事务边界），必须由当前 service 记录一次，禁止与下游重复打印同一 error。
 - 禁止在每一层嵌套 service 都对同一失败重复打 Error 日志。
 - 存在项目错误 wrapper 时，必须将底层错误包装为 user/API/service 层错误；禁止把原始低层错误文本直接暴露给调用方。
+- 对外可见的错误包装、语义转换与 i18n 必须在 Service 完成；禁止留给 API/handler 再做 `wrapXxxErr`。
 - 错误包装不得丢失可供上层或日志使用的原始 error。
 
 ## 与 DAL、Model 的边界
