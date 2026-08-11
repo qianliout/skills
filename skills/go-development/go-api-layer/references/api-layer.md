@@ -22,21 +22,20 @@ API 层只负责 HTTP 适配：读取框架上下文、构造类型化参数、�
 ```go
 type XxxAPI struct {
     xxxSrv service.XxxService
-    log    *utils.LogEvent
+    log    *logger.Logger
 }
 
 func NewXxxAPI(xxxSrv service.XxxService) *XxxAPI {
     api := XxxAPI{
         xxxSrv: xxxSrv,
-        log: utils.NewLogEvent(
-            utils.WithModule("moduleName"),
-            utils.WithSubModule("api"),
+        log: logger.New(
+            logger.WithModule("moduleName"),
+            logger.WithSubModule("api"),
         ),
     }
     return &api
 }
 ```
-
 ## 请求解析
 
 - 禁止使用 path param。

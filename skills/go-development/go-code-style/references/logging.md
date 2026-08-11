@@ -1,51 +1,52 @@
 # Go 日志硬约束
 
-日志用于定位问题和追踪关键异常，不得替代错误返回，不得泄露敏感信息，不得制造重复噪音。日志任务同时必须遵守 `code-style.md` 的接收者、依赖与并发约束。
+日志只用于定位与关键异常追踪；禁止替代错误返回、泄露敏感信息、跨层重复打印。必须同时遵守 `code-style.md`。API/Service 构造与编排细则分别遵守对应 `go-*`。Logger 实现以项目 `infra/logger` 为准。
 
-## 日志边界与所有权
+## 谁打
 
-- 拥有最完整业务上下文的层必须记录日志；私有 helper 默认只返回错误，由上层附带操作名、业务 ID 和参数摘要记录。
-- API 只记录入口级关键信息与必要异常返回；禁止记录复杂业务细节，必须只使用安全请求摘要。
-- Service 必须记录关键异常、外部调用失败、异步任务失败和必要业务上下文；Service 必须承担错误日志并附带最完整的可用业务上下文。
-- DAL 默认禁止日志，只返回错误。需要 DAL 日志时必须先说明原因并等待用户决定。
-- Model 禁止日志；`Check()`、`Serialize()`、`Deserialize()`、`ToUpdater()` 与同类方法只能返回错误。需要 Model 日志时必须先说明原因并等待用户决定。
-- 仅当 helper 独有上下文会丢失且用户明确要求时才允许在 helper 内记录日志。
+| 层 | 规则 |
+| --- | --- |
+| API | 只记入口关键信息与必要异常返回；禁止业务细节 |
+| Service | 记关键异常、外部/Cache/异步失败；附带最完整可用业务上下文 |
+| DAL / Model | 默认禁止；需要时必须先说明原因并等用户决定。`Check`/`Serialize`/`Deserialize`/`ToUpdater` 等只返回错误 |
+| helper | 默认只返回错误；禁止打日志，下列除外：独有上下文会丢失且用户明确要求 |
 
-## Logger 所有权
+拥有最完整业务上下文的层必须记录；同一 error 禁止跨层重复打印；禁止记录后吞掉错误。
 
-- 需要日志的 struct 必须持有 logger 字段，并在构造函数初始化稳定的 `module` 与 `subModule`。
-- logger 必须作为其他依赖后的最后一个字段；字段、构造参数和初始化顺序必须一致。
-- 禁止在方法中直接使用全局 logger，禁止每个方法临时创建 logger，禁止将 logger 作为普通参数沿调用链传递。
-- Service 与 API 的 receiver 必须分别使用 `s` 与 `api`；Model `LogStr()` 的 Param receiver 必须用 `p`，其他 Model receiver 必须用 `vi`。同一 struct 的 receiver 形式和名称必须一致。
+## Logger
 
-## 级别、内容与错误
+- 需要日志的 struct 必须持有 `log *logger.Logger`，构造时用 `logger.New(logger.WithModule(...), logger.WithSubModule(...))` 初始化稳定 module/subModule；logger 必须是依赖字段最后一项。
+- 禁止方法内使用全局 logger、临时 `logger.New`、把 logger 当普通参数沿调用链传递。
+- 级别方法必须带 `ctx`：`log.Debug(ctx)` / `Info(ctx)` / `Warn(ctx)` / `Error(ctx)`，再链式字段，最后 `.Msg(...)`。
+- 错误必须用 `.Err(err)`；结构化值必须用 `.Str` / `.Int64` / `.Bool` / `.Interface` 等字段方法，禁止塞进 `Msg`。
 
-- `Debug` 仅用于临时或低频排障；禁止保留长期高噪音 Debug。
-- `Info` 仅记录重要成功业务动作和生命周期事件。
-- `Warn` 仅记录可恢复异常、降级、跳过的非关键数据和兼容行为。
-- `Error` 必须用于当前操作失败、外部/Cache/异步失败以及已恢复的 goroutine panic。
-- 错误日志必须包含稳定英文操作名、错误对象、关键业务 ID 与安全参数摘要。
-- 禁止记录后吞掉错误；同一错误禁止跨层重复打印。被故意忽略的错误必须按项目约定记录或用注释说明原因。
-- goroutine panic 必须 recover 并记录日志与 stack，或转换为项目可观测错误路径。
+## 级别与内容
+- Debug 禁止长期高噪音
+- Error 必须：英文短 `Msg` + `.Err(err)` + 关键业务 ID + `LogStr()`；字段名稳定；禁止中文 Msg。
+- 禁止 password/token/secret/Cookie/Authorization/原始敏感体/大 payload/完整 SQL 参数；定位只用脱敏、哈希、长度、数量、类型或业务 ID。
+- 忽略的 error 必须记日志或英文注释原因；panic 必须 recover 并记日志与 stack。
+- 禁止循环逐项成功日志；失败项必须带关键 ID；批结束必须记总数/成功/失败/耗时；高频错误必须采样或聚合。
 
 ## `LogStr()`
 
-- struct 需要日志摘要时必须使用 `LogStr() string`。
-- `LogStr()` 只能拼装字符串；禁止校验、填默认值、规范化字段、权限检查、DB/Cache/Network/File I/O、副作用、receiver 或外部状态修改、复杂计算、排序、过滤和去重。
-- `LogStr()` 必须使用指针接收者，receiver 形式和名称必须与同一 struct 保持一致。
-- 输出必须稳定、简短、可搜索，并且不得包含敏感字段或大载荷。
+- struct 需要日志摘要时必须提供 `LogStr() string`；必须指针 receiver；Param 用 `p`，其他 Model 用 `vi`。
+- 只拼字符串；禁止校验、填默认、规范化、权限、I/O、副作用、改状态、复杂计算/排序/过滤/去重。
+- 输出必须短、稳、可搜索；禁止敏感字段与大载荷。
 
-## 敏感信息与格式
+## 样例
 
-- 绝对禁止记录 password、token、secret、access key、Cookie、Authorization、原始敏感请求体、私密用户数据、大 payload、完整文件内容和完整 SQL 参数。
-- 需要定位时必须只记录脱敏值、哈希、长度、数量、类型或业务 ID。
-- `Msg` 与操作名必须使用简短、稳定的英文；禁止使用中文。
-- 结构化值必须放字段，禁止塞入 `Msg`；字段名必须保持一致，例如始终使用 `projectID`。
-- `module` 与 `subModule` 必须稳定，并映射到业务域或代码层。
+```go
+type XxxSrv struct {
+    xxxDal dal.XxxDal
+    log    *logger.Logger
+}
 
-## 批量与循环
+s.log.Error(ctx).Err(err).Int64("projectID", param.ProjectID).Str("param", param.LogStr()).Msg("createXxx failed")
+```
 
-- 禁止在大循环中记录每个成功项。
-- 失败项日志必须包含该项的关键 ID。
-- 批任务结束时，确有定位价值时必须记录总数、成功数、失败数和耗时摘要。
-- 高频错误必须采样或聚合，禁止持续制造噪音。
+禁止：
+
+```go
+s.log.Error(ctx).Msg("创建失败: " + err.Error() + " token=" + token)
+logger.New(...).Error(ctx).Err(err).Msg("createXxx failed") // 方法内临时 New
+```

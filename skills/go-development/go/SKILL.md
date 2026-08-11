@@ -19,11 +19,11 @@ description: "用于编写、重构、评审、排查、测试或解释任何 Go
 
 | 任务信号 | 必须加载 |
 |----------|----------|
-| 控制流、命名、错误处理、依赖注入、receiver、import、可维护性 | `go-code-style` |
+| 控制流、命名、依赖注入、receiver、import、可维护性、立即返回错误、`errors.Is`/`errors.As` | `go-code-style` |
 | 注释、doc comment、字段注释 | `go-code-style`（`references/comment-style.md`） |
 | 日志、logger、recover 日志、敏感信息 | `go-code-style`（`references/logging.md`） |
-| Gin/HTTP handler、绑定、响应 DTO、分页响应 | `go-api-layer` |
-| Service 接口/编排/聚合/错误包装 | `go-service-layer` |
+| Gin/HTTP handler、绑定、响应 DTO、分页响应、handler 错误返回形态 | `go-api-layer` |
+| Service 接口/编排/聚合/业务错误包装/语义转换/i18n | `go-service-layer` |
 | Store/DAL/DAO/GORM/CRUD/分页查询 | `go-query-dal` |
 | Domain/GORM model、param、response、Serialize/生命周期 | `go-model-hierarchy` |
 | `_test.go`、testify、mock、表驱动 | `go-test-writer` |
@@ -36,7 +36,7 @@ description: "用于编写、重构、评审、排查、测试或解释任何 Go
 - DAL 只做持久化；禁止承载业务规则。
 - Model 管理字段生命周期、校验、序列化/反序列化、更新字段选择。
 - 日志由拥有业务上下文的 API、Service 或 goroutine 边界记录；DAL 与 Model 默认禁止新增日志。
-- 代码注释必须中文；日志 Msg 必须英文。
+- 代码注释必须英文；日志 Msg 必须英文；禁止注释与日志 Msg 使用中文。
 
 ## 禁止清单
 

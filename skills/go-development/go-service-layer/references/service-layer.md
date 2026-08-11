@@ -13,7 +13,7 @@ Service 只负责业务编排、跨领域聚合、响应组合、日志与错误
 
 ## 依赖注入
 
-Service 的长期依赖必须声明为 struct 字段，经 constructor 显式注入。禁止在公有或私有业务方法内调用 `NewXxxDao`、`NewXxxSrv`、`NewClient`、`utils.NewLogEvent` 或同类工厂。
+Service 的长期依赖必须声明为 struct 字段，经 constructor 显式注入。禁止在公有或私有业务方法内调用 `NewXxxDao`、`NewXxxSrv`、`NewClient`、`logger.New` 或同类工厂。
 
 字段与 constructor 参数必须保持同一顺序：
 

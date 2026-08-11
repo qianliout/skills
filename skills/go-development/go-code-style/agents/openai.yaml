@@ -1,4 +1,4 @@
 interface:
   display_name: "Go Code Style"
   short_description: "Go 风格、注释与日志硬约束"
-  default_prompt: "使用 $go-code-style，按任务读取 code-style / comment-style / logging reference，严格执行禁止清单。"
+  default_prompt: "使用 $go-code-style，按任务读取 code-style / comment-style / logging reference；规则只用必须/禁止；生命周期走 go-model-hierarchy，业务错误包装走 go-service-layer，handler 错误返回走 go-api-layer。"
