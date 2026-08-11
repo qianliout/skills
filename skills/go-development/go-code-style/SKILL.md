@@ -1,6 +1,6 @@
 ---
 name: go-code-style
-description: "用于编写、重构、评审、排查或解释 Go 通用代码风格、注释、日志、early return、薄包装、receiver、goimport 或 LogStr 时。"
+description: "用于编写、重构、评审、排查或解释 Go 通用代码风格、注释、日志、early return、薄包装、receiver、goimports 或 LogStr 时。"
 ---
 
 # Go Code Style
@@ -15,7 +15,7 @@ description: "用于编写、重构、评审、排查或解释 Go 通用代码�
 4. 日志任务必须读 `references/logging.md`。
 5. 同时涉及多项时全部读取；禁止只读其一却改其它领域。
 6. 触及字段生命周期时必须加载 `go-model-hierarchy`；触及业务错误包装时必须加载 `go-service-layer`；触及 handler 错误返回时必须加载 `go-api-layer`。
-7. 修改 Go 文件后必须 `goimport`；能测必须最小范围 `go test`。
+7. 修改 Go 文件后必须 `goimports`；能测必须最小范围 `go test`。
 
 ## 禁止清单
 
@@ -29,4 +29,4 @@ description: "用于编写、重构、评审、排查或解释 Go 通用代码�
 
 - 已读本次涉及的全部 reference。
 - 风格/注释/日志边界未互相污染层职责。
-- 已 `goimport`；能测则已测试。
+- 已 `goimports`；能测则已测试。

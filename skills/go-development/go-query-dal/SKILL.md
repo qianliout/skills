@@ -5,7 +5,7 @@ description: "用于编写、重构、评审、排查或解释 Go store/DAL/DAO�
 
 # Go Query DAL
 
-DAL 只编排持久化。禁止承载业务规则。一个 DAL 方法围绕一个主要 data model。
+DAL 只编排持久化。禁止承载业务规则。一个 DAL 方法只围绕一个主要 data model。细则与合法形态示例见 `references/query-dal.md`。
 
 ## 强制工作流
 
@@ -20,9 +20,10 @@ DAL 只编排持久化。禁止承载业务规则。一个 DAL 方法围绕一�
 - 禁止在 DAL 写业务决策、跨资源业务聚合。
 - 禁止默认在 DAL 打业务日志。
 - 禁止无 timeout 的 DB 调用。
+- 禁止跳过 reference 或偏离其中示例的确定顺序。
 
 ## 交付门禁
 
 - 已读 query-dal reference 与所需跨层 Skill。
-- 签名、receiver（`dal`）、边界符合 reference。
+- 签名、receiver（`dal`）、流水线顺序符合 reference。
 - 已 `goimport`；能测则已测。

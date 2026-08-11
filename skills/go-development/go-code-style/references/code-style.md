@@ -1,98 +1,58 @@
 # Go 通用代码风格硬约束
 
-本文件规定 Go 通用代码风格。必须保持业务行为和层职责不变；API 只适配 HTTP，Service 只编排业务，DAL 只访问持久化，Model 只管理字段生命周期。注释规则必须读取 `comment-style.md`，日志规则必须读取 `logging.md`。触及 `Serialize`/`Deserialize`/`ToUpdater`/`Check`/`Same` 或字段生命周期时，必须加载 `go-model-hierarchy`；禁止在本文件维护生命周期细则。
+注释 → `comment-style.md`；日志 → `logging.md`；生命周期方法 → `go-model-hierarchy`；业务错误包装 → `go-service-layer`；handler 错误返回 → `go-api-layer`。禁止在本文件复述专文。冲突：层 Skill > 专文 > 本文件。必须保持业务行为与层职责不变。
 
 ## 控制流
 
-- 必须对非法输入、空值、权限失败和错误使用 early return，使成功主流程左对齐。
-- 禁止使用 `else if` 与嵌套超过一层的分支；单值多状态必须使用 `switch`。
-- 禁止保留 `else`，下列情形除外：两个分支都必须进入同一后续步骤，且该后续步骤不适合拆成独立函数。
-- 复杂布尔条件必须先抽为具名局部变量。
-- 禁止为布尔条件新增 helper，下列情形除外：该表达式在本包内至少两处复用，或该名称对应稳定业务概念且已出现在 typed param/领域模型中。
+- 非法输入、空值、权限失败、错误必须 early return；成功主流程左对齐。
+- 禁止 `else if`；单值多状态必须 `switch`。
+- 禁止嵌套复合分支：`if`/`for`/`switch` 的 body 内禁止再出现三者。`switch` case 内只允许 early return，或一层且无嵌套的 `if`。
+- 禁止 `else`。仅当两分支合流后共用 ≥3 行、且只读分支前局部变量时允许；否则 early return，或抽具名函数两侧调用。
+- ≥2 处 `&&`/`||` 或含函数调用的布尔条件必须先赋具名变量。布尔 helper 仅本包 ≥2 处复用，或名称已在 typed param/领域模型中时允许。
 
-## 函数形态与职责
+## 函数与签名
 
-- 一个函数必须处于同一抽象层级；禁止在同一函数内混入编排步骤与实现细节。
-- 禁止新增仅转发参数、仅含一两行显然赋值/判空/转换、仅隐藏单个条件、单调用点且无稳定语义或副作用边界的薄包装。
-- 禁止创建 `processData`、`handleResult`、`buildInfo`、`prepareData`、`doCreate`、`checkData` 等模糊 helper；禁止形成无业务决策的 helper 链。
-- 拆分 helper 必须满足下列条件之一：本包内至少两处复用；隔离副作用；承载复杂分支或跨领域聚合；名称表达稳定业务语义。
-- 短小本地操作必须内联或使用具名局部变量。既有薄包装必须保留兼容，禁止复制该模式。
-- 归属明确的行为必须使用所属 struct 的指针接收者；禁止新增无所有者的包级业务函数。无业务归属的纯工具函数必须放入项目既有 `utils` 位置。
+- 业务函数：含 `ctx` 或 API/Service/DAL 导出方法。工具函数：无 `ctx`、无持久化/RPC/缓存副作用。其余新增签名必须先经用户确认。
+- 新增业务方法必须 `(ctx, param *T)`（`ctx` 首位），返回只能 `error` 或 `(result, error)`；禁止多位置业务参数。工具函数普通参数；返回值 ≤3（含 `error`）；receiver 不计入参数个数。
+- 免确认：框架/接口强制、生成适配器、构造/装配、既有分层标准（含 DAL `Create/Update/Delete/SearchXxx` 既有形态）。既有多参/多返回必须保留，除非用户要求重构。
+- 同一函数禁止既做跨依赖编排又做字段赋值/拼接/容器操作。
+- 禁止薄包装：只转发；体 ≤3 句且只赋值/判空/转换；只藏单条件；单调用点且无稳定业务动词、不隔离副作用。禁止 `processData`/`handleResult`/`buildInfo`/`prepareData`/`doCreate`/`checkData` 及无决策 helper 链。抽 helper 必须满足其一：本包 ≥2 复用；隔离副作用；≥2 层分支或跨领域聚合；稳定业务动词。本地短操作内联或具名变量；既有薄包装只保留兼容。
+- 有归属行为必须用所属 struct 指针方法；禁止无主包级业务函数。无归属纯工具必须放既有 `utils`。
 
-## 入参与返回值
+## 返回与实参
 
-- 新增带请求上下文的业务函数/方法必须使用 `ctx context.Context` 与一个具名 `param` 指针；`ctx` 必须位于首位。
-- 新增业务函数/方法只能返回 `error` 或一个结果加 `error`。工具函数必须使用普通参数；receiver 不计入入参数量。
-- 禁止新增多个位置业务参数或额外返回值；必须将调用字段放入具名 param/request struct。
-- 既有多参数、多返回值函数必须保留，除非用户明确要求重构。新增超出上述形态的签名必须先取得用户明确确认。
-- 下列签名不需逐次确认：既有分层标准签名、框架/接口强制签名、生成适配器、构造函数与依赖装配。DAL 的 `UpdateXxx(ctx, id, data)`、`CreateXxx(ctx, data)`、`DeleteXxx(ctx, id)` 与返回 `(list, count, error)` 的 `SearchXxx(ctx, param)` 属于分层标准签名。
-- 返回业务调用、I/O、DAL/Service/Client 调用、复杂构造/转换、链式调用或错误包装的结果前，必须赋给局部变量并处理后返回。
-- 仅字面量、常量、字段访问、`nil`、`err`、布尔值、简单零值、`fmt.Errorf`、`errors.New` 与稳定适配器值允许直接返回。
-- `(value, error)` 调用必须拆开：先接收、处理 `err`，再返回结果。
+- `(value, error)` 必须先处理 `err` 再返回 value。
+- 业务/I/O/层调用、≥2 步构造转换、链式调用、错误包装必须先赋局部变量再返回。允许直接返回：字面量、常量、字段、`nil`/`err`/布尔/简单零值、`fmt.Errorf`/`errors.New`、稳定适配器值。
+- 实参只允许变量/常量/字面量/简单字段或索引。返回 `error` 或多返回值的调用禁止直接作实参。`len`/`cap`/`append` 与字段/索引允许直接作实参。
 
-## 防御检查与依赖
+## 防御与依赖
 
-- 防御检查只允许出现在：请求边界、外部系统边界、真实 panic 风险、明确接受 nil/零值/空值或 `(nil, nil)` 的公开契约、允许 nil receiver 的 Model 生命周期方法、goroutine 恢复与清理路径。
-- 防御检查必须紧邻引入不确定性的边界；值通过验证或构造后，下游必须信任契约。
-- 禁止对已由 `Check()` 或边界校验通过的字段重复校验，禁止检查本函数刚 `make`、字面量创建或保证可用的构造结果。
-- 禁止对 `err == nil` 时保证可用的 `(value, error)` 结果重复判空，除非该函数契约明确允许 `(nil, nil)`。
-- 禁止把初始化后的空 slice/map 改为 nil，禁止为调用方可处理的空结果增设特殊分支，禁止对不可能内部状态静默降级。
-- 长期依赖必须通过构造函数、初始化或启动阶段注入并保证非 nil；字段、构造参数和启动调用点必须同步更新，字段与构造参数顺序必须一致。
-- struct 字段只能存放长期协作者；业务方法只能创建请求级对象。
-- 禁止在业务方法临时创建 Service、DAL、Client、Cache、Logger 或同类长期依赖；禁止因注入依赖为 nil 而跳过验证、写入、缓存维护、日志或返回成功。必须修复装配或启动校验。
-- 依赖字段顺序必须为：持久化、跨领域服务、基础设施/缓存/Client、配置或小 helper、Logger。
+- 防御检查只允许：请求/外部边界、真实 panic 风险、契约接受 nil/零值/`(nil, nil)`、允许 nil receiver 的生命周期方法、goroutine 恢复/清理。必须紧邻不确定性边界；验证/构造后禁止重复检查。
+- 禁止：复查已 `Check()`/边界通过字段；检查本函数刚 `make`/字面量/保证可用构造；`err == nil` 仍判空（契约允许 `(nil, nil)` 除外）；空 slice/map 改 nil；为空结果加多余分支；不可能状态静默降级。
+- 长期依赖必须构造/启动注入且非 nil；字段、构造参数、启动点同步更新且顺序一致：持久化 → 跨领域服务 → 基础设施/缓存/Client → 配置或小 helper → Logger。
+- 字段只放长期协作者；请求级对象只在方法内创建。禁止方法内临时 `New` Service/DAL/Client/Cache/Logger。禁止依赖 nil 时跳过验证/写入/缓存/日志或假成功。
 
-## 领域生命周期
+## 命名与声明
 
-- 触及字段规整、校验、反序列化、更新字段选择或 `Serialize`/`Deserialize`/`ToUpdater`/`Check`/`Same` 时，必须加载并遵守 `go-model-hierarchy`。
-- 禁止在本 skill 内新增、复述或改写生命周期方法细则。
-- 禁止新增 `Normalize()`、`FillDefault()` 或同职责私有 helper / 包级函数替代 `Serialize()`。
+- 全部指针 receiver；同 struct 禁止混用；名称：Service `s`，DAL `dal`，API `api`，含 `Param` 用 `p`，其他 Model 用 `vi`。
+- 标识符必须表达业务职责。公共方法禁止编码调用方/租户/场景；差异进 typed param。副作用或写入字段集合不同且 param 表达不了时，必须独立业务动词。
+- 禁止 `data`/`tmp`/`obj`。`res`/`ans`/`input`/`output`/`cnt` 仅循环体或闭包。禁止冗余 `Is`、局部名 >40 字符、与函数/receiver/type/package 重名，以及 `max`/`min`/`len`/`cap`/`error`/`slices`/`maps`/`strings`。
+- `ID`/`URL`/`HTTP`/`JSON` 同库大小写一致。默认 `:=`；仅 nil 指针/接口、跨分支累积零值、扩作用域零值用 `var`。
 
-## 接收者、命名与声明
+## 类型与数据
 
-- 所有方法必须使用指针接收者；同一 struct 禁止混用值接收者与指针接收者，必须统一 receiver 名称。
-- receiver 命名必须固定：Service 用 `s`，DAL 用 `dal`，API 用 `api`，名称含 `Param` 的 Model 用 `p`，其他 Model 用 `vi`。
-- 类型、函数、接口和局部变量必须表达业务职责；公共方法不得把当前调用者、租户或场景编码入名称，必须通过 typed param 的筛选字段表达。
-- 禁止新增按调用方/租户/场景拆分的专用方法名；差异必须放入 typed param 的筛选或命令字段。行为确实不同且无法用筛选/命令字段表达时，必须使用独立业务动词命名。
-- 禁止使用 `data`、`tmp`、`obj` 作为变量名。
-- 仅循环体或闭包内的短生命周期局部变量允许使用 `res`、`ans`、`input`、`output`、`cnt`；其余作用域禁止使用这些名称。
-- 禁止冗余 `Is` 前缀、过长局部变量名、与函数/receiver/type/package 重复的名称，以及 `max`、`min`、`len`、`cap`、`error`、`slices`、`maps`、`strings` 等内建或常用包名。
-- `ID`、`URL`、`HTTP`、`JSON` 等缩写在同一代码库内必须大小写一致。
-- 必须使用 `:=` 声明即初始化。下列情形必须使用 `var`：故意声明 nil 指针或接口；跨分支累积的零值；必须扩大作用域的零值声明。
+- 输入输出必须具体类型。匿名结构本包 ≥2 次或跨函数传递必须具名 struct。
+- 禁止普通业务字段具名基础类型包装。必须具名当且仅当：外部协议、该类型需方法、或不可用 struct 的强类型边界。
+- `err == nil` 的 slice/map 必须非 nil；`err != nil` 允许 nil。
+- 业务与层间数值必须 `int64`。例外：语言/标准库 `int`、外部协议、第三方签名、字节、已证明性能/存储、兼容约束。禁止因范围小用 `int`/`int32`/`uint`/`uint64`。
+- 禁止业务数据 `any`/`interface{}`/`map[string]any`（`ToUpdater`、泛型 helper、原始 JSON、日志字段、第三方边界除外）；入域立即强类型。
+- 禁止新增 ≤3 方法且单动词接口，除非调用方按不同实现切换。常量必须进项目 `consts`；禁止在层代码或函数体定义。重复魔法值必须具名常量。
+- 新表/新功能时间必须毫秒 `int64` + `time.Now().UTC().UnixMilli()`；禁止擅自改既有单位。JSON tag 禁止 `omitempty`。禁止 `Normalize()`/`FillDefault()` 替代 `Serialize()`。
 
-## 类型、集合、常量与数据字段
+## 文件、并发、错误、门禁
 
-- 函数输入输出必须使用已定义 struct 或具体类型；数据形态稳定时必须定义 struct。
-- 新增函数或方法的返回值最多三个（包含 `error`）；超过三个时必须使用具名结果 struct。下列签名允许超过三个返回值：框架或接口强制签名、外部协议签名、生成适配器、既有公开兼容签名。
-- 禁止为普通业务字段创建具名基础类型包装，例如 `type Kind string`、`type Status int64`。下列情形必须创建具名类型：外部协议要求；该类型必须定义方法；该类型构成不可由 struct 表达的强类型边界。
-- 调用参数只能是变量、常量、字面量或简单字段/索引访问；禁止直接传入另一个函数/方法调用结果，必须先赋给具名局部变量。
-- 返回 slice/map 前必须初始化；所有返回路径，包括错误路径，必须返回非 nil slice/map。
-- 字段、参数、返回值、计数、分页、ID、时间戳与层间数值必须使用 `int64`。下列情形允许其他数值类型：外部协议、第三方签名、字节数据、已证明的性能/存储需求、兼容约束。
-- 禁止因范围小使用 `int`、`int32`、`uint`、`uint64`；禁止仅为旧实现兼容保留非 `int64`，除非外部契约或迁移风险要求。
-- 禁止为普通业务数据使用 `any`、`interface{}`、`map[string]any`；`ToUpdater()`、泛型 helper、原始 JSON、日志字段与第三方边界除外。进入业务域后必须立即转为强类型。
-- 禁止新增小行为接口，除非调用方按该接口的不同实现切换行为。
-- 常量必须统一放入项目定义的 `consts` 目录，按业务职责组织；禁止在 Model、API、Service、DAL、Helper、Handler 或函数体定义常量。重复魔法值必须使用具名常量。
-- 新表和新功能的所有时间字段必须使用毫秒 `int64`，数据库、模型、参数、响应、前后端载荷、Service、DAL、缓存与序列化必须保持单位一致。当前时间必须使用 `time.Now().UTC().UnixMilli()`；禁止擅自迁移既有时间单位。
-- JSON tag 禁止使用 `omitempty`；必须以显式零值维持契约。
-
-## 文件、格式化与并发
-
-- 文件必须按类型组、职责、路由组、方法族或既有本地约定拆分；禁止单文件混入无关职责；禁止仅为行数拆成碎片文件。
-- 非 Model 的公共 struct 必须放入项目统一的 `structs` 位置；具有 Model 语义、参数校验、序列化或数据库映射的 struct 必须保留在 Model 层。
-- 过长函数调用、链式调用、struct 字面量、slice/map 与复杂条件必须在自然边界换行；禁止挤成单行。
-- I/O、DB、Cache、RPC、Queue 与长任务必须传递上游 `ctx`；禁止在请求或任务流中替换为 `context.Background()`。
-- 仅为新增 timeout/cancel 范围时创建 child context，且必须调用 `cancel`。
-- goroutine 必须有退出条件、ctx 取消、受限工作量或明确生命周期；必须 `recover`，并将 panic 与 stack 记录到项目可观测错误路径。
-- 共享可变状态必须遵循项目既有同步方式。
-- import 必须使用分组语法，即使仅一个 import；修改 Go 文件后必须运行 `goimport`。
-- 必须先执行最小范围 `go test`；变更行为或共享代码时必须扩大范围。因依赖或环境无法测试时，必须明确报告原因。
-
-## 错误处理
-
-- 错误必须立即返回；存在明确恢复路径时必须在恢复后继续，禁止吞掉未处理错误。
-- 业务错误的包装、语义转换与 i18n 必须由 Service 完成，并遵守 `go-service-layer`；禁止在本 skill 要求或实施业务错误包装。
-- API/handler 必须遵守 `go-api-layer`：解析/绑定/校验失败使用 `response.NewErr`；service 返回的 error 必须原样交给 `response.JSONError`，禁止再处理。
-- 日志字段与错误上下文必须包含有用业务信息，且不得泄露敏感值。
-- 次要清理或维护错误被故意忽略时，必须用注释写明原因。
-- 项目使用标准错误包装时，比较包装错误必须使用 `errors.Is` 或 `errors.As`。
-- 禁止将注入依赖为 nil 视为可恢复运行时状态；禁止以判空分支隐藏装配错误。
+- 按类型组/职责/路由组/方法族拆文件；禁止无关混装与纯行数切碎。非 Model 公共 struct → 项目 `structs`；Model 语义留 Model。单行 >120 列必须换行。
+- I/O/DB/Cache/RPC/Queue/长任务必须传上游 `ctx`；禁止请求/任务流改用 `context.Background()`。仅 timeout/cancel 可建 child 且必须 `cancel`。
+- goroutine 必须有：ctx 取消、有上限工作量、或同寿停机信号；必须 `recover` 并记录 panic/stack。共享状态用项目既有同步。
+- 错误立即返回；有恢复则恢复后继续；禁止吞错。忽略的次要错误必须打日志或英文注释原因。包装错误用 `errors.Is`/`errors.As`。错误上下文必须含可定位业务 ID/主键；禁止敏感值。
+- import 必须分组。改文件后必须 `goimports`；必须最小范围 `go test`，行为/共享变更扩范围；不能测必须报告原因。
