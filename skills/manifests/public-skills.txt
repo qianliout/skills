@@ -16,4 +16,3 @@ development|using-git-worktrees|obra-superpowers|skills/using-git-worktrees
 development|receiving-code-review|obra-superpowers|skills/receiving-code-review
 development|dispatching-parallel-agents|obra-superpowers|skills/dispatching-parallel-agents
 development|writing-skills|obra-superpowers|skills/writing-skills
-productivity|grilling|mattpocock-skills|skills/productivity/grilling

@@ -28,6 +28,7 @@ write_fixture_repo() {
     "$fixture_root/skills/manifests" \
     "$fixture_root/skills/local/local-one" \
     "$fixture_root/skills/local/local-two" \
+    "$fixture_root/skills/local/public/only-docs" \
     "$fixture_root/mcps/public/playwright" \
     "$fixture_root/mcps/private/private-tool"
 
@@ -54,6 +55,11 @@ description: Local two fixture
 ---
 
 # Local Two
+EOF
+  cat > "$fixture_root/skills/local/public/only-docs/README.md" <<'EOF'
+# only-docs
+
+Public stub fixture; must not be installed.
 EOF
 
   cat > "$fixture_root/mcps/profiles.json" <<'EOF'
@@ -156,6 +162,7 @@ write_fixture_repo "$FIXTURE_ROOT"
 HOME="$TEST_HOME" "$FIXTURE_ROOT/scripts/install.sh" >/tmp/skills-install-test.log
 assert_path_exists "$TEST_HOME/.agents/skills/local-one/SKILL.md"
 assert_path_exists "$TEST_HOME/.agents/skills/local-two/SKILL.md"
+assert_path_absent "$TEST_HOME/.agents/skills/only-docs"
 assert_file_count "$TEST_HOME/.agents/skills" "2"
 assert_path_exists "$TEST_HOME/.agents/mcps/profiles.json"
 assert_path_exists "$TEST_HOME/.agents/mcps/public/playwright/config.json"
@@ -180,6 +187,7 @@ assert_path_absent "$TEST_HOME/.codex/skills/local-two"
 HOME="$TEST_HOME" "$FIXTURE_ROOT/scripts/install-operations.sh" >/tmp/skills-operations-install-test.log
 assert_path_exists "$TEST_HOME/.agents/skills/local-one/SKILL.md"
 assert_path_absent "$TEST_HOME/.agents/skills/local-two"
+assert_path_absent "$TEST_HOME/.agents/skills/only-docs"
 assert_file_count "$TEST_HOME/.agents/skills" "1"
 assert_path_exists "$TEST_HOME/.agents/mcps/profiles.json"
 assert_path_exists "$TEST_HOME/.agents/mcps/public/playwright/config.json"

@@ -51,7 +51,8 @@ done < "$PUBLIC_SKILLS"
 local_skill_names="$(
   find "$ROOT/skills" -type f -name SKILL.md \
     ! -path "$ROOT/skills/manifests/*" \
-    ! -path "$ROOT/skills/*/resources/*" -print |
+    ! -path "$ROOT/skills/*/resources/*" \
+    ! -path "$ROOT/skills/*/public/*" -print |
   while IFS= read -r skill_file; do
     basename "${skill_file%/SKILL.md}"
   done | sort
@@ -68,6 +69,32 @@ overlapping_installs="$(
     <(printf '%s\n' "$local_skill_names" | sed '/^$/d' | sort)
 )"
 test -z "$overlapping_installs" || fail "local and public install names overlap: $overlapping_installs"
+
+# skills/<category>/public/<name>/ is documentation for public skills only.
+find "$ROOT/skills" -mindepth 2 -maxdepth 2 -type d -name public | sort |
+while IFS= read -r public_dir; do
+  category="$(basename "$(dirname "$public_dir")")"
+
+  find "$public_dir" -mindepth 1 -maxdepth 1 -type d | sort |
+  while IFS= read -r stub_dir; do
+    stub_name="$(basename "$stub_dir")"
+    require_file "$stub_dir/README.md"
+    test ! -e "$stub_dir/SKILL.md" ||
+      fail "public stub must not contain SKILL.md: $category/public/$stub_name"
+  done
+
+  while IFS='|' read -r skill_category skill_name _repository _source_path; do
+    case "$skill_category" in
+      '' | '#'*)
+        continue
+        ;;
+    esac
+    test "$skill_category" = "$category" || continue
+    test -d "$public_dir/$skill_name" ||
+      fail "missing public stub for $category/$skill_name"
+    require_file "$public_dir/$skill_name/README.md"
+  done < "$PUBLIC_SKILLS"
+done
 
 duplicate_operations_skills="$(
   awk 'NF && $0 !~ /^#/ {print $1}' "$OPERATIONS_SKILLS" | sort | uniq -d

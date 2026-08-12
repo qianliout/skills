@@ -25,7 +25,8 @@ lookup_local_skill() {
 
   find "$ROOT/skills" -type f -name SKILL.md \
     ! -path "$ROOT/skills/manifests/*" \
-    ! -path "$ROOT/skills/*/resources/*" -print |
+    ! -path "$ROOT/skills/*/resources/*" \
+    ! -path "$ROOT/skills/*/public/*" -print |
   while IFS= read -r skill_file; do
     skill_dir="${skill_file%/SKILL.md}"
     if [ "${skill_dir##*/}" = "$name" ]; then

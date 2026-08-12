@@ -2,7 +2,7 @@
 
 这个仓库同时维护 Skill 和 MCP。目标不是把所有能力都手写一遍，而是把可复用的公共 Skill 整理成稳定的本地入口，再统一安装到 `~/.agents/skills`。
 
-当前仓库一共管理 31 个可安装 Skill：12 个本地入口 Skill，19 个通过 manifest 跟踪的公共 Skill；另外还有 7 个仅作为分类资源镜像保留的上游 Skill，不会直接安装。
+当前仓库一共管理 31 个可安装 Skill：13 个本地入口 Skill，18 个通过 manifest 跟踪的公共 Skill；另外还有 7 个仅作为分类资源镜像保留的上游 Skill，不会直接安装。
 
 ## 这仓库在管什么
 
@@ -57,6 +57,7 @@ skills/
 | `code-quality` | `code-quality` |
 | `documents` | `documents` |
 | `go-development` | `go`、`go-api-layer`、`go-code-style`、`go-gin-openapi-json`、`go-model-hierarchy`、`go-query-dal`、`go-service-layer`、`go-test-writer` |
+| `productivity` | `grilling` |
 
 说明：
 
@@ -74,7 +75,6 @@ skills/
 | `skill-management` | `find-skills` | `vercel-skills` |
 | `ai-learning` | `sigma` | `sanyuan-code-review-expert` |
 | `development` | `using-superpowers`、`brainstorming`、`writing-plans`、`test-driven-development`、`subagent-driven-development`、`requesting-code-review`、`systematic-debugging`、`finishing-a-development-branch`、`verification-before-completion`、`using-git-worktrees`、`receiving-code-review`、`dispatching-parallel-agents`、`writing-skills` | `obra-superpowers` |
-| `productivity` | `grilling` | `mattpocock-skills` |
 
 说明：
 
