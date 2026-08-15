@@ -32,3 +32,4 @@ finishing-a-development-branch
 find-skills
 writing-skills
 sigma
+ops-daily-report

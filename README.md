@@ -2,7 +2,7 @@
 
 这个仓库同时维护 Skill 和 MCP。目标不是把所有能力都手写一遍，而是把可复用的公共 Skill 整理成稳定的本地入口，再统一安装到 `~/.agents/skills`。
 
-当前仓库一共管理 31 个可安装 Skill：13 个本地入口 Skill，18 个通过 manifest 跟踪的公共 Skill；另外还有 7 个仅作为分类资源镜像保留的上游 Skill，不会直接安装。
+当前仓库一共管理 32 个可安装 Skill：14 个本地入口 Skill，18 个通过 manifest 跟踪的公共 Skill；另外还有 7 个仅作为分类资源镜像保留的上游 Skill，不会直接安装。
 
 ## 这仓库在管什么
 
@@ -57,7 +57,7 @@ skills/
 | `code-quality` | `code-quality` |
 | `documents` | `documents` |
 | `go-development` | `go`、`go-api-layer`、`go-code-style`、`go-gin-openapi-json`、`go-model-hierarchy`、`go-query-dal`、`go-service-layer`、`go-test-writer` |
-| `productivity` | `grilling` |
+| `productivity` | `grilling`、`ops-daily-report` |
 
 说明：
 
@@ -102,7 +102,7 @@ skills/
 | 并行执行 | `dispatching-parallel-agents`、`subagent-driven-development` |
 | Go 平台开发 | `go`、`go-api-layer`、`go-code-style`、`go-gin-openapi-json`、`go-model-hierarchy`、`go-query-dal`、`go-service-layer`、`go-test-writer` |
 | 质量与交付 | `code-quality`、`requesting-code-review`、`receiving-code-review`、`test-driven-development`、`verification-before-completion`、`finishing-a-development-branch` |
-| 文档与知识 | `documents`、`find-skills`、`writing-skills`、`sigma` |
+| 文档与知识 | `documents`、`find-skills`、`writing-skills`、`sigma`、`ops-daily-report` |
 
 ## 安装与更新
 
