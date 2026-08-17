@@ -47,6 +47,7 @@ func NewXxxAPI(xxxSrv service.XxxService) *XxxAPI {
 - 参数较多时必须使用单个语义化 param struct；禁止使用大量位置参数。
 - param 和响应 DTO 必须定义在 model/API 类型层；禁止在 handler 函数内声明请求或响应 struct。
 - param 与响应 DTO 的 JSON tag 必须显式声明，且禁止使用 `omitempty`。
+- HTTP 请求参数名（query、JSON body 字段）与响应 JSON 字段名默认统一使用小驼峰（camelCase），如 `projectId`、`uniqueId`、`itemsPerPage`；项目已有明确命名约定时遵循项目约定。
 - 新设计 API 的所有时间请求或响应字段必须使用 `int64` 毫秒时间戳；既有 API 必须保持现有时间单位，除非用户明确要求迁移。
 - trim、ID 规整、默认值与派生字段必须放入拥有字段的公开 `Serialize()`。
 - 枚举与必填字段校验必须放入 `Check()`。

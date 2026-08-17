@@ -20,6 +20,7 @@ API 层只做 HTTP 适配。禁止在 handler 内写复杂业务、聚合、DB/G
 - 禁止 handler 访问 DAL/DB/GORM/SQL。
 - 禁止在 handler 做复杂参数规整；必须落到拥有字段的 `Serialize()`。
 - 禁止 JSON tag 使用 `omitempty`。
+- 禁止 HTTP 请求参数名与响应 JSON 字段名偏离小驼峰（项目已有明确约定时除外）。
 - 禁止对 service 返回的 error 再处理；解析/校验失败仍用 `response.NewErr`。
 - 禁止跳过 `$go` 或本 Skill reference 直接改 handler。
 

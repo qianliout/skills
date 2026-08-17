@@ -34,7 +34,7 @@ Model 层拥有字段契约与生命周期。下列示例即合法形态；禁�
 
 ## 字段与标识
 
-- `json` 禁止 `omitempty`；显式名或 `json:"-"`。普通字段 `gorm` 只能 `column:...`。基础四字段 tag 以示例为准，禁止改写（唯一例外可含 `primaryKey`/`autoCreateTime:milli`/`autoUpdateTime:milli`）。
+- `json` 禁止 `omitempty`；显式名或 `json:"-"`。JSON tag 字段名默认统一小驼峰（camelCase，如 `projectId`、`uniqueId`），项目已有明确命名约定时遵循项目约定。普通字段 `gorm` 只能 `column:...`。基础四字段 tag 以示例为准，禁止改写（唯一例外可含 `primaryKey`/`autoCreateTime:milli`/`autoUpdateTime:milli`）。
 - 运行时字段 `gorm:"-"`。禁止 JSON/JSONB/数组/map/对象列；复杂结构用文本双字段（运行时 `gorm:"-"` + `string` backing `json:"-"`）或拆列/关联表。
 - 数值与时间必须 `int64` 毫秒；`time.Now().UTC().UnixMilli()`。旧秒级只在 `Deserialize` 转毫秒。禁止 `uint`/`uint64`/超 `int64`/`big.Int`/decimal；超范围标识用 `string`。
 - 业务身份：`UniqueID int64`；禁止 `DataID`/`UID`，除非仓库已有契约或用户明确要求。业务键=范围 ID + 稳定 name/code + 资源 type；禁止随机/请求时刻/进程态。不生成则类型上方 `// UniqueID: not generated because ...`。
