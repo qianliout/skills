@@ -42,8 +42,10 @@ Service 只负责业务编排、跨领域聚合、响应组合、日志与错误
 ## 编排
 
 - 持久化必须委托 DAL；更新先完成所需校验与业务判断再调 DAL。
-- 局部更新：service 自行组装 `map[string]any` updater 交给 `UpdateXxxColumns`，DAL 直接执行。key 必须是 model `gorm:"column:..."` 的字面列名，必须在调用点写成 map 字面量，必须自带 `updated_at: time.Now().UTC().UnixMilli()`；禁止 `id`/`created_at`/主身份/`UniqueID`/checksum/派生列。禁止抽 `buildXxxUpdater` helper 或反射 struct。
-- 全量更新（待改列参与 `Serialize` 派生/序列化，或已持有整个规整实体）才走 `UpdateXxx(ctx, id, data)` + model `ToUpdater()`；此时 service 禁止自行组装 updater。
+- 更新一律走 `UpdateXxx(ctx, id int64, updater map[string]any)`，updater 由 service 控制，DAL 直接执行。DAL 只有这一个更新签名，两种组装方式对它无差别。
+- 待改列**参与 `Serialize` 派生/序列化**（`UniqueID`、checksum、文本 backing 列、互相依赖的字段等），或已持有整个规整实体：必须 `data = data.Serialize()` → `data.Check()` → `data.ToUpdater()`。禁止在调用点手搓这类 updater。
+- 待改列**不参与派生**的散列更新：在调用点写 map 字面量。key 必须是 model `gorm:"column:..."` 的字面列名，必须自带 `updated_at: time.Now().UTC().UnixMilli()`；禁止 `id`/`created_at`/主身份/`UniqueID`/checksum/派生列。禁止抽 `buildXxxUpdater` helper 或反射 struct。
+- 更新路径的实体 `Serialize`/`Check` 归 service（DAL 收不到实体）；Create 路径仍由 DAL 负责，service 禁止对同一 data 重复调用。
 - 跨多个 DAL 写且需原子提交时，由 Service 用已注入的 DB/事务入口开事务；禁止把跨资源事务藏进单个 DAL。
 - 返回 slice/map 必须先 `make`，全路径返回非 nil 空集合；契约为可选指针且允许 nil 除外。
 
@@ -100,7 +102,8 @@ func (s *XxxSrv) CreateXxx(ctx context.Context, param *model.CreateXxxParam) (*m
 	return data, nil
 }
 
-// UpdateXxx：局部更新在调用点组装列 updater，DAL 直接执行；不涉及 Serialize 派生列。
+// UpdateXxx：待改列不参与 Serialize 派生，因此在调用点写 map 字面量；DAL 直接执行。
+// 若待改列参与派生，改为 data = data.Serialize() -> data.Check() -> data.ToUpdater()。
 func (s *XxxSrv) UpdateXxx(ctx context.Context, param *model.UpdateXxxParam) error {
 	param = param.Serialize()
 	if err := param.Check(); err != nil {
@@ -112,8 +115,8 @@ func (s *XxxSrv) UpdateXxx(ctx context.Context, param *model.UpdateXxxParam) err
 		"remark":     param.Remark,
 		"updated_at": time.Now().UTC().UnixMilli(),
 	}
-	if err := s.xxxDal.UpdateXxxColumns(ctx, param.ID, updater); err != nil {
-		s.log.Error(ctx).Err(err).Int64("xxxID", param.ID).Msg("updateXxxColumns failed")
+	if err := s.xxxDal.UpdateXxx(ctx, param.ID, updater); err != nil {
+		s.log.Error(ctx).Err(err).Int64("xxxID", param.ID).Msg("updateXxx failed")
 		return err
 	}
 	return nil
