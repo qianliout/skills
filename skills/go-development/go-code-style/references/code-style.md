@@ -45,7 +45,7 @@
 - 禁止普通业务字段具名基础类型包装。必须具名当且仅当：外部协议、该类型需方法、或不可用 struct 的强类型边界。
 - `err == nil` 的 slice/map 必须非 nil；`err != nil` 允许 nil。
 - 业务与层间数值必须 `int64`。例外：语言/标准库 `int`、外部协议、第三方签名、字节、已证明性能/存储、兼容约束。禁止因范围小用 `int`/`int32`/`uint`/`uint64`。
-- 禁止业务数据 `any`/`interface{}`/`map[string]any`（`ToUpdater`、泛型 helper、原始 JSON、日志字段、第三方边界除外）；入域立即强类型。
+- 禁止业务数据 `any`/`interface{}`/`map[string]any`（`ToUpdater`、service 组装给 DAL 的 DB 列 updater、泛型 helper、原始 JSON、日志字段、第三方边界除外）；入域立即强类型。updater map 只能作为「列名 → 值」直接传给 DAL，禁止当业务对象在层间传递、缓存或返回给 API。
 - 禁止新增 ≤3 方法且单动词接口，除非调用方按不同实现切换。常量必须进项目 `consts`；禁止在层代码或函数体定义。重复魔法值必须具名常量。
 - 新表/新功能时间必须毫秒 `int64` + `time.Now().UTC().UnixMilli()`；禁止擅自改既有单位。JSON tag 禁止 `omitempty`。禁止 `Normalize()`/`FillDefault()` 替代 `Serialize()`。
 

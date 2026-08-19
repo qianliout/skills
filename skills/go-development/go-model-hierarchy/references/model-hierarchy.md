@@ -13,7 +13,7 @@ Model 层拥有字段契约与生命周期。下列示例即合法形态；禁�
 ## 类型与方法闭集
 
 - 一旦提供某生命周期方法，签名/receiver/职责必须符合下文与示例。
-- 持久化实体（有 `TableName()`）：必须 `Serialize`、`Deserialize`、`ToUpdater`、`Check`；仅当存在「相等则跳过写库」时才提供 `Same`。
+- 持久化实体（有 `TableName()`）：必须 `Serialize`、`Deserialize`、`Check`；仅当存在全量更新写库路径时才提供 `ToUpdater`；仅当存在「相等则跳过写库」时才提供 `Same`。只做局部更新的实体禁止为对称而补空/半全量 `ToUpdater`。
 - Param：必须 `Serialize`、`Check`；禁止 `ToUpdater`；无存储读取兼容则禁止 `Deserialize`。
 - Response/View/Cache/Statistic/值对象：禁止生命周期方法；含须 trim/填默认/枚举校验的自有字段时只允许对应 `Serialize`/`Check`。禁止空壳方法。
 
@@ -27,7 +27,8 @@ Model 层拥有字段契约与生命周期。下列示例即合法形态；禁�
 - 禁止写 `Normalize`/`FillDefault`/`GenUniqueID`/`GenUUID`/`GenCheckSum` 及同职责私有 helper。
 - `Deserialize` 只做存储读取兼容（旧枚举/秒→毫秒/历史默认/文本列还原）。
 - `Check` 拒 nil；只校验不改写。只校验实际存在的身份（type/name/code/version）、范围（tenant/project/parent）、状态（`consts.TrueString`/`consts.FalseString`）、外部引用字段。
-- `ToUpdater`：已初始化 map，显式列全量可更新列 + `updated_at: time.Now().UTC().UnixMilli()`；零值有效禁止跳过。禁止 `id`/`created_at`/主身份/`UniqueID`/checksum/派生列；禁止反射整 struct。
+- `ToUpdater` 只服务全量更新：已初始化 map，显式列全量可更新列 + `updated_at: time.Now().UTC().UnixMilli()`；零值有效禁止跳过。禁止 `id`/`created_at`/主身份/`UniqueID`/checksum/派生列；禁止反射整 struct。禁止只列部分列、禁止按零值/参数条件增删 key——需要局部更新时由 service 自行组装 updater map 交给 DAL，不得让 `ToUpdater` 变成可变形状。
+- model 禁止提供局部 updater 的组装方法（`ToStatusUpdater`/`ToUpdaterWith(fields)`/`PatchMap` 等）。
 - `Same` 只比业务可变字段；禁止比 `ID`/`CreatedAt`/`UpdatedAt`/`DeletedAt`/`UniqueID`等。
 - 返回 slice/map 的方法全路径非 nil 空集合。生命周期必须在一个公有方法内完成；工具函数仅当无 model 字段名/业务常量、本包或 `utils`≥2 处复用、且不读写 receiver。
 - `TableName()` 返回字面量表名。
@@ -47,7 +48,8 @@ Model 层拥有字段契约与生命周期。下列示例即合法形态；禁�
 | 入站 Param `Serialize`/`Check` | API handler（调 service 前） | 下游对同一 param 再调 |
 | 写入实体 `Serialize`/`Check` | DAL（写库前） | service/API 对同一 data 再调 |
 | 读出 `Deserialize` | DAL（`Find` 后逐行） | service/API 再调 |
-| `ToUpdater` | DAL `Updates` | service/API |
+| `ToUpdater`（仅全量更新） | DAL `Updates` | service/API |
+| 局部更新 updater `map[string]any` | service 在调用点写 map 字面量，DAL 直接 `Updates` | model 提供组装方法；DAL 补列或清洗 |
 | `Same` | service（且仅「相等则跳过写库」） | 被其他生命周期调用 |
 
 禁止对同一对象重复 `Check()`。API/service/DAL 禁止重复实现 model 已有规整/校验/序列化逻辑。
@@ -120,6 +122,8 @@ func (vi *Resource) Check() error {
 	return nil
 }
 
+// ToUpdater exists only because Resource has a full-update path, and its shape is fixed:
+// every updatable column, always. Partial updates use a service-assembled map instead.
 func (vi *Resource) ToUpdater() map[string]any {
 	return map[string]any{
 		"project_id": vi.ProjectID,

@@ -42,6 +42,8 @@ Service 只负责业务编排、跨领域聚合、响应组合、日志与错误
 ## 编排
 
 - 持久化必须委托 DAL；更新先完成所需校验与业务判断再调 DAL。
+- 局部更新：service 自行组装 `map[string]any` updater 交给 `UpdateXxxColumns`，DAL 直接执行。key 必须是 model `gorm:"column:..."` 的字面列名，必须在调用点写成 map 字面量，必须自带 `updated_at: time.Now().UTC().UnixMilli()`；禁止 `id`/`created_at`/主身份/`UniqueID`/checksum/派生列。禁止抽 `buildXxxUpdater` helper 或反射 struct。
+- 全量更新（待改列参与 `Serialize` 派生/序列化，或已持有整个规整实体）才走 `UpdateXxx(ctx, id, data)` + model `ToUpdater()`；此时 service 禁止自行组装 updater。
 - 跨多个 DAL 写且需原子提交时，由 Service 用已注入的 DB/事务入口开事务；禁止把跨资源事务藏进单个 DAL。
 - 返回 slice/map 必须先 `make`，全路径返回非 nil 空集合；契约为可选指针且允许 nil 除外。
 
@@ -64,6 +66,7 @@ Service 只负责业务编排、跨领域聚合、响应组合、日志与错误
 ```go
 type XxxService interface {
 	CreateXxx(ctx context.Context, param *model.CreateXxxParam) (*model.Xxx, error)
+	UpdateXxx(ctx context.Context, param *model.UpdateXxxParam) error
 	SearchXxx(ctx context.Context, param *model.SearchXxxParam) ([]*model.Xxx, int64, error)
 }
 
@@ -95,6 +98,25 @@ func (s *XxxSrv) CreateXxx(ctx context.Context, param *model.CreateXxxParam) (*m
 		return nil, err
 	}
 	return data, nil
+}
+
+// UpdateXxx：局部更新在调用点组装列 updater，DAL 直接执行；不涉及 Serialize 派生列。
+func (s *XxxSrv) UpdateXxx(ctx context.Context, param *model.UpdateXxxParam) error {
+	param = param.Serialize()
+	if err := param.Check(); err != nil {
+		return err
+	}
+
+	updater := map[string]any{
+		"status":     param.Status,
+		"remark":     param.Remark,
+		"updated_at": time.Now().UTC().UnixMilli(),
+	}
+	if err := s.xxxDal.UpdateXxxColumns(ctx, param.ID, updater); err != nil {
+		s.log.Error(ctx).Err(err).Int64("xxxID", param.ID).Msg("updateXxxColumns failed")
+		return err
+	}
+	return nil
 }
 
 // SearchXxx：纯转调不重复 Serialize/Check；可直接返回 model 定义的数据结构。

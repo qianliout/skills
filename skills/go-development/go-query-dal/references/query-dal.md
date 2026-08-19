@@ -20,10 +20,12 @@ DAL 只做持久化。禁止业务规则、跨资源聚合、响应组装、业�
 CreateXxx(ctx context.Context, data *model.Xxx) error
 SearchXxx(ctx context.Context, param *model.SearchXxxParam) ([]*model.Xxx, int64, error)
 UpdateXxx(ctx context.Context, id int64, data *model.Xxx) error
+UpdateXxxColumns(ctx context.Context, id int64, updater map[string]any) error
 DeleteXxx(ctx context.Context, id int64) error
 ```
 
 - 查询必须 `SearchXxx`。禁止 `FindXxx`/`GetXxx`/场景化后缀（`ForUser`/`ForProject` 等）。按 ID 取数必须 `SearchXxx` + 类型化 ID 条件；过滤必须进 typed param。
+- 局部更新方法名必须 `UpdateXxxColumns`，是唯一允许的 `Update` 后缀；禁止 `UpdateXxxStatus`/`PatchXxx` 等按字段或场景拆分的名字。
 - 带 `Serialize`/`Check` 的 param/data 必须指针。跨 model 字段禁止裸 `ID`/`Type`/`Name`/`Keyword`，必须语义名（`ProjectID` 等）。
 
 ## 超时与表名
@@ -79,7 +81,19 @@ func (dal *XxxDao) SearchXxx(ctx context.Context, param *model.SearchXxxParam) (
 
 ## Create / Update / Delete
 
-`Update`/`Delete` 的 id 必须为正。`Update` 必须 `Updates(data.ToUpdater())`，禁止存完整 struct。不可变字段、权限、所有权、状态机、删除许可必须在调用 DAL 前由 model/service 处理。禁止 `return db.Xxx(...).Error`；一切 DB 调用必须先取 `err`，再 `if err != nil { return err }`，成功路径显式 `return nil`。
+`Update*`/`Delete` 的 id 必须为正。禁止 `Save`/`Updates(struct)` 存完整 struct。不可变字段、权限、所有权、状态机、删除许可必须在调用 DAL 前由 model/service 处理。禁止 `return db.Xxx(...).Error`；一切 DB 调用必须先取 `err`，再 `if err != nil { return err }`，成功路径显式 `return nil`。
+
+更新有且仅有两种形态，按待改列选择：
+
+| 形态 | 方法 | DAL 内做什么 |
+| --- | --- | --- |
+| 全量更新：一次覆盖该实体所有可更新列 | `UpdateXxx(ctx, id, data *model.Xxx)` | `data.Serialize()` → `data.Check()` → `Updates(data.ToUpdater())` |
+| 局部更新：只改部分列 | `UpdateXxxColumns(ctx, id, updater map[string]any)` | 只校验 `id > 0`、`len(updater) > 0`，然后 `Updates(updater)` |
+
+- 默认局部更新。当且仅当待改列参与 `Serialize` 的派生/序列化（`UniqueID`、checksum、文本 backing 列、互相依赖的字段等），或调用方本就持有整个已规整实体时，才用全量更新。
+- `UpdateXxxColumns` 的 updater 由 service 组装，DAL 直接执行。禁止 DAL 改写/补列/清洗/领域校验 updater 内容；`updated_at` 由组装方放入，DAL 不补。
+- updater 的 key 必须是 model `gorm:"column:..."` 的字面列名；禁止出现 `id`/`created_at`/主身份/`UniqueID`/checksum/派生列。DAL 禁止提供 updater 组装 helper，禁止反射 struct 生成 updater。
+- 两个方法可以共存；只需要一种时不要为对称而补另一种。
 
 ```go
 func (dal *XxxDao) CreateXxx(ctx context.Context, data *model.Xxx) error {
@@ -109,6 +123,23 @@ func (dal *XxxDao) UpdateXxx(ctx context.Context, id int64, data *model.Xxx) err
 	db := dal.db.Get().WithContext(cancelCtx).Table(data.TableName())
 	db = db.Where("id = ?", id)
 	if err := db.Updates(data.ToUpdater()).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (dal *XxxDao) UpdateXxxColumns(ctx context.Context, id int64, updater map[string]any) error {
+	if id <= 0 {
+		return fmt.Errorf("id must be positive")
+	}
+	if len(updater) == 0 {
+		return fmt.Errorf("updater is empty")
+	}
+	cancelCtx, cancelFunc := context.WithTimeout(ctx, time.Second*3)
+	defer cancelFunc()
+	db := dal.db.Get().WithContext(cancelCtx).Table((&model.Xxx{}).TableName())
+	db = db.Where("id = ?", id)
+	if err := db.Updates(updater).Error; err != nil {
 		return err
 	}
 	return nil
