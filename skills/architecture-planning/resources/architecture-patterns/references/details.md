@@ -33,7 +33,7 @@ app/
     └── logging.py
 ```
 
-**Dependency rule in one sentence:** every `import` statement in `domain/` and `use_cases/` must point only toward `domain/`; nothing in those layers may import from `adapters/` or `infrastructure/`.
+Dependency rule in one sentence: every `import` statement in `domain/` and `use_cases/` must point only toward `domain/`; nothing in those layers may import from `adapters/` or `infrastructure/`.
 
 ## Clean Architecture — Core Implementation
 

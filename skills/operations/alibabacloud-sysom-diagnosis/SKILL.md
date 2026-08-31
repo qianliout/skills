@@ -12,19 +12,19 @@ description: |
 
 # alibabacloud-sysom-diagnosis
 
-> **Skill Name**: alibabacloud-sysom-diagnosis
-> **Goal**: Use SysOM CLI and backend envelopes as the diagnosis source of truth for Alibaba Cloud ECS performance and stability diagnosis.
+> Skill Name: alibabacloud-sysom-diagnosis
+> Goal: Use SysOM CLI and backend envelopes as the diagnosis source of truth for Alibaba Cloud ECS performance and stability diagnosis.
 
 ---
 
 ## Immediate Route
 
-When the user reports a symptom and has **not** provided fresh SysOM envelope output,
-run the matching SysOM command from **Domain Routing** below **before** ad hoc Linux
+When the user reports a symptom and has not provided fresh SysOM envelope output,
+run the matching SysOM command from Domain Routing below before ad hoc Linux
 inspection or manual probing. Then follow the returned `agent.summary`,
 `agent.findings[].detail/category`, and `agent.next_steps[]`.
 
-Raw Linux commands (via Cloud Assistant) are **bounded fallbacks** only when:
+Raw Linux commands (via Cloud Assistant) are bounded fallbacks only when:
 - A SysOM command is unavailable for the symptom domain
 - SysOM outputs contradict each other
 - A required entity remains missing after the focused SysOM command
@@ -33,31 +33,31 @@ Raw Linux commands (via Cloud Assistant) are **bounded fallbacks** only when:
 
 ## Credential Security
 
-> **[CRITICAL] Credential Security Rules:**
-> - **NEVER** print, echo, or display AccessKey ID / AccessKey Secret values in conversation or command output (even partial masking of `LTAI_ACCESS_KEY_ID` is FORBIDDEN)
-> - **NEVER** ask the user to input AK/SK directly in the conversation or command line
-> - **NEVER** use `aliyun configure set` with literal credential values
-> - **ONLY** use `aliyun configure list` to check credential status
+> [CRITICAL] Credential Security Rules:
+> - NEVER print, echo, or display AccessKey ID / AccessKey Secret values in conversation or command output (even partial masking of `LTAI_ACCESS_KEY_ID` is FORBIDDEN)
+> - NEVER ask the user to input AK/SK directly in the conversation or command line
+> - NEVER use `aliyun configure set` with literal credential values
+> - ONLY use `aliyun configure list` to check credential status
 >
 > ```bash
 > aliyun configure list
 > ```
 > Check the output for a valid profile (AK, STS, or OAuth identity).
 >
-> **If no valid profile exists, STOP here.**
+> If no valid profile exists, STOP here.
 > 1. Obtain credentials from [Alibaba Cloud Console](https://ram.console.aliyun.com/manage/ak)
-> 2. Configure credentials **outside of this session** (via `aliyun configure` in terminal or environment variables in shell profile)
+> 2. Configure credentials outside of this session (via `aliyun configure` in terminal or environment variables in shell profile)
 > 3. Return and re-run after `aliyun configure list` shows a valid profile
 
 ---
 
 ## Prerequisites
 
-> **Pre-check: Aliyun CLI >= 3.3.3 required**
+> Pre-check: Aliyun CLI >= 3.3.3 required
 > Run `aliyun version` to verify >= 3.3.3. If not installed or version too low,
 > run `curl -fsSL https://aliyuncli.alicdn.com/setup.sh | bash` to install/update.
 
-> **Pre-check: Aliyun CLI plugin update required**
+> Pre-check: Aliyun CLI plugin update required
 > [MUST] run `aliyun configure set --auto-plugin-install true` to enable automatic plugin installation.
 > [MUST] run `aliyun plugin update` to ensure that any existing plugins on your local machine are always up-to-date.
 
@@ -65,7 +65,7 @@ Raw Linux commands (via Cloud Assistant) are **bounded fallbacks** only when:
 
 ## Parameter Confirmation
 
-> **IMPORTANT: Parameter Confirmation** — Before executing any command or API call,
+> IMPORTANT: Parameter Confirmation — Before executing any command or API call,
 > ALL user-customizable parameters (e.g., RegionId, InstanceId, time ranges)
 > MUST be confirmed with the user. Do NOT assume or use default
 > values without explicit user approval.
@@ -81,7 +81,7 @@ Raw Linux commands (via Cloud Assistant) are **bounded fallbacks** only when:
 
 ### Time Inference Rule
 
-When the user's description contains **any temporal reference** (e.g., "this morning", "yesterday afternoon", "around 3pm", "last night"), you **MUST** proactively ask for the specific time range and recommend **historical diagnosis mode**. Do NOT silently default to real-time diagnosis when the problem clearly occurred in the past.
+When the user's description contains any temporal reference (e.g., "this morning", "yesterday afternoon", "around 3pm", "last night"), you MUST proactively ask for the specific time range and recommend historical diagnosis mode. Do NOT silently default to real-time diagnosis when the problem clearly occurred in the past.
 
 | User Description | Inferred Action |
 |-----------------|----------------|
@@ -95,13 +95,13 @@ When the user's description contains **any temporal reference** (e.g., "this mor
 
 ## Core Workflow
 
-All `aliyun` CLI **business commands** (SysOM, ECS API calls) **MUST** include
+All `aliyun` CLI business commands (SysOM, ECS API calls) MUST include
 `--user-agent AlibabaCloud-Agent-Skills/alibabacloud-sysom-diagnosis`.
 System commands (`version`, `configure`, `plugin`) do NOT use `--user-agent`.
 
 ### Phase 1: Environment Setup (Steps 0–3)
 
-**Step 0 — Enable AI-Mode and Update Plugins**
+Step 0 — Enable AI-Mode and Update Plugins
 
 Before executing any CLI commands, enable AI-Mode, set User-Agent, and update plugins:
 
@@ -111,9 +111,9 @@ aliyun configure ai-mode set-user-agent --user-agent "AlibabaCloud-Agent-Skills/
 aliyun plugin update
 ```
 
-> **⚠️ The above three commands must be executed before all CLI operations, and only need to be run once.**
+> ⚠️ The above three commands must be executed before all CLI operations, and only need to be run once.
 
-**Step 1 — CLI Version Check**
+Step 1 — CLI Version Check
 
 ```bash
 aliyun version
@@ -124,37 +124,37 @@ Verify version >= 3.3.3. If not met, install/update via:
 curl -fsSL https://aliyuncli.alicdn.com/setup.sh | bash
 ```
 
-**Step 2 — Enable Auto Plugin Installation**
+Step 2 — Enable Auto Plugin Installation
 
 ```bash
 aliyun configure set --auto-plugin-install true
 ```
 
-**Step 3 — Credential Verification**
+Step 3 — Credential Verification
 
 ```bash
 aliyun configure list
 ```
 
-If no valid credentials exist, **STOP** and guide the user to configure credentials outside the session.
+If no valid credentials exist, STOP and guide the user to configure credentials outside the session.
 
 ---
 
 ### Phase 2: Resource Validation + Cloud Assistant Check (Steps 4–5)
 
-**Step 4 — Ambiguous Problem Clarification (Inversion Gate)**
+Step 4 — Ambiguous Problem Clarification (Inversion Gate)
 
-Must confirm `region`, `instance_id`, and **when the anomaly occurred**. If not provided by the user, ask explicitly.
+Must confirm `region`, `instance_id`, and when the anomaly occurred. If not provided by the user, ask explicitly.
 
 If missing any required parameter, ask:
 
 > 🔍 To perform SysOM deep diagnosis on ECS, I need to confirm the following:
 >
-> - **Instance ID**: Please provide the ECS instance ID (`i-xxxxxxxxxxxxxxxxx`)
-> - **Region**: The Alibaba Cloud region where the instance is located (e.g., `cn-hangzhou`, `cn-beijing`, `cn-shanghai`)
-> - **When did the anomaly occur?**: Is the issue happening right now, or did it occur at a specific time in the past? (This determines whether to use real-time or historical diagnosis mode)
+> - Instance ID: Please provide the ECS instance ID (`i-xxxxxxxxxxxxxxxxx`)
+> - Region: The Alibaba Cloud region where the instance is located (e.g., `cn-hangzhou`, `cn-beijing`, `cn-shanghai`)
+> - When did the anomaly occur?: Is the issue happening right now, or did it occur at a specific time in the past? (This determines whether to use real-time or historical diagnosis mode)
 
-**Step 5 — Instance Validation + Cloud Assistant Check**
+Step 5 — Instance Validation + Cloud Assistant Check
 
 #### 5A. Verify Instance Exists
 
@@ -165,7 +165,7 @@ aliyun ecs describe-instances \
   --user-agent AlibabaCloud-Agent-Skills/alibabacloud-sysom-diagnosis
 ```
 
-If the instance does not exist or is not found, inform the user and **STOP**.
+If the instance does not exist or is not found, inform the user and STOP.
 
 #### 5B. Check Cloud Assistant Status
 
@@ -182,7 +182,7 @@ Check the response:
 - `CloudAssistantStatus` is `true` → Cloud Assistant is installed and running, proceed to Step 6
 - `CloudAssistantStatus` is `false` → Cloud Assistant is not installed or not running
 
-If Cloud Assistant is not running, inform the user and **STOP**:
+If Cloud Assistant is not running, inform the user and STOP:
 
 > ⚠️ Cloud Assistant is not running on instance `<instance_id>`. SysOM diagnosis requires Cloud Assistant to be active.
 > Please install or start Cloud Assistant on the instance, then retry.
@@ -192,25 +192,25 @@ If Cloud Assistant is not running, inform the user and **STOP**:
 
 ### Phase 3: Domain Routing & Diagnosis (Steps 6–8)
 
-**Step 6 — Domain Routing: Map Symptom to SysOM Diagnostic Command**
+Step 6 — Domain Routing: Map Symptom to SysOM Diagnostic Command
 
 Based on the user's problem description, route to the appropriate SysOM diagnostic
-subsystem. See the **Domain Routing Table** below.
+subsystem. See the Domain Routing Table below.
 
-**Domain Routing Table:**
+Domain Routing Table:
 
 | Symptom Domain | Trigger Keywords | SysOM Diagnostic Scope | SysOM Subsystem |
 |---------------|------------------|----------------------|-----------------|
-| **CPU** | "CPU high", "CPU spike", "CPU 100%", "cpu utilization", "CPU steal", "CPU saturation" | User/kernel CPU usage, CPU saturation, scheduling latency | `cpu`, `scheduling` |
-| **Memory** | "OOM", "out of memory", "memory leak", "memory high", "memory usage", "process killed", "oom killer" | Memory panoramic analysis, memory leak detection, OOM root cause | `memgraph`, `oom` |
-| **IO / Disk** | "IO high", "iowait", "disk slow", "disk latency", "IOPS", "disk throughput", "fsync slow" | IO traffic attribution, IO latency, iowait root cause | `iofsstat`, `iodiagnose` |
-| **Network** | "packet loss", "network jitter", "network latency", "TCP retransmit", "bandwidth", "connection timeout", "丢包", "网络抖动" | Packet drop analysis, network jitter, TCP anomalies | `packetdrop`, `netjitter` |
-| **System Load** | "load high", "load average", "system hang", "unresponsive", "load spike", "LA high" | System load anomaly, load jitter, D-state process analysis | `loadtask` |
-| **Kernel / Stability** | "kernel oops", "kernel panic", "crash", "hung task", "soft lockup", "hard lockup", "RCU stall", "kernel bug" | Kernel crash analysis, hung task detection | `hungtask`, `kerneldiag` |
-| **Scheduling** | "scheduling delay", "latency spike", "RT throttling", "cgroup throttle" | CPU scheduling jitter, scheduling latency analysis | `delay`, `scheduling` |
-| **General / Unknown** | Vague symptoms, "system slow", "performance degradation" | Full-system health check (all subsystems) | `healthy_score`, `full` |
+| CPU | "CPU high", "CPU spike", "CPU 100%", "cpu utilization", "CPU steal", "CPU saturation" | User/kernel CPU usage, CPU saturation, scheduling latency | `cpu`, `scheduling` |
+| Memory | "OOM", "out of memory", "memory leak", "memory high", "memory usage", "process killed", "oom killer" | Memory panoramic analysis, memory leak detection, OOM root cause | `memgraph`, `oom` |
+| IO / Disk | "IO high", "iowait", "disk slow", "disk latency", "IOPS", "disk throughput", "fsync slow" | IO traffic attribution, IO latency, iowait root cause | `iofsstat`, `iodiagnose` |
+| Network | "packet loss", "network jitter", "network latency", "TCP retransmit", "bandwidth", "connection timeout", "丢包", "网络抖动" | Packet drop analysis, network jitter, TCP anomalies | `packetdrop`, `netjitter` |
+| System Load | "load high", "load average", "system hang", "unresponsive", "load spike", "LA high" | System load anomaly, load jitter, D-state process analysis | `loadtask` |
+| Kernel / Stability | "kernel oops", "kernel panic", "crash", "hung task", "soft lockup", "hard lockup", "RCU stall", "kernel bug" | Kernel crash analysis, hung task detection | `hungtask`, `kerneldiag` |
+| Scheduling | "scheduling delay", "latency spike", "RT throttling", "cgroup throttle" | CPU scheduling jitter, scheduling latency analysis | `delay`, `scheduling` |
+| General / Unknown | Vague symptoms, "system slow", "performance degradation" | Full-system health check (all subsystems) | `healthy_score`, `full` |
 
-> **IMPORTANT: Run the matching SysOM command BEFORE any ad-hoc Linux inspection or manual probing.**
+> IMPORTANT: Run the matching SysOM command BEFORE any ad-hoc Linux inspection or manual probing.
 > The SysOM envelope output provides `agent.summary`, `agent.findings[].detail/category`, and
 > `agent.next_steps[]` — follow these as the primary diagnosis path.
 
@@ -218,11 +218,11 @@ subsystem. See the **Domain Routing Table** below.
 
 Each domain has a corresponding SysOM diagnosis invocation. Build the params JSON with:
 
-- **Real-time diagnosis**: `start_time=0`, `end_time=0`
-- **Historical diagnosis**: `start_time=<unix_ts>`, `end_time=<unix_ts>`
-- **Forced real-time** (`enable_diagnosis=true`): force `start_time` to `0` even if provided
+- Real-time diagnosis: `start_time=0`, `end_time=0`
+- Historical diagnosis: `start_time=<unix_ts>`, `end_time=<unix_ts>`
+- Forced real-time (`enable_diagnosis=true`): force `start_time` to `0` even if provided
 
-**6A. CPU Diagnosis**
+6A. CPU Diagnosis
 
 ```bash
 aliyun sysom invoke-diagnosis \
@@ -232,7 +232,7 @@ aliyun sysom invoke-diagnosis \
   --user-agent AlibabaCloud-Agent-Skills/alibabacloud-sysom-diagnosis
 ```
 
-**6B. Memory / OOM Diagnosis**
+6B. Memory / OOM Diagnosis
 
 ```bash
 aliyun sysom invoke-diagnosis \
@@ -242,7 +242,7 @@ aliyun sysom invoke-diagnosis \
   --user-agent AlibabaCloud-Agent-Skills/alibabacloud-sysom-diagnosis
 ```
 
-**6C. IO / Disk Diagnosis**
+6C. IO / Disk Diagnosis
 
 ```bash
 aliyun sysom invoke-diagnosis \
@@ -252,7 +252,7 @@ aliyun sysom invoke-diagnosis \
   --user-agent AlibabaCloud-Agent-Skills/alibabacloud-sysom-diagnosis
 ```
 
-**6D. Network Diagnosis**
+6D. Network Diagnosis
 
 ```bash
 aliyun sysom invoke-diagnosis \
@@ -262,7 +262,7 @@ aliyun sysom invoke-diagnosis \
   --user-agent AlibabaCloud-Agent-Skills/alibabacloud-sysom-diagnosis
 ```
 
-**6E. System Load Diagnosis**
+6E. System Load Diagnosis
 
 ```bash
 aliyun sysom invoke-diagnosis \
@@ -272,7 +272,7 @@ aliyun sysom invoke-diagnosis \
   --user-agent AlibabaCloud-Agent-Skills/alibabacloud-sysom-diagnosis
 ```
 
-**6F. Kernel / Stability Diagnosis**
+6F. Kernel / Stability Diagnosis
 
 ```bash
 aliyun sysom invoke-diagnosis \
@@ -282,7 +282,7 @@ aliyun sysom invoke-diagnosis \
   --user-agent AlibabaCloud-Agent-Skills/alibabacloud-sysom-diagnosis
 ```
 
-**6G. Full-System Health Check (General / Unknown Symptoms)**
+6G. Full-System Health Check (General / Unknown Symptoms)
 
 ```bash
 aliyun sysom invoke-diagnosis \
@@ -292,20 +292,20 @@ aliyun sysom invoke-diagnosis \
   --user-agent AlibabaCloud-Agent-Skills/alibabacloud-sysom-diagnosis
 ```
 
-> **Conditional params**: Add to JSON only when non-empty:
+> Conditional params: Add to JSON only when non-empty:
 > - `"ocd_description": "<string>"` — user's problem description in English with underscores
 
 Extract `task_id` from the response.
 
-> **⚠️ [CRITICAL] `Sysom.TaskInProgress` Error Handling:**
-> If `invoke-diagnosis` returns a `Sysom.TaskInProgress` error, this means a diagnosis task is already running. You **MUST**:
+> ⚠️ [CRITICAL] `Sysom.TaskInProgress` Error Handling:
+> If `invoke-diagnosis` returns a `Sysom.TaskInProgress` error, this means a diagnosis task is already running. You MUST:
 > 1. Extract the existing `task_id` from the error message using string match (pattern: `ocd(<task_id>)` or similar identifier in the message body)
 > 2. Immediately proceed to the polling flow with the extracted `task_id`
-> 3. **NEVER** treat `TaskInProgress` as a fatal failure or abort the workflow
+> 3. NEVER treat `TaskInProgress` as a fatal failure or abort the workflow
 
 ---
 
-**Step 7 — Poll Diagnosis Results**
+Step 7 — Poll Diagnosis Results
 
 Interval: 10 seconds, max 60 attempts (10 minutes total):
 
@@ -316,25 +316,25 @@ aliyun sysom get-diagnosis-result \
 ```
 
 Check the `status` field in the response:
-- `Ready` / `Running` → **MUST** continue polling at 10s intervals
+- `Ready` / `Running` → MUST continue polling at 10s intervals
 - `Success` → diagnosis complete, proceed to Step 8
 - `Fail` → diagnosis failed, inform the user
 
-> **⛔ [CRITICAL] Mandatory Polling Rules (MUST OBEY — violations will produce incorrect results):**
+> ⛔ [CRITICAL] Mandatory Polling Rules (MUST OBEY — violations will produce incorrect results):
 >
-> **Rule 1: `Running` status is NORMAL — keep polling.**
-> The diagnosis engine typically takes 1–5 minutes to complete. Receiving multiple consecutive `Running` responses is expected behavior. You **MUST** continue polling every 10 seconds without hesitation. `Running` is NOT an error and MUST NOT trigger early termination.
+> Rule 1: `Running` status is NORMAL — keep polling.
+> The diagnosis engine typically takes 1–5 minutes to complete. Receiving multiple consecutive `Running` responses is expected behavior. You MUST continue polling every 10 seconds without hesitation. `Running` is NOT an error and MUST NOT trigger early termination.
 >
-> **Rule 2: NEVER abandon polling early.**
+> Rule 2: NEVER abandon polling early.
 > Do NOT stop polling before reaching `Success`, `Fail`, or the 60-attempt limit. Do NOT "give up" after a few `Running` responses.
 >
-> **Rule 3: NEVER fall back to manual Linux commands during polling.**
-> Raw Linux commands via Cloud Assistant are **bounded fallbacks** only after diagnosis completes or when a SysOM command is unavailable for the symptom domain. During active polling, you MUST NOT run ad-hoc commands.
+> Rule 3: NEVER fall back to manual Linux commands during polling.
+> Raw Linux commands via Cloud Assistant are bounded fallbacks only after diagnosis completes or when a SysOM command is unavailable for the symptom domain. During active polling, you MUST NOT run ad-hoc commands.
 >
-> **Rule 4: NEVER fabricate diagnosis results.**
-> If the task has not reached `Success` status, you MUST NOT output any `summary.overall_status`, `summary.root_cause`, or `summary.suggestions` values. These fields come **exclusively** from the completed diagnosis result JSON.
+> Rule 4: NEVER fabricate diagnosis results.
+> If the task has not reached `Success` status, you MUST NOT output any `summary.overall_status`, `summary.root_cause`, or `summary.suggestions` values. These fields come exclusively from the completed diagnosis result JSON.
 >
-> **Timeout handling**: If still incomplete after 60 polling attempts, output ONLY this template and stop:
+> Timeout handling: If still incomplete after 60 polling attempts, output ONLY this template and stop:
 >
 > ```
 > ⏳ SysOM diagnosis task timed out
@@ -345,7 +345,7 @@ Check the `status` field in the response:
 
 ---
 
-**Step 8 — Result Parsing and Output**
+Step 8 — Result Parsing and Output
 
 Parse the returned JSON and present to the user:
 
@@ -363,12 +363,12 @@ Parse the returned JSON and present to the user:
 
 ### Phase 4: Bounded Fallback — Raw Linux Commands (Only When Applicable)
 
-Raw Linux commands via Cloud Assistant are **bounded fallbacks** only when:
+Raw Linux commands via Cloud Assistant are bounded fallbacks only when:
 1. A SysOM command is unavailable for the symptom domain
 2. SysOM outputs contradict each other (rare)
 3. A required entity remains missing after the focused SysOM command
 
-**When a fallback is warranted:**
+When a fallback is warranted:
 
 ```bash
 # Execute a targeted command via Cloud Assistant
@@ -387,9 +387,9 @@ aliyun ecs describe-invocation-results \
   --user-agent AlibabaCloud-Agent-Skills/alibabacloud-sysom-diagnosis
 ```
 
-> **Note:** The `Output` field in `describe-invocation-results` is Base64 encoded. Decode before analysis.
+> Note: The `Output` field in `describe-invocation-results` is Base64 encoded. Decode before analysis.
 
-**DO NOT** use raw Linux commands as the primary diagnosis path when a matching SysOM command exists in the Domain Routing Table.
+DO NOT use raw Linux commands as the primary diagnosis path when a matching SysOM command exists in the Domain Routing Table.
 
 ---
 
@@ -410,13 +410,13 @@ aliyun ecs describe-invocation-results \
 
 ## Cleanup
 
-**[MUST] Disable AI-Mode at EVERY exit point** — Before delivering the final response for ANY reason, always disable AI-mode first.
+[MUST] Disable AI-Mode at EVERY exit point — Before delivering the final response for ANY reason, always disable AI-mode first.
 
 ```bash
 aliyun configure ai-mode disable
 ```
 
-The diagnosis operations in this skill are **read-only** and do not modify the ECS instance state — no cleanup is needed.
+The diagnosis operations in this skill are read-only and do not modify the ECS instance state — no cleanup is needed.
 
 ---
 
@@ -437,12 +437,12 @@ The diagnosis operations in this skill are **read-only** and do not modify the E
 
 ## Best Practices
 
-1. **SysOM first, Linux second** — Always run the matching SysOM command from Domain Routing before ad-hoc inspection
-2. **Follow the envelope** — `agent.summary`, `agent.findings[]`, and `agent.next_steps[]` are the primary diagnosis path
-3. **Cloud Assistant is mandatory** — Check Cloud Assistant status before invoking diagnosis
-4. **Real-time by default** — Unless the user specifies a historical time range, default to real-time diagnosis
-5. **Credential security** — Never print or echo AK/SK values in conversation
-6. **All business CLI commands must include `--user-agent AlibabaCloud-Agent-Skills/alibabacloud-sysom-diagnosis`**
-7. **Never fabricate results** — All diagnosis conclusions must come from completed SysOM output
-8. **One subsystem at a time** — Run the most relevant diagnostic first; expand to `full` only if the initial diagnosis is inconclusive
-9. **Raw Linux commands are bounded fallbacks** — Only use when SysOM is unavailable, outputs contradict, or required entity is missing
+1. SysOM first, Linux second — Always run the matching SysOM command from Domain Routing before ad-hoc inspection
+2. Follow the envelope — `agent.summary`, `agent.findings[]`, and `agent.next_steps[]` are the primary diagnosis path
+3. Cloud Assistant is mandatory — Check Cloud Assistant status before invoking diagnosis
+4. Real-time by default — Unless the user specifies a historical time range, default to real-time diagnosis
+5. Credential security — Never print or echo AK/SK values in conversation
+6. All business CLI commands must include `--user-agent AlibabaCloud-Agent-Skills/alibabacloud-sysom-diagnosis`
+7. Never fabricate results — All diagnosis conclusions must come from completed SysOM output
+8. One subsystem at a time — Run the most relevant diagnostic first; expand to `full` only if the initial diagnosis is inconclusive
+9. Raw Linux commands are bounded fallbacks — Only use when SysOM is unavailable, outputs contradict, or required entity is missing

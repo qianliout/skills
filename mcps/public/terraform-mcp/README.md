@@ -2,8 +2,8 @@
 
 HashiCorp 官方 Terraform MCP 服务器。查询 Terraform Registry、管理 HCP Terraform / Terraform Enterprise 工作空间。
 
-- **GitHub**: https://github.com/hashicorp/terraform-mcp-server（⭐ 1.4k）
-- **运行方式**: Docker（官方镜像 `hashicorp/terraform-mcp-server:1.0.0`）
+- GitHub: https://github.com/hashicorp/terraform-mcp-server（⭐ 1.4k）
+- 运行方式: Docker（官方镜像 `hashicorp/terraform-mcp-server:1.0.0`）
 
 > 有一个已归档的旧 npm 版 `terraform-mcp-server`（thrashr888），不再维护，请用官方版。
 
@@ -13,14 +13,14 @@ HashiCorp 官方 Terraform MCP 服务器。查询 Terraform Registry、管理 HC
 
 | 工具集 | 功能 | 说明 |
 |--------|------|------|
-| **registry** | 搜索 Provider / Module / Policy | 公共 Terraform Registry |
-| **terraform** | 工作空间 CRUD、Run 管理、变量管理、State 查看 | HCP Terraform / TFE 操作 |
+| registry | 搜索 Provider / Module / Policy | 公共 Terraform Registry |
+| terraform | 工作空间 CRUD、Run 管理、变量管理、State 查看 | HCP Terraform / TFE 操作 |
 
 ---
 
 ## 前置条件
 
-- **Docker** 或 **Podman** 运行环境
+- Docker 或 Podman 运行环境
 - HCP Terraform / Terraform Enterprise 账号
   - Team API Token：`Settings → API Tokens` → 创建
   - 或 User Token：`User Settings → Tokens` → 创建
@@ -87,7 +87,7 @@ HashiCorp 官方 Terraform MCP 服务器。查询 Terraform Registry、管理 HC
 
 ## 安全注意事项
 
-- **TFE Token 务必只给最小权限**：Team Token 的权限受 Team 的 Workspace 权限限制
+- TFE Token 务必只给最小权限：Team Token 的权限受 Team 的 Workspace 权限限制
 - 生产环境建议用 Team API Token（而不是 User Token），便于权限管理和审计
 - 不要给 `manage workspaces` 以外的 admin 权限
 - 如果不需要变更操作，Terraform 端的 Workspace 权限设为 `Read`

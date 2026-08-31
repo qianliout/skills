@@ -2,11 +2,11 @@
 
 通过 Jenkins 官方 MCP Server 插件，把 Jenkins 作业、构建、日志、测试结果、SCM 信息等能力暴露给 MCP 客户端。
 
-- **Jenkins 插件**: `mcp-server`
-- **插件页**: https://plugins.jenkins.io/mcp-server/
-- **运行方式**: Jenkins 端安装插件，客户端通过 `mcp-remote` 连接 Jenkins 的 Streamable HTTP 端点
-- **推荐端点**: `<jenkins-url>/mcp-server/mcp`
-- **健康检查**: `<jenkins-url>/mcp-health`
+- Jenkins 插件: `mcp-server`
+- 插件页: https://plugins.jenkins.io/mcp-server/
+- 运行方式: Jenkins 端安装插件，客户端通过 `mcp-remote` 连接 Jenkins 的 Streamable HTTP 端点
+- 推荐端点: `<jenkins-url>/mcp-server/mcp`
+- 健康检查: `<jenkins-url>/mcp-health`
 
 ---
 

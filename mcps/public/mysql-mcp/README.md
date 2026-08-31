@@ -2,9 +2,9 @@
 
 通过 MCP 协议查询和管理 MySQL 数据库。
 
-- **npm**: `@f4ww4z/mcp-mysql-server`
-- **GitHub**: https://github.com/f4ww4z/mcp-mysql-server
-- **运行方式**: `npx`
+- npm: `@f4ww4z/mcp-mysql-server`
+- GitHub: https://github.com/f4ww4z/mcp-mysql-server
+- 运行方式: `npx`
 
 > 另有一个社区活跃版 `@berthojoris/mcp-mysql-server`，提供更多 DDL 工具（create_table / alter_column 等），本目录以简洁版为主。
 
@@ -62,7 +62,7 @@
 
 ### 生产环境
 
-**创建只读用户**：
+创建只读用户：
 ```sql
 CREATE USER 'ops_readonly'@'%' IDENTIFIED BY '<strong_password>';
 GRANT SELECT ON mydb.* TO 'ops_readonly'@'%';
@@ -116,7 +116,7 @@ FLUSH PRIVILEGES;
 
 ### 本地 MySQL：全功能配置
 
-如果你就是要连接**本地 MySQL**，并且希望把该 MCP 的能力尽量开满，推荐直接用环境变量方式，避免密码出现在进程参数里。
+如果你就是要连接本地 MySQL，并且希望把该 MCP 的能力尽量开满，推荐直接用环境变量方式，避免密码出现在进程参数里。
 
 已提供可直接复制的模板文件：
 
@@ -151,7 +151,7 @@ FLUSH PRIVILEGES;
 - `MCP_PERMISSIONS` 打开了列表、读写、自定义 SQL、DDL、事务、存储过程等高权限能力
 - `MCP_CATEGORIES` 打开了完整分类集合，对应上游全量工具集
 - 如果账号密码里包含 `@`、`:`、`/` 等特殊字符，优先用 `env` 方式，不要直接拼接连接串
-- 这是**高权限配置**，只适合本地开发库；生产库请改成只读账号 + 精简权限
+- 这是高权限配置，只适合本地开发库；生产库请改成只读账号 + 精简权限
 - 首次接入后建议先调用 `list_all_tools`，确认实际启用的工具集合
 
 > 备注：上游文档当前版本已经扩展到更高的工具数量，明显多于本 README 前面提到的简化版能力。
@@ -160,7 +160,7 @@ FLUSH PRIVILEGES;
 
 ## 安全注意事项
 
-- **生产环境必须用只读用户**：MySQL 层面 `GRANT SELECT` 即可
+- 生产环境必须用只读用户：MySQL 层面 `GRANT SELECT` 即可
 - 连接字符串里的密码会出现在进程参数中，建议用 `env` 方式注入
 - 该包使用预编译语句，已内置 SQL 注入防护
 - 不要授予 `DROP`、`ALTER`、`TRUNCATE`、`DELETE` 权限

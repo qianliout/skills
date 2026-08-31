@@ -2,11 +2,11 @@
 
 Red Hat / Ansible 官方 MCP 服务器。让 AI 助手通过标准化协议使用 Ansible 开发工具。
 
-- **npm**: `@ansible/ansible-mcp-server`
-- **容器镜像**: `ghcr.io/ansible/devtools-mcp-server:latest`
-- **文档**: https://docs.ansible.com/projects/vscode-ansible/mcp/
-- **运行方式**: `npx`（需 Node.js 24+）或 Docker
-- **状态**: Technical Preview
+- npm: `@ansible/ansible-mcp-server`
+- 容器镜像: `ghcr.io/ansible/devtools-mcp-server:latest`
+- 文档: https://docs.ansible.com/projects/vscode-ansible/mcp/
+- 运行方式: `npx`（需 Node.js 24+）或 Docker
+- 状态: Technical Preview
 
 > ⚠️ 本目录之前记录的 `bsahane/mcp-ansible`（社区 Python 版）已被官方版取代。官方版由 Red Hat 维护，功能更贴近 Ansible 开发工作流。
 
@@ -16,17 +16,17 @@ Red Hat / Ansible 官方 MCP 服务器。让 AI 助手通过标准化协议使�
 
 | 类别 | 工具 | 说明 |
 |------|------|------|
-| **信息与文档** | Zen of Ansible、Best Practices、Tool Discovery | 获取 Ansible 设计哲学、最佳实践、工具列表 |
-| **环境管理** | Environment Info、Setup Automation、Tool Installation | 检查 Python/Ansible 版本，自动配置 venv 和安装依赖 |
-| **项目脚手架** | Playbook Creation、Collection Creation | 按最佳实践生成 Playbook 和 Collection 骨架 |
-| **代码质量** | Ansible Lint（含自动修复）、Execution Environment Builder | 代码检查、自动修复、构建执行环境定义 |
-| **Playbook 执行** | Ansible Navigator | 智能环境检测 + 容器管理执行 Playbook |
+| 信息与文档 | Zen of Ansible、Best Practices、Tool Discovery | 获取 Ansible 设计哲学、最佳实践、工具列表 |
+| 环境管理 | Environment Info、Setup Automation、Tool Installation | 检查 Python/Ansible 版本，自动配置 venv 和安装依赖 |
+| 项目脚手架 | Playbook Creation、Collection Creation | 按最佳实践生成 Playbook 和 Collection 骨架 |
+| 代码质量 | Ansible Lint（含自动修复）、Execution Environment Builder | 代码检查、自动修复、构建执行环境定义 |
+| Playbook 执行 | Ansible Navigator | 智能环境检测 + 容器管理执行 Playbook |
 
 ---
 
 ## 前置条件
 
-**方式一：npm（需要 Node.js 24+）**
+方式一：npm（需要 Node.js 24+）
 
 ```bash
 # Mac 安装 Node.js 24
@@ -35,7 +35,7 @@ brew install node@24
 nvm install 24
 ```
 
-**方式二：Docker（无需 Node.js，推荐）**
+方式二：Docker（无需 Node.js，推荐）
 
 ```bash
 # Mac OrbStack 自带 Docker，无需额外安装
@@ -169,9 +169,9 @@ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":
 
 ## 安全注意事项
 
-- **生产环境用 Docker + 只读挂载 `:ro`**：Playbook 和 Inventory 不会被 AI 意外修改
-- **不要让 AI 直接操作 Vault 解密密码**：敏感凭据应在 CI/CD 流水线中注入，而非暴露给 MCP
-- `ansible-navigator` 执行 Playbook 时会实际连接目标主机，**确保容器内 SSH key 权限最小化**
+- 生产环境用 Docker + 只读挂载 `:ro`：Playbook 和 Inventory 不会被 AI 意外修改
+- 不要让 AI 直接操作 Vault 解密密码：敏感凭据应在 CI/CD 流水线中注入，而非暴露给 MCP
+- `ansible-navigator` 执行 Playbook 时会实际连接目标主机，确保容器内 SSH key 权限最小化
 - WORKSPACE_ROOT 即权限边界：只挂载需要的 Ansible 项目目录，不要挂载 `/` 或 `~/.ssh`
 - 如果不需要执行 Playbook（只需 lint 和 scaffold），挂载一个空目录即可，完全隔离
 

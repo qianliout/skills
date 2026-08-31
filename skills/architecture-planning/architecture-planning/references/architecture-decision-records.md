@@ -45,16 +45,16 @@ Proposed / Accepted / Deprecated / Superseded / Rejected
 
 ## Decision Drivers
 
-- **必须满足**：列出强制性需求
-- **应该满足**：列出期望但非强制性需求
+- 必须满足：列出强制性需求
+- 应该满足：列出期望但非强制性需求
 
 ## Considered Options
 
 ### Option 1: [名称]
 
-- **优点**：...
-- **缺点**：...
-- **团队经验**：...
+- 优点：...
+- 缺点：...
+- 团队经验：...
 
 ### Option 2: [名称]
 
@@ -98,7 +98,7 @@ Proposed / Accepted / Deprecated / Superseded / Rejected
 ```markdown
 # ADR-NNNN: 标题
 
-**Status**: Accepted | **Date**: YYYY-MM-DD | **Deciders**: @人员列表
+Status: Accepted | Date: YYYY-MM-DD | Deciders: @人员列表
 
 ## Context
 
@@ -110,9 +110,9 @@ Proposed / Accepted / Deprecated / Superseded / Rejected
 
 ## Consequences
 
-**正面**: ...
-**负面**: ...
-**缓解**: ...
+正面: ...
+负面: ...
+缓解: ...
 ```
 
 ### Y-Statement 格式
@@ -120,12 +120,12 @@ Proposed / Accepted / Deprecated / Superseded / Rejected
 适用于一句话摘要：
 
 ```markdown
-在 **<上下文>** 的背景下，
-面对 **<需要解决的问题>**，
-我们选择了 **<决策方案>**，
-而非 **<备选方案>**，
-以达到 **<目标效果>**，
-并接受 **<代价或权衡>**。
+在 <上下文> 的背景下，
+面对 <需要解决的问题>，
+我们选择了 <决策方案>，
+而非 <备选方案>，
+以达到 <目标效果>，
+并接受 <代价或权衡>。
 ```
 
 ### 废弃 ADR
@@ -204,14 +204,14 @@ docs/
 
 ## 最佳实践
 
-**应该做：**
+应该做：
 - 在实现之前写 ADR
 - 保持简洁：1-2 页即可
 - 坦诚记录权衡和真实的缺点
 - 链接相关决策，构建决策图谱
 - 当决策被取代时更新状态
 
-**不应该做：**
+不应该做：
 - 不要修改已接受的 ADR——写新的来取代
 - 不要跳过上下文——未来读者需要背景
 - 不要隐藏失败——被拒绝的决策同样有价值

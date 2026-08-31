@@ -2,9 +2,9 @@
 
 通过 MCP 协议查询 PagerDuty：Incident 列表、Service 状态、OnCall 值班信息。
 
-- **npm**: `@vineethnkrishnan/pagerduty-mcp`
-- **GitHub**: https://github.com/vineethkrishnan/mcp-pool（monorepo，`packages/pagerduty`）
-- **运行方式**: `npx`
+- npm: `@vineethnkrishnan/pagerduty-mcp`
+- GitHub: https://github.com/vineethkrishnan/mcp-pool（monorepo，`packages/pagerduty`）
+- 运行方式: `npx`
 
 > 另有一个 Python 版 `wpfleger96/pagerduty-mcp-server`，支持 Incident 的 acknowledge/resolve 操作。
 
@@ -24,7 +24,7 @@
 
 ## 前置条件
 
-- PagerDuty **只读 API Key**（推荐）：
+- PagerDuty 只读 API Key（推荐）：
   1. PagerDuty → Integrations → API Access Keys → Create API Key
   2. 选择 `Read-only` 权限
   3. Key 格式：`u+xxxxxxxxxxxxxxxx`
@@ -50,7 +50,7 @@
 }
 ```
 
-**EU 实例**（欧洲数据中心）：
+EU 实例（欧洲数据中心）：
 ```json
 {
   "env": {
@@ -88,7 +88,7 @@ pip install pagerduty-mcp-server
 
 ## 安全注意事项
 
-- **API Key 用只读权限**（`Read-only`），防止 AI 误操作关掉真实告警
+- API Key 用只读权限（`Read-only`），防止 AI 误操作关掉真实告警
 - 如果确实需要 acknowledge/resolve 权限，创建单独的 API Key 并精确控制
 - PagerDuty API Key 格式 `u+...` 是用户级 Token，权限范围是用户本身
 - 建议使用 Service Account 的 API Key，而非个人账号

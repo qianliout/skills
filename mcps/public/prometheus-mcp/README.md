@@ -2,9 +2,9 @@
 
 通过 MCP 协议查询 Prometheus 监控指标。支持直接 URL 连接和 K8s 集群自动发现。
 
-- **npm**: `mcp-prometheus`
-- **GitHub**: https://github.com/jeanlopezxyz/mcp-prometheus
-- **运行方式**: `npx`
+- npm: `mcp-prometheus`
+- GitHub: https://github.com/jeanlopezxyz/mcp-prometheus
+- 运行方式: `npx`
 
 ---
 
@@ -98,7 +98,7 @@ kubectl port-forward -n monitoring svc/prometheus-operated 9090:9090 &
 ## 安全注意事项
 
 - Prometheus 的 query API 是只读的，但可以消耗大量资源（大范围查询、高基数聚合）
-- 生产环境建议使用**只读 Prometheus 用户**或 API 代理层限制请求速率
+- 生产环境建议使用只读 Prometheus 用户或 API 代理层限制请求速率
 - K8s 自动发现模式使用集群内的 `kubeconfig`，确保 RBAC 权限最小化
 - URL 中的用户名密码在进程参数中可见，建议用环境变量 + shell 包装
 
@@ -118,7 +118,7 @@ curl http://localhost:9090/api/v1/query?query=up
 
 ## MCP 客户端接入
 
-**本地开发（端口转发）**：
+本地开发（端口转发）：
 ```json
 {
   "mcpServers": {
@@ -133,7 +133,7 @@ curl http://localhost:9090/api/v1/query?query=up
 }
 ```
 
-**生产环境（直接 URL）**：
+生产环境（直接 URL）：
 ```json
 {
   "mcpServers": {

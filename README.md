@@ -142,7 +142,7 @@ skills/
 | 客户端 | 路径 | 方式 |
 | ------ | ---- | ---- |
 | Claude Code | `~/.claude/skills` | 整目录软链 → `~/.agents/skills` |
-| Cursor | `~/.cursor/skills/<skill>` | **复制**到真实目录（Cursor 对软链 Skill 发现不可靠） |
+| Cursor | `~/.cursor/skills/<skill>` | 复制到真实目录（Cursor 对软链 Skill 发现不可靠） |
 | Trae | `~/.trae/skills` | 整目录软链 → `~/.agents/skills` |
 | Reasonix | `~/.reasonix/skills` | 整目录软链 → `~/.agents/skills` |
 | Codex | `~/.codex/skills/<skill>` | 逐 Skill 软链；保留内置 `.system` |

@@ -15,20 +15,20 @@
 
 ### 1. Clean Architecture（整洁架构）
 
-**层次（依赖向内流动）：**
+层次（依赖向内流动）：
 
-- **Entities**：核心业务模型，无框架导入
-- **Use Cases**：应用业务规则，编排实体
-- **Interface Adapters**：控制器、呈现器、网关——在用例与外部格式之间转换
-- **Frameworks & Drivers**：UI、数据库、外部服务——全部在最外层
+- Entities：核心业务模型，无框架导入
+- Use Cases：应用业务规则，编排实体
+- Interface Adapters：控制器、呈现器、网关——在用例与外部格式之间转换
+- Frameworks & Drivers：UI、数据库、外部服务——全部在最外层
 
-**关键原则：**
+关键原则：
 - 依赖只向内指向；内层完全不知道外层的存在
 - 业务逻辑独立于框架、数据库和交付机制
 - 每个层次边界都通过抽象接口跨越
 - 无需 UI、数据库或外部服务即可测试
 
-**目录结构：**
+目录结构：
 
 ```
 app/
@@ -44,34 +44,34 @@ app/
 └── infrastructure/   # 框架接线、配置、DI 容器
 ```
 
-**依赖规则一句话：** `domain/` 和 `use_cases/` 中的每个 `import` 只能指向 `domain/`；这两个层次禁止导入 `adapters/` 或 `infrastructure/`。
+依赖规则一句话： `domain/` 和 `use_cases/` 中的每个 `import` 只能指向 `domain/`；这两个层次禁止导入 `adapters/` 或 `infrastructure/`。
 
 ### 2. Hexagonal Architecture（端口与适配器）
 
-**组件：**
+组件：
 
-- **Domain Core**：业务逻辑，无框架依赖
-- **Ports**：抽象接口，定义核心与外部世界的交互方式（驱动端和被驱动端）
-- **Adapters**：端口的具象实现（PostgreSQL 适配器、Stripe 适配器、REST 适配器）
+- Domain Core：业务逻辑，无框架依赖
+- Ports：抽象接口，定义核心与外部世界的交互方式（驱动端和被驱动端）
+- Adapters：端口的具象实现（PostgreSQL 适配器、Stripe 适配器、REST 适配器）
 
-**优势：**
+优势：
 - 无需触碰核心即可替换实现（如 PostgreSQL 换 DynamoDB）
 - 测试中使用内存适配器——无需 Docker
 - 技术决策推迟到边缘
 
 ### 3. Domain-Driven Design（DDD）
 
-**战略模式：**
-- **Bounded Contexts（限界上下文）**：为一个子域隔离一致的模型；避免跨系统共享单一模型
-- **Context Mapping（上下文映射）**：定义上下文之间的关系（防腐层 ACL、共享内核、开放主机服务）
-- **Ubiquitous Language（通用语言）**：代码中的每个术语与领域专家使用的术语一致
+战略模式：
+- Bounded Contexts（限界上下文）：为一个子域隔离一致的模型；避免跨系统共享单一模型
+- Context Mapping（上下文映射）：定义上下文之间的关系（防腐层 ACL、共享内核、开放主机服务）
+- Ubiquitous Language（通用语言）：代码中的每个术语与领域专家使用的术语一致
 
-**战术模式：**
-- **Entities（实体）**：具有稳定标识、随时间变化的对象
-- **Value Objects（值对象）**：由属性标识的不可变对象（Email、Money、Address）
-- **Aggregates（聚合）**：一致性边界；只有根可从外部访问
-- **Repositories（仓储）**：持久化和重建聚合；抽象存储机制
-- **Domain Events（领域事件）**：捕获领域内发生的事情；用于跨聚合协调
+战术模式：
+- Entities（实体）：具有稳定标识、随时间变化的对象
+- Value Objects（值对象）：由属性标识的不可变对象（Email、Money、Address）
+- Aggregates（聚合）：一致性边界；只有根可从外部访问
+- Repositories（仓储）：持久化和重建聚合；抽象存储机制
+- Domain Events（领域事件）：捕获领域内发生的事情；用于跨聚合协调
 
 ## 核心实现示例
 

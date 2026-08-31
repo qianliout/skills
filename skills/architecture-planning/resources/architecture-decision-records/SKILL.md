@@ -22,9 +22,9 @@ Comprehensive patterns for creating, maintaining, and managing Architecture Deci
 
 An Architecture Decision Record captures:
 
-- **Context**: Why we needed to make a decision
-- **Decision**: What we decided
-- **Consequences**: What happens as a result
+- Context: Why we needed to make a decision
+- Decision: What we decided
+- Consequences: What happens as a result
 
 ### 2. When to Write an ADR
 
@@ -71,45 +71,45 @@ compliance for financial transactions.
 
 ## Decision Drivers
 
-- **Must have ACID compliance** for payment processing
-- **Must support complex queries** for reporting
-- **Should support full-text search** to reduce infrastructure complexity
-- **Should have good JSON support** for flexible product attributes
-- **Team familiarity** reduces onboarding time
+- Must have ACID compliance for payment processing
+- Must support complex queries for reporting
+- Should support full-text search to reduce infrastructure complexity
+- Should have good JSON support for flexible product attributes
+- Team familiarity reduces onboarding time
 
 ## Considered Options
 
 ### Option 1: PostgreSQL
 
-- **Pros**: ACID compliant, excellent JSON support (JSONB), built-in full-text
+- Pros: ACID compliant, excellent JSON support (JSONB), built-in full-text
   search, PostGIS for geospatial, team has experience
-- **Cons**: Slightly more complex replication setup than MySQL
+- Cons: Slightly more complex replication setup than MySQL
 
 ### Option 2: MySQL
 
-- **Pros**: Very familiar to team, simple replication, large community
-- **Cons**: Weaker JSON support, no built-in full-text search (need
+- Pros: Very familiar to team, simple replication, large community
+- Cons: Weaker JSON support, no built-in full-text search (need
   Elasticsearch), no geospatial without extensions
 
 ### Option 3: MongoDB
 
-- **Pros**: Flexible schema, native JSON, horizontal scaling
-- **Cons**: No ACID for multi-document transactions (at decision time),
+- Pros: Flexible schema, native JSON, horizontal scaling
+- Cons: No ACID for multi-document transactions (at decision time),
   team has limited experience, requires schema design discipline
 
 ## Decision
 
-We will use **PostgreSQL 15** as our primary database.
+We will use PostgreSQL 15 as our primary database.
 
 ## Rationale
 
 PostgreSQL provides the best balance of:
 
-1. **ACID compliance** essential for e-commerce transactions
-2. **Built-in capabilities** (full-text search, JSONB, PostGIS) reduce
+1. ACID compliance essential for e-commerce transactions
+2. Built-in capabilities (full-text search, JSONB, PostGIS) reduce
    infrastructure complexity
-3. **Team familiarity** with SQL databases reduces learning curve
-4. **Mature ecosystem** with excellent tooling and community support
+3. Team familiarity with SQL databases reduces learning curve
+4. Mature ecosystem with excellent tooling and community support
 
 The slight complexity in replication is outweighed by the reduction in
 additional services (no separate Elasticsearch needed).
@@ -158,9 +158,9 @@ additional services (no separate Elasticsearch needed).
 ```markdown
 # ADR-0012: Adopt TypeScript for Frontend Development
 
-**Status**: Accepted
-**Date**: 2024-01-15
-**Deciders**: @alice, @bob, @charlie
+Status: Accepted
+Date: 2024-01-15
+Deciders: @alice, @bob, @charlie
 
 ## Context
 
@@ -174,12 +174,12 @@ Adopt TypeScript for all new frontend code. Migrate existing code incrementally.
 
 ## Consequences
 
-**Good**: Catch type errors at compile time, better IDE support, self-documenting
+Good: Catch type errors at compile time, better IDE support, self-documenting
 code.
 
-**Bad**: Learning curve for team, initial slowdown, build complexity increase.
+Bad: Learning curve for team, initial slowdown, build complexity increase.
 
-**Mitigations**: TypeScript training sessions, allow gradual adoption with
+Mitigations: TypeScript training sessions, allow gradual adoption with
 `allowJs: true`.
 ```
 
@@ -188,12 +188,12 @@ code.
 ```markdown
 # ADR-0015: API Gateway Selection
 
-In the context of **building a microservices architecture**,
-facing **the need for centralized API management, authentication, and rate limiting**,
-we decided for **Kong Gateway**
-and against **AWS API Gateway and custom Nginx solution**,
-to achieve **vendor independence, plugin extensibility, and team familiarity with Lua**,
-accepting that **we need to manage Kong infrastructure ourselves**.
+In the context of building a microservices architecture,
+facing the need for centralized API management, authentication, and rate limiting,
+we decided for Kong Gateway
+and against AWS API Gateway and custom Nginx solution,
+to achieve vendor independence, plugin extensibility, and team familiarity with Lua,
+accepting that we need to manage Kong infrastructure ourselves.
 ```
 
 ### Template 4: ADR for Deprecation
@@ -221,10 +221,10 @@ Deprecate MongoDB and migrate user profiles to PostgreSQL.
 
 ## Migration Plan
 
-1. **Phase 1** (Week 1-2): Create PostgreSQL schema, dual-write enabled
-2. **Phase 2** (Week 3-4): Backfill historical data, validate consistency
-3. **Phase 3** (Week 5): Switch reads to PostgreSQL, monitor
-4. **Phase 4** (Week 6): Remove MongoDB writes, decommission
+1. Phase 1 (Week 1-2): Create PostgreSQL schema, dual-write enabled
+2. Phase 2 (Week 3-4): Backfill historical data, validate consistency
+3. Phase 3 (Week 5): Switch reads to PostgreSQL, monitor
+4. Phase 4 (Week 6): Remove MongoDB writes, decommission
 
 ## Consequences
 
@@ -283,9 +283,9 @@ OrderShipped { orderId, trackingNumber, timestamp }
 
 ### Projections
 
-- **CurrentOrderState**: Materialized view for queries
-- **OrderHistory**: Complete timeline for audit
-- **DailyOrderMetrics**: Analytics aggregation
+- CurrentOrderState: Materialized view for queries
+- OrderHistory: Complete timeline for audit
+- DailyOrderMetrics: Analytics aggregation
 
 ### Technology
 
@@ -301,9 +301,9 @@ OrderShipped { orderId, trackingNumber, timestamp }
 
 ## Alternatives
 
-1. **Audit tables**: Simpler but doesn't enable temporal queries
-2. **CDC from existing DB**: Complex, doesn't change data model
-3. **Hybrid**: Event source only for order state changes
+1. Audit tables: Simpler but doesn't enable temporal queries
+2. CDC from existing DB: Complex, doesn't change data model
+3. Hybrid: Event source only for order state changes
 
 ## Unresolved Questions
 
@@ -364,11 +364,11 @@ This directory contains Architecture Decision Records (ADRs) for [Project Name].
 
 ## ADR Status
 
-- **Proposed**: Under discussion
-- **Accepted**: Decision made, implementing
-- **Deprecated**: No longer relevant
-- **Superseded**: Replaced by another ADR
-- **Rejected**: Considered but not adopted
+- Proposed: Under discussion
+- Accepted: Decision made, implementing
+- Deprecated: No longer relevant
+- Superseded: Replaced by another ADR
+- Rejected: Considered but not adopted
 ```
 
 ### Automation (adr-tools)
@@ -426,16 +426,16 @@ adr link 2 "Complements" 1 "Is complemented by"
 
 ### Do's
 
-- **Write ADRs early** - Before implementation starts
-- **Keep them short** - 1-2 pages maximum
-- **Be honest about trade-offs** - Include real cons
-- **Link related decisions** - Build decision graph
-- **Update status** - Deprecate when superseded
+- Write ADRs early - Before implementation starts
+- Keep them short - 1-2 pages maximum
+- Be honest about trade-offs - Include real cons
+- Link related decisions - Build decision graph
+- Update status - Deprecate when superseded
 
 ### Don'ts
 
-- **Don't change accepted ADRs** - Write new ones to supersede
-- **Don't skip context** - Future readers need background
-- **Don't hide failures** - Rejected decisions are valuable
-- **Don't be vague** - Specific decisions, specific consequences
-- **Don't forget implementation** - ADR without action is waste
+- Don't change accepted ADRs - Write new ones to supersede
+- Don't skip context - Future readers need background
+- Don't hide failures - Rejected decisions are valuable
+- Don't be vague - Specific decisions, specific consequences
+- Don't forget implementation - ADR without action is waste

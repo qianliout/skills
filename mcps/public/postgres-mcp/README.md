@@ -2,9 +2,9 @@
 
 通过 MCP 协议查询和管理 PostgreSQL 数据库。
 
-- **npm**: `mcp-postgres`
-- **GitHub**: https://github.com/kristofer84/mcp-postgres
-- **运行方式**: `npx`
+- npm: `mcp-postgres`
+- GitHub: https://github.com/kristofer84/mcp-postgres
+- 运行方式: `npx`
 
 > 官方 `@modelcontextprotocol/server-postgres` 已归档/不再维护，本目录推荐社区活跃版 `mcp-postgres`。
 
@@ -22,9 +22,9 @@
 | `create_table` / `alter_table` | DDL 操作 |
 
 安全特性：
-- **只读模式** `DB_READ_ONLY=true`：禁止所有写操作
-- **语句超时** `DB_STATEMENT_TIMEOUT`：防止慢查询拖死服务
-- **SSL 支持**：自动下载 AWS RDS CA 证书
+- 只读模式 `DB_READ_ONLY=true`：禁止所有写操作
+- 语句超时 `DB_STATEMENT_TIMEOUT`：防止慢查询拖死服务
+- SSL 支持：自动下载 AWS RDS CA 证书
 
 ---
 
@@ -63,7 +63,7 @@
 
 ### 生产环境
 
-**生产环境必须启用只读模式**：
+生产环境必须启用只读模式：
 
 ```json
 {
@@ -99,7 +99,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO ops_readonly
 
 ## 安全注意事项
 
-- **生产环境必须创建专用只读用户**，不要用 superuser 或 owner 账号
+- 生产环境必须创建专用只读用户，不要用 superuser 或 owner 账号
 - 配合 `DB_READ_ONLY=true` 双重保险（服务端 + 数据库端都限制）
 - `DB_STATEMENT_TIMEOUT` 设为 30s，避免大查询影响生产库
 - 通过 SSL 加密连接（`DB_SSL_MODE=require`）

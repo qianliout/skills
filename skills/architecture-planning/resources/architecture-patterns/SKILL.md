@@ -7,8 +7,8 @@ description: Implement proven backend architecture patterns including Clean Arch
 
 Master proven backend architecture patterns including Clean Architecture, Hexagonal Architecture, and Domain-Driven Design to build maintainable, testable, and scalable systems.
 
-**Given:** a service boundary or module to architect.
-**Produces:** layered structure with clear dependency rules, interface definitions, and test boundaries.
+Given: a service boundary or module to architect.
+Produces: layered structure with clear dependency rules, interface definitions, and test boundaries.
 
 ## When to Use This Skill
 
@@ -23,14 +23,14 @@ Master proven backend architecture patterns including Clean Architecture, Hexago
 
 ### 1. Clean Architecture (Uncle Bob)
 
-**Layers (dependency flows inward):**
+Layers (dependency flows inward):
 
-- **Entities**: Core business models, no framework imports
-- **Use Cases**: Application business rules, orchestrate entities
-- **Interface Adapters**: Controllers, presenters, gateways — translate between use cases and external formats
-- **Frameworks & Drivers**: UI, database, external services — all at the outermost ring
+- Entities: Core business models, no framework imports
+- Use Cases: Application business rules, orchestrate entities
+- Interface Adapters: Controllers, presenters, gateways — translate between use cases and external formats
+- Frameworks & Drivers: UI, database, external services — all at the outermost ring
 
-**Key Principles:**
+Key Principles:
 
 - Dependencies point inward only; inner layers know nothing about outer layers
 - Business logic is independent of frameworks, databases, and delivery mechanisms
@@ -39,13 +39,13 @@ Master proven backend architecture patterns including Clean Architecture, Hexago
 
 ### 2. Hexagonal Architecture (Ports and Adapters)
 
-**Components:**
+Components:
 
-- **Domain Core**: Business logic lives here, framework-free
-- **Ports**: Abstract interfaces that define how the core interacts with the outside world (driving and driven)
-- **Adapters**: Concrete implementations of ports (PostgreSQL adapter, Stripe adapter, REST adapter)
+- Domain Core: Business logic lives here, framework-free
+- Ports: Abstract interfaces that define how the core interacts with the outside world (driving and driven)
+- Adapters: Concrete implementations of ports (PostgreSQL adapter, Stripe adapter, REST adapter)
 
-**Benefits:**
+Benefits:
 
 - Swap implementations without touching the core (e.g., replace PostgreSQL with DynamoDB)
 - Use in-memory adapters in tests — no Docker required
@@ -53,19 +53,19 @@ Master proven backend architecture patterns including Clean Architecture, Hexago
 
 ### 3. Domain-Driven Design (DDD)
 
-**Strategic Patterns:**
+Strategic Patterns:
 
-- **Bounded Contexts**: Isolate a coherent model for one subdomain; avoid sharing a single model across the whole system
-- **Context Mapping**: Define how contexts relate (Anti-Corruption Layer, Shared Kernel, Open Host Service)
-- **Ubiquitous Language**: Every term in code matches the term used by domain experts
+- Bounded Contexts: Isolate a coherent model for one subdomain; avoid sharing a single model across the whole system
+- Context Mapping: Define how contexts relate (Anti-Corruption Layer, Shared Kernel, Open Host Service)
+- Ubiquitous Language: Every term in code matches the term used by domain experts
 
-**Tactical Patterns:**
+Tactical Patterns:
 
-- **Entities**: Objects with stable identity that change over time
-- **Value Objects**: Immutable objects identified by their attributes (Email, Money, Address)
-- **Aggregates**: Consistency boundaries; only the root is accessible from outside
-- **Repositories**: Persist and reconstitute aggregates; abstract over the storage mechanism
-- **Domain Events**: Capture things that happened inside the domain; used for cross-aggregate coordination
+- Entities: Objects with stable identity that change over time
+- Value Objects: Immutable objects identified by their attributes (Email, Money, Address)
+- Aggregates: Consistency boundaries; only the root is accessible from outside
+- Repositories: Persist and reconstitute aggregates; abstract over the storage mechanism
+- Domain Events: Capture things that happened inside the domain; used for cross-aggregate coordination
 
 ## Detailed patterns and worked examples
 

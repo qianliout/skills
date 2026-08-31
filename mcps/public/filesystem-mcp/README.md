@@ -2,9 +2,9 @@
 
 基于官方 `@modelcontextprotocol/server-filesystem` 的 MCP 服务器配置。让 AI 助手安全地读写指定目录中的文件。
 
-- **npm**: `@modelcontextprotocol/server-filesystem`
-- **GitHub**: https://github.com/modelcontextprotocol/servers（monorepo，`src/filesystem/`）
-- **运行方式**: `npx`
+- npm: `@modelcontextprotocol/server-filesystem`
+- GitHub: https://github.com/modelcontextprotocol/servers（monorepo，`src/filesystem/`）
+- 运行方式: `npx`
 
 ---
 
@@ -89,8 +89,8 @@ npx -y @modelcontextprotocol/server-filesystem ~/work ~/.kube
 
 ## 安全注意事项
 
-- **目录白名单即权限边界**：配置中列出的目录就是 AI 的全部文件访问范围，务必最小化
-- **生产环境禁止暴露 `/`、`/etc`、`~/.ssh`** 等敏感路径
+- 目录白名单即权限边界：配置中列出的目录就是 AI 的全部文件访问范围，务必最小化
+- 生产环境禁止暴露 `/`、`/etc`、`~/.ssh` 等敏感路径
 - 工具注释了 `readOnlyHint` / `destructiveHint` 标签，支持只读模式的客户端可以利用这些标签限制写操作
 - 该包由 Anthropic/ModelContextProtocol 官方维护，推荐优先使用
 

@@ -4,11 +4,11 @@
 
 | 方案 | 包名 | 运行时 | 推荐场景 |
 |------|------|--------|---------|
-| **mcp-shell-server**（推荐） | `mcp-shell-server` | Python (uvx) | 生产环境，安全控制最完善 |
+| mcp-shell-server（推荐） | `mcp-shell-server` | Python (uvx) | 生产环境，安全控制最完善 |
 | shell-command-mcp | `shell-command-mcp` | Node.js (npx) | 快速上手，简单需求 |
 
-- **GitHub (Python)**: https://github.com/tumf/mcp-shell-server
-- **GitHub (Node)**: https://github.com/egoist/shell-command-mcp
+- GitHub (Python): https://github.com/tumf/mcp-shell-server
+- GitHub (Node): https://github.com/egoist/shell-command-mcp
 
 ---
 
@@ -44,7 +44,7 @@
 }
 ```
 
-> **前置条件**：需要安装 `uv`（Python 包管理器）：`brew install uv` 或 `pip install uv`
+> 前置条件：需要安装 `uv`（Python 包管理器）：`brew install uv` 或 `pip install uv`
 
 ---
 
@@ -70,7 +70,7 @@
 }
 ```
 
-> `ALLOWED_COMMANDS="*"` 允许所有命令，**极度危险，生产环境严禁使用**。
+> `ALLOWED_COMMANDS="*"` 允许所有命令，极度危险，生产环境严禁使用。
 
 ---
 
@@ -84,7 +84,7 @@ ls,cat,pwd,grep,wc,head,tail,du,df,free,ps,uptime,netstat,ss,systemctl,journalct
 
 ## 安全注意事项
 
-- **绝对不要**把 `rm`、`dd`、`mkfs`、`shutdown`、`reboot`、`iptables`、`kill` 等加入白名单
+- 绝对不要把 `rm`、`dd`、`mkfs`、`shutdown`、`reboot`、`iptables`、`kill` 等加入白名单
 - 白名单匹配的是命令名（argv[0]），不是完整命令行字符串
 - Python 方案 (`mcp-shell-server`) 有默认参数加固，比简单白名单更安全
 - 生产环境务必配置超时和输出上限，避免执行结果撑爆上下文
@@ -105,7 +105,7 @@ uvx mcp-shell-server --help
 
 ## MCP 客户端接入
 
-**推荐（mcp-shell-server）**：
+推荐（mcp-shell-server）：
 ```json
 {
   "mcpServers": {
@@ -120,7 +120,7 @@ uvx mcp-shell-server --help
 }
 ```
 
-**备选（shell-command-mcp，纯 Node.js）**：
+备选（shell-command-mcp，纯 Node.js）：
 ```json
 {
   "mcpServers": {

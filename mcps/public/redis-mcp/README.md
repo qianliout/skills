@@ -2,9 +2,9 @@
 
 通过 MCP 协议查询和管理 Redis（支持 Standalone 和 Cluster 模式）。
 
-- **npm**: `mcp-redis`
-- **GitHub**: 无公开仓库（发布者 `itapi`）
-- **运行方式**: `npx`
+- npm: `mcp-redis`
+- GitHub: 无公开仓库（发布者 `itapi`）
+- 运行方式: `npx`
 
 > 官方 `@modelcontextprotocol/server-redis` 已归档。另有一个权限可控版 `@liangshanli/mcp-server-redis`。
 
@@ -59,7 +59,7 @@
 
 ### 生产环境
 
-**Redis Cluster**：
+Redis Cluster：
 ```json
 {
   "mcpServers": {
@@ -75,7 +75,7 @@
 }
 ```
 
-**Sentinel**：使用 `REDIS_URL` 指向 Sentinel 地址（底层 ioredis 自动处理）。
+Sentinel：使用 `REDIS_URL` 指向 Sentinel 地址（底层 ioredis 自动处理）。
 
 ---
 
@@ -108,7 +108,7 @@
 
 ## 安全注意事项
 
-- **生产环境禁止 `redis_del` / `FLUSHDB` / `FLUSHALL` 等破坏性命令**
+- 生产环境禁止 `redis_del` / `FLUSHDB` / `FLUSHALL` 等破坏性命令
 - Redis 本身没有用户权限体系，通过 MCP 的 `ALLOW_DELETE=false` 等开关做应用层限制
 - 密码不要硬编码，用 `${REDIS_PASSWORD}` 环境变量引用
 - 对于 Redis Cluster，连接字符串中的密码会明文出现在进程参数中，建议用 `REDIS_PASSWORD` 环境变量

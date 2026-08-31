@@ -1,10 +1,10 @@
 # kubernetes-mcp
 
-通过 MCP 协议查询和管理 Kubernetes 集群资源。本目录推荐使用 **Red Hat / containers 组织** 维护的版本，功能最全面。
+通过 MCP 协议查询和管理 Kubernetes 集群资源。本目录推荐使用 Red Hat / containers 组织 维护的版本，功能最全面。
 
-- **npm**: `kubernetes-mcp-server`
-- **GitHub**: https://github.com/containers/kubernetes-mcp-server（⭐ ~1,700）
-- **运行方式**: `npx`
+- npm: `kubernetes-mcp-server`
+- GitHub: https://github.com/containers/kubernetes-mcp-server（⭐ ~1,700）
+- 运行方式: `npx`
 
 > 另有两个备选：`mcp-server-kubernetes`（Flux159，TypeScript）和 `@strowk/mcp-k8s`（Go）。本目录以 containers 版为准。
 
@@ -14,19 +14,19 @@
 
 | 工具集 | 包含的典型工具 | 说明 |
 |--------|-------------|------|
-| **core** | Pod/Deployment/Service/ConfigMap 等全部 K8s 资源的 CRUD | 核心 K8s 操作 |
-| **config** | kubeconfig 上下文/集群切换 | 多集群管理 |
-| **helm** | install / list / uninstall | Helm 操作 |
-| **tekton** | Pipeline / Task 管理 | CI/CD |
-| **kubevirt** | 虚拟机管理 | 虚拟化 |
-| **kiali** | 服务网格可视化 | Istio |
+| core | Pod/Deployment/Service/ConfigMap 等全部 K8s 资源的 CRUD | 核心 K8s 操作 |
+| config | kubeconfig 上下文/集群切换 | 多集群管理 |
+| helm | install / list / uninstall | Helm 操作 |
+| tekton | Pipeline / Task 管理 | CI/CD |
+| kubevirt | 虚拟机管理 | 虚拟化 |
+| kiali | 服务网格可视化 | Istio |
 
 关键特性：
-- **原生 Go 实现**，不依赖 kubectl/helm 命令行
-- **只读模式** `--read-only`：禁止任何写操作
-- **禁用破坏性操作** `--disable-destructive`：屏蔽 delete/patch 等
-- **多集群支持**：自动读取 kubeconfig 中的全部 context
-- 支持 **TOML 配置文件** 进行细粒度控制
+- 原生 Go 实现，不依赖 kubectl/helm 命令行
+- 只读模式 `--read-only`：禁止任何写操作
+- 禁用破坏性操作 `--disable-destructive`：屏蔽 delete/patch 等
+- 多集群支持：自动读取 kubeconfig 中的全部 context
+- 支持 TOML 配置文件 进行细粒度控制
 
 ---
 
@@ -66,7 +66,7 @@ npx -y kubernetes-mcp-server@latest --read-only
 
 ### 生产环境
 
-**建议配置：只读模式 + 禁用破坏性操作**
+建议配置：只读模式 + 禁用破坏性操作
 
 ```json
 {
@@ -88,7 +88,7 @@ npx -y kubernetes-mcp-server@latest --read-only
 }
 ```
 
-**如果需要允许特定变更操作**（如 rollout restart），去掉 `--read-only` 但保留 `--disable-destructive`，再在 TOML 配置文件中精确放开需要的操作：
+如果需要允许特定变更操作（如 rollout restart），去掉 `--read-only` 但保留 `--disable-destructive`，再在 TOML 配置文件中精确放开需要的操作：
 
 ```toml
 # kubernetes-mcp.toml
@@ -129,7 +129,7 @@ verbs = ["get", "update"]
 
 ## 安全注意事项
 
-- **生产环境必须启用 `--read-only` 或 `--disable-destructive`**
+- 生产环境必须启用 `--read-only` 或 `--disable-destructive`
 - kubeconfig 中的凭据会间接暴露给 AI（AI 能看到 context 名称），确保使用最小权限的 service account
 - 配合 `allowedRemotePaths` 限制文件上传路径，防止 kubeconfig 被覆盖
 - 如果需要允许部分写操作，通过 TOML 配置文件的 `resource_filters` 做细粒度控制

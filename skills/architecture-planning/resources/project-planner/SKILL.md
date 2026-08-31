@@ -27,37 +27,37 @@ Use this skill when:
 
 ## Planning Process
 
-### 1. **Define Success**
+### 1. Define Success
 - What is the end goal?
 - What are the success criteria?
 - What defines "done"?
 - What are the constraints (time, budget, resources)?
 
-### 2. **Identify Deliverables**
+### 2. Identify Deliverables
 - What are the major outputs?
 - What milestones mark progress?
 - What dependencies exist?
 - What can be parallelized?
 
-### 3. **Break Down Tasks**
+### 3. Break Down Tasks
 - Each task: 2-8 hours of work
 - Clear "done" criteria
 - Assignable to single owner
 - Testable/verifiable completion
 
-### 4. **Map Dependencies**
+### 4. Map Dependencies
 - What must be done first?
 - What can happen in parallel?
 - What are the critical path items?
 - Where are the bottlenecks?
 
-### 5. **Estimate and Buffer**
+### 5. Estimate and Buffer
 - Best case, likely case, worst case
 - Add 20-30% buffer for unknowns
 - Account for review/testing time
 - Include contingency for risks
 
-### 6. **Assign and Track**
+### 6. Assign and Track
 - Who owns each task?
 - What skills are required?
 - How will progress be tracked?
@@ -65,19 +65,19 @@ Use this skill when:
 
 ## Task Sizing Guidelines
 
-**Too Large** (>2 days):
+Too Large (>2 days):
 - Break into subtasks
 - Hard to estimate accurately
 - Difficult to track progress  
 - Blocks other work too long
 
-**Well-Sized** (2-8 hours):
+Well-Sized (2-8 hours):
 - Clear deliverable
 - One person can complete
 - Progress visible daily
 - Easy to estimate
 
-**Too Small** (<1 hour):
+Too Small (<1 hour):
 - May be over-planning
 - Too much overhead
 - Combine related micro-tasks
@@ -87,10 +87,10 @@ Use this skill when:
 ```markdown
 ## Project: [Name]
 
-**Goal**: [Clear end state]
-**Timeline**: [Duration]
-**Team**: [People and roles]
-**Constraints**: [Budget, tech, deadlines]
+Goal: [Clear end state]
+Timeline: [Duration]
+Team: [People and roles]
+Constraints: [Budget, tech, deadlines]
 
 ---
 
@@ -149,11 +149,11 @@ Expected = (O + 4M + P) / 6
 ```
 
 ### T-Shirt Sizing
-- **XS**: < 2 hours
-- **S**: 2-4 hours
-- **M**: 4-8 hours (1 day)
-- **L**: 2-3 days
-- **XL**: 1 week
+- XS: < 2 hours
+- S: 2-4 hours
+- M: 4-8 hours (1 day)
+- L: 2-3 days
+- XL: 1 week
 
 *Break down anything larger than XL*
 
@@ -162,16 +162,16 @@ For team estimation, use Fibonacci: 1, 2, 3, 5, 8, 13 story points
 
 ## Example
 
-**User Request:** "Plan a website redesign. Team: 1 designer, 2 developers. Deadline: 6 weeks."
+User Request: "Plan a website redesign. Team: 1 designer, 2 developers. Deadline: 6 weeks."
 
-**Response:**
+Response:
 
 ## Project: Company Website Redesign
 
-**Goal**: Launch redesigned website with improved UX and modern design
-**Timeline**: 6 weeks
-**Team**: 1 designer, 2 developers
-**Constraints**: Must maintain all existing functionality, no budget for new tools
+Goal: Launch redesigned website with improved UX and modern design
+Timeline: 6 weeks
+Team: 1 designer, 2 developers
+Constraints: Must maintain all existing functionality, no budget for new tools
 
 ---
 
@@ -197,7 +197,7 @@ For team estimation, use Fibonacci: 1, 2, 3, 5, 8, 13 story points
 | Design page templates | 12h | Designer | Homepage | Templates for all page types |
 | Design review & revisions | 8h | Designer | Templates | Stakeholder approval received |
 
-**Total Effort**: 46 hours (~6 days for 1 designer)
+Total Effort: 46 hours (~6 days for 1 designer)
 
 ---
 
@@ -211,7 +211,7 @@ For team estimation, use Fibonacci: 1, 2, 3, 5, 8, 13 story points
 | Create component library | 12h | Dev 1 | Design approval | Reusable components built |
 | Set up CMS | 6h | Dev 2 | Tech stack | CMS installed, admin access working |
 
-**Total Effort**: 28 hours (~3.5 days for 2 devs)
+Total Effort: 28 hours (~3.5 days for 2 devs)
 
 ---
 
@@ -228,7 +228,7 @@ For team estimation, use Fibonacci: 1, 2, 3, 5, 8, 13 story points
 | Mobile responsive testing | 8h | Dev 1 | All pages | Works on mobile/tablet/desktop |
 | Cross-browser testing | 6h | Dev 2 | Responsive | Works in Chrome, Firefox, Safari, Edge |
 
-**Total Effort**: 84 hours (~10 days for 2 devs)
+Total Effort: 84 hours (~10 days for 2 devs)
 
 ---
 
@@ -245,7 +245,7 @@ For team estimation, use Fibonacci: 1, 2, 3, 5, 8, 13 story points
 | Launch & monitoring | 4h | All | Everything | Site live, analytics working |
 | Post-launch fixes | 8h | Devs | Launch | Address any immediate issues |
 
-**Total Effort**: 52 hours (~6.5 days for 2 devs + designer)
+Total Effort: 52 hours (~6.5 days for 2 devs + designer)
 
 ---
 
@@ -256,7 +256,7 @@ Design Approval ──> Components ──> Homepage ──> Other Pages ──> 
                     └──> CMS ────────────────────┘
 ```
 
-**Critical Path**: Design Approval → Components → Homepage → Other Pages → Testing → Launch
+Critical Path: Design Approval → Components → Homepage → Other Pages → Testing → Launch
 
 ---
 
@@ -280,15 +280,15 @@ Design Approval ──> Components ──> Homepage ──> Other Pages ──> 
 | Developer 1 | 40h | Weeks 3-6 | Architecture, dev setup, page development |
 | Developer 2 | 40h | Weeks 3-6 | CMS, page development, testing |
 
-**Total Effort**: ~210 hours across 6 weeks
+Total Effort: ~210 hours across 6 weeks
 
 ---
 
 ## Weekly Checkpoints
 
-- **Monday standup**: Progress updates, blockers
-- **Friday review**: Demo completed work, plan next week
-- **Weeks 2, 4, 6**: Milestone reviews with stakeholders
+- Monday standup: Progress updates, blockers
+- Friday review: Demo completed work, plan next week
+- Weeks 2, 4, 6: Milestone reviews with stakeholders
 
 ---
 

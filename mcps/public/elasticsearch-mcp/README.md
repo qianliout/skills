@@ -2,11 +2,11 @@
 
 通过 MCP 协议查询和管理 Elasticsearch / OpenSearch 集群。
 
-- **PyPI**: `elasticsearch-mcp-server`
-- **GitHub**: https://github.com/cr7258/elasticsearch-mcp-server（⭐ ~290）
-- **运行方式**: `uvx`（Python）
+- PyPI: `elasticsearch-mcp-server`
+- GitHub: https://github.com/cr7258/elasticsearch-mcp-server（⭐ ~290）
+- 运行方式: `uvx`（Python）
 
-> 官方 `@elastic/mcp-server-elasticsearch`（npm）已 **deprecated**，v0.4+ 仅提供 Docker 镜像。本目录推荐社区活跃 Python 版，功能更全且支持 OpenSearch。
+> 官方 `@elastic/mcp-server-elasticsearch`（npm）已 deprecated，v0.4+ 仅提供 Docker 镜像。本目录推荐社区活跃 Python 版，功能更全且支持 OpenSearch。
 
 ---
 
@@ -14,12 +14,12 @@
 
 | 类别 | 工具 | 说明 |
 |------|------|------|
-| **索引管理** | `list_indices`、`get_index`、`create_index`、`delete_index` | 索引 CRUD |
-| **文档** | `search_documents`、`index_document`、`get_document`、`delete_document`、`delete_by_query` | 文档 CRUD |
-| **数据流** | `create_data_stream`、`get_data_stream`、`delete_data_stream` | Data Stream 管理 |
-| **集群** | `get_cluster_health`、`get_cluster_stats` | 集群健康/统计 |
-| **别名** | `list_aliases`、`get_alias`、`put_alias`、`delete_alias` | 别名管理 |
-| **工具** | `analyze_text`、`general_api_request` | 文本分析、通用 API |
+| 索引管理 | `list_indices`、`get_index`、`create_index`、`delete_index` | 索引 CRUD |
+| 文档 | `search_documents`、`index_document`、`get_document`、`delete_document`、`delete_by_query` | 文档 CRUD |
+| 数据流 | `create_data_stream`、`get_data_stream`、`delete_data_stream` | Data Stream 管理 |
+| 集群 | `get_cluster_health`、`get_cluster_stats` | 集群健康/统计 |
+| 别名 | `list_aliases`、`get_alias`、`put_alias`、`delete_alias` | 别名管理 |
+| 工具 | `analyze_text`、`general_api_request` | 文本分析、通用 API |
 
 安全特性：
 - `DISABLE_HIGH_RISK_OPERATIONS=true`：隐藏所有写操作工具
@@ -30,7 +30,7 @@
 
 ## 前置条件
 
-- **uv** 已安装：`brew install uv` 或 `pip install uv`
+- uv 已安装：`brew install uv` 或 `pip install uv`
 
 ---
 
@@ -124,7 +124,7 @@
 
 ## 安全注意事项
 
-- **生产环境必须设置 `DISABLE_HIGH_RISK_OPERATIONS=true`**：禁用 delete_index、delete_document 等破坏性操作
+- 生产环境必须设置 `DISABLE_HIGH_RISK_OPERATIONS=true`：禁用 delete_index、delete_document 等破坏性操作
 - 精细禁用：`DISABLE_OPERATIONS=create_index,index_document,put_alias`
 - 优先使用 API Key 而非用户名/密码，便于审计和轮换
 - 启用 SSL 验证：`VERIFY_CERTS=true`

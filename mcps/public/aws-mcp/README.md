@@ -2,9 +2,9 @@
 
 通过 MCP 协议操作 AWS 云资源。本目录推荐 `@yawlabs/aws-mcp`，功能全面、社区活跃。
 
-- **npm**: `@yawlabs/aws-mcp`
-- **GitHub**: https://github.com/YawLabs/aws-mcp
-- **运行方式**: `npx`
+- npm: `@yawlabs/aws-mcp`
+- GitHub: https://github.com/YawLabs/aws-mcp
+- 运行方式: `npx`
 
 > 官方方案 `mcp-proxy-for-aws`（PyPI/uvx）提供 SigV4 认证代理，但需要额外配置 AWS MCP endpoint。`@yawlabs/aws-mcp` 开箱即用，更省事。
 
@@ -25,8 +25,8 @@
 
 ## 前置条件
 
-- **AWS CLI v2** 已安装：`brew install awscli`
-- **AWS 凭据**已配置（SSO 或 IAM User）：
+- AWS CLI v2 已安装：`brew install awscli`
+- AWS 凭据已配置（SSO 或 IAM User）：
   ```bash
   aws configure sso    # SSO
   # 或
@@ -73,7 +73,7 @@
 
 ### 生产环境
 
-生产环境建议使用**只读 IAM Policy 的凭据**，避免 AI 操作生产资源：
+生产环境建议使用只读 IAM Policy 的凭据，避免 AI 操作生产资源：
 
 ```json
 {
@@ -120,7 +120,7 @@
 
 ## 安全注意事项
 
-- **生产环境强烈建议只读 IAM Policy**，通过 `aws_iam_simulate` 可以预检权限
+- 生产环境强烈建议只读 IAM Policy，通过 `aws_iam_simulate` 可以预检权限
 - SSO profile 过期时 MCP 会引导重新登录
 - 不要给 AI 使用 `AdministratorAccess` 或 `PowerUserAccess` 的 profile
 - 如使用 `aws_resource_delete`，务必先用 dry-run diff 确认影响范围

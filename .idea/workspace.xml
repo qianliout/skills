@@ -5,9 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="847da770-f101-48bf-b5d8-ba219476c33c" name="更改" comment="">
-      <change beforePath="$PROJECT_DIR$/skills/go-development/go-service-layer/references/service-layer.md" beforeDir="false" afterPath="$PROJECT_DIR$/skills/go-development/go-service-layer/references/service-layer.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/skills/go-development/go/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/skills/go-development/go/SKILL.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/skills/productivity/grilling/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/skills/productivity/grilling/SKILL.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/skills/documents/resources/lark-markdown/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/skills/documents/resources/lark-markdown/SKILL.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,6 +35,7 @@
     "RunOnceActivity.GoLinterPluginOnboardingV2": "true",
     "RunOnceActivity.GoLinterPluginStorageMigration": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.go.analysis.ui.options.defaults": "true",
     "RunOnceActivity.go.formatter.settings.were.checked": "true",

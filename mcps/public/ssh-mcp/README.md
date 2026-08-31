@@ -15,8 +15,8 @@ mcps/public/ssh-mcp/
 
 ## 前置条件
 
-- **Node.js >= 18**（已满足：v22.21.1）
-- **npm/npx** 可用
+- Node.js >= 18（已满足：v22.21.1）
+- npm/npx 可用
 - SSH 密钥或密码凭据
 
 ---
@@ -27,11 +27,11 @@ mcps/public/ssh-mcp/
 
 本地 K8s 集群运行在 OrbStack 虚拟机中。日常可以直接 `ssh k8s-master-01` 连接，这是通过 `~/.ssh/config` 中配置的 OrbStack ProxyCommand 实现的。
 
-但 **ssh-mcp-server 使用的是 ssh2 库（Node.js 原生 SSH 实现），不支持 OpenSSH 的 ProxyCommand**。所以不能直接传 `--host k8s-master-01` 复用 SSH config。
+但 ssh-mcp-server 使用的是 ssh2 库（Node.js 原生 SSH 实现），不支持 OpenSSH 的 ProxyCommand。所以不能直接传 `--host k8s-master-01` 复用 SSH config。
 
 ### 解决方案：直连 OrbStack SSH 端口
 
-OrbStack 在 `127.0.0.1:32222` 暴露了一个统一的 SSH 入口，通过**用户名来路由到不同的 VM**。ssh2 库可以直接 TCP 连接该端口。
+OrbStack 在 `127.0.0.1:32222` 暴露了一个统一的 SSH 入口，通过用户名来路由到不同的 VM。ssh2 库可以直接 TCP 连接该端口。
 
 | SSH config 别名        | 实际连接参数                                          |
 |------------------------|------------------------------------------------------|
@@ -120,8 +120,8 @@ npx -y @fangjunjie/ssh-mcp-server \
 
 `ssh-config.prod.json` 是生产环境模板，包含两类节点：
 
-- **只读节点** (`prod-master-01`)：仅允许 kubectl get/describe/logs 等查看操作
-- **运维节点** (`prod-master-01-root`)：允许 restart、rollout restart 等变更操作
+- 只读节点 (`prod-master-01`)：仅允许 kubectl get/describe/logs 等查看操作
+- 运维节点 (`prod-master-01-root`)：允许 restart、rollout restart 等变更操作
 
 ### 使用前修改
 
@@ -140,7 +140,7 @@ vim ssh-config.prod.actual.json
 
 ### 安全配置说明
 
-生产环境**强烈建议**配置以下限制：
+生产环境强烈建议配置以下限制：
 
 #### 命令白名单（whitelist）
 
@@ -154,7 +154,7 @@ vim ssh-config.prod.actual.json
 |---------|-----------|---------|
 | 只读 | `kubectl get/describe/logs/top`、`helm list/status/history`、`cat`、`df`、`ps`、`systemctl status`、`journalctl` | 日常排查 |
 | 受控变更 | 只读 + `kubectl rollout restart`、`systemctl restart` | 常规运维 |
-| 完全放权 | 不设白名单 | **不推荐**，风险极高 |
+| 完全放权 | 不设白名单 | 不推荐，风险极高 |
 
 #### 远端路径限制（allowedRemotePaths）
 
@@ -168,7 +168,7 @@ vim ssh-config.prod.actual.json
 
 #### 其他安全建议
 
-- 使用**专用 SSH 密钥**，不要复用个人日常密钥
+- 使用专用 SSH 密钥，不要复用个人日常密钥
 - 若需经过堡垒机，考虑 `transportMode: "shell"` + `commandTemplate`
 - 部署 MCP server 的机器本身需要加固，SSH 私钥在内存中
 
@@ -206,7 +206,7 @@ vim ssh-config.prod.actual.json
 
 编辑 `.vscode/mcp.json`（格式同上）。
 
-> **注意**：`args` 数组中的每个参数和值必须是独立元素，不要写成 `"--host 127.0.0.1"`。
+> 注意：`args` 数组中的每个参数和值必须是独立元素，不要写成 `"--host 127.0.0.1"`。
 
 ---
 
@@ -290,7 +290,7 @@ ssh -o ProxyCommand=none -p 32222 k8s-master-01@127.0.0.1 -i ~/.orbstack/ssh/id_
 - 通过堡垒机/跳板机连接
 - exec 模式执行命令返回错误
 
-注意 shell 模式**不支持 upload/download**。
+注意 shell 模式不支持 upload/download。
 
 ### Q: 如何安全存储密码？
 不要在配置文件中明文写密码。优先使用私钥认证。如果必须用密码，可通过环境变量传递：

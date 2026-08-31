@@ -1,14 +1,14 @@
 # Go Skills 收敛 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> For agentic workers: REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 按已批准 spec 收敛 Go Skills：薄路由 `go` + 分层叶子、注释/日志并入 `go-code-style`、OpenAPI 单接口唯一 Skill、全文中文、严厉措辞、零物理拷贝。
+Goal: 按已批准 spec 收敛 Go Skills：薄路由 `go` + 分层叶子、注释/日志并入 `go-code-style`、OpenAPI 单接口唯一 Skill、全文中文、严厉措辞、零物理拷贝。
 
-**Architecture:** `go` 只路由到可安装叶子；每个叶子自有中文 reference（`go-code-style` 三份）；删除 `go/references` 拷贝、`go-comment-style`、`go-logging`、根级 `gin-openapi-json`；用 `check.sh` 锁死结构。
+Architecture: `go` 只路由到可安装叶子；每个叶子自有中文 reference（`go-code-style` 三份）；删除 `go/references` 拷贝、`go-comment-style`、`go-logging`、根级 `gin-openapi-json`；用 `check.sh` 锁死结构。
 
-**Tech Stack:** 仓库内 Markdown Skill、`scripts/check.sh`、`skills/manifests/operations-skills.txt`、bash 安装脚本。
+Tech Stack: 仓库内 Markdown Skill、`scripts/check.sh`、`skills/manifests/operations-skills.txt`、bash 安装脚本。
 
-**Spec:** `docs/superpowers/specs/2026-08-10-go-skills-consolidation-design.md`
+Spec: `docs/superpowers/specs/2026-08-10-go-skills-consolidation-design.md`
 
 ## Global Constraints
 
@@ -34,15 +34,15 @@ test -z "$(find skills/go-development/<skill> -name '*-conventions.md')"
 
 ### Task 1: 为 Go 结构写入失败的 check 断言
 
-**Files:**
+Files:
 - Modify: `scripts/check.sh`
 - Test: `./scripts/check.sh`
 
-**Interfaces:**
+Interfaces:
 - Consumes: 现有 `check.sh` 末尾 `printf 'check passed\n'`
 - Produces: 函数式断言块，后续删除/改写后必须全部通过
 
-- [ ] **Step 1: 在 `check.sh` 的 gitlinks 检查之后、`check passed` 之前插入以下块**
+- [ ] Step 1: 在 `check.sh` 的 gitlinks 检查之后、`check passed` 之前插入以下块
 
 ```bash
 # --- Go skills consolidation invariants ---
@@ -99,13 +99,13 @@ if rg -n 'go/references/' "$GO_DEV" --glob 'SKILL.md' --glob '*.md' >/dev/null; 
 fi
 ```
 
-- [ ] **Step 2: 跑 check，确认当前仓库失败**
+- [ ] Step 2: 跑 check，确认当前仓库失败
 
 Run: `./scripts/check.sh`
 
 Expected: `check failed:` 且至少命中仍存在的禁目录 / `go/references` / 缺文件之一。
 
-- [ ] **Step 3: Commit**
+- [ ] Step 3: Commit
 
 ```bash
 git add scripts/check.sh
@@ -120,16 +120,16 @@ EOF
 
 ### Task 2: 更新 manifest 与 README 目标集合
 
-**Files:**
+Files:
 - Modify: `skills/manifests/operations-skills.txt`
 - Modify: `README.md`
 - Delete: `scripts/go-reference-pairs.txt`（若仍存在）
 
-**Interfaces:**
+Interfaces:
 - Consumes: spec §4 安装名列表
 - Produces: 运维清单与文档只列出允许的 Go Skill
 
-- [ ] **Step 1: 将 `operations-skills.txt` 中 Go 段改成**
+- [ ] Step 1: 将 `operations-skills.txt` 中 Go 段改成
 
 ```text
 # Operations platform development and review
@@ -146,11 +146,11 @@ code-quality
 
 （保持其后 `requesting-code-review` 等行不变；删除 `go-comment-style`、`go-logging`、`gin-openapi-json`。）
 
-- [ ] **Step 2: 改 README**
+- [ ] Step 2: 改 README
 
 在 `README.md`：
 
-1. 分类表中 `go-development` 一行只列：`go`、`go-api-layer`、`go-code-style`、`go-gin-openapi-json`、`go-logging` 等**不得**再出现；最终为：
+1. 分类表中 `go-development` 一行只列：`go`、`go-api-layer`、`go-code-style`、`go-gin-openapi-json`、`go-logging` 等不得再出现；最终为：
 
 `go`、`go-api-layer`、`go-code-style`、`go-gin-openapi-json`、`go-model-hierarchy`、`go-query-dal`、`go-service-layer`、`go-test-writer`
 
@@ -162,13 +162,13 @@ code-quality
 4. 运维组合「Go 平台开发」一行只列上述 8 个名字。
 5. 删除维护约定中「`go-development/go` 与同目录 `go-*` … 物理拷贝…同步」整条。
 
-- [ ] **Step 3: 删除同步表**
+- [ ] Step 3: 删除同步表
 
 ```bash
 rm -f scripts/go-reference-pairs.txt
 ```
 
-- [ ] **Step 4: Commit**
+- [ ] Step 4: Commit
 
 ```bash
 git add skills/manifests/operations-skills.txt README.md
@@ -184,16 +184,16 @@ EOF
 
 ### Task 3: 重写薄路由 `go` 并清空拷贝
 
-**Files:**
+Files:
 - Modify: `skills/go-development/go/SKILL.md`
 - Modify: `skills/go-development/go/agents/openai.yaml`
 - Delete: `skills/go-development/go/references/`（整个目录）
 - Delete: `skills/go-development/go/assets/`（整个目录）
 
-**Interfaces:**
+Interfaces:
 - Produces: 仅路由的 `go` Skill；后续叶子不得再被 `go` 内嵌细则替代
 
-- [ ] **Step 1: 写入完整 `SKILL.md`**
+- [ ] Step 1: 写入完整 `SKILL.md`
 
 ```markdown
 ---
@@ -209,7 +209,7 @@ description: "用于编写、重构、评审、排查、测试或解释任何 Go
 
 1. 识别任务类型与实际触及的层（实现 / 重构 / 评审 / 排查 / 测试 / 解释 / 单接口 OpenAPI）。
 2. 读取就近代码：相邻文件、接口、构造函数、调用方、测试。
-3. 按下方路由表加载**且仅加载**实际需要的 `go-*` Skill（先读其 `SKILL.md`，再读其 reference）。
+3. 按下方路由表加载且仅加载实际需要的 `go-*` Skill（先读其 `SKILL.md`，再读其 reference）。
 4. 禁止因调用链上存在某层就加载该层。
 5. 修改 Go 文件后必须运行 `goimport`；能定位包或测试时必须跑最小范围 `go test`；不能跑时必须说明原因。未满足不得宣称完成。
 
@@ -250,7 +250,7 @@ description: "用于编写、重构、评审、排查、测试或解释任何 Go
 - 已运行 `goimport`；能测则已 `go test`，不能则已说明原因。
 ```
 
-- [ ] **Step 2: 写入 `agents/openai.yaml`**
+- [ ] Step 2: 写入 `agents/openai.yaml`
 
 ```yaml
 interface:
@@ -259,13 +259,13 @@ interface:
   default_prompt: "必须先使用 $go，再按任务加载对应 go-* Skill；禁止跳过路由。"
 ```
 
-- [ ] **Step 3: 删除拷贝目录**
+- [ ] Step 3: 删除拷贝目录
 
 ```bash
 rm -rf skills/go-development/go/references skills/go-development/go/assets
 ```
 
-- [ ] **Step 4: 自检**
+- [ ] Step 4: 自检
 
 ```bash
 test ! -d skills/go-development/go/references
@@ -275,7 +275,7 @@ rg -n '建议|尽量|最好|可以考虑|推荐' skills/go-development/go/SKILL.
 
 Expected: 目录不存在；软措辞无匹配。
 
-- [ ] **Step 5: Commit**
+- [ ] Step 5: Commit
 
 ```bash
 git add skills/go-development/go
@@ -291,7 +291,7 @@ EOF
 
 ### Task 4: 删除 comment/logging Skill，并入 `go-code-style`
 
-**Files:**
+Files:
 - Delete: `skills/go-development/go-comment-style/`
 - Delete: `skills/go-development/go-logging/`
 - Modify: `skills/go-development/go-code-style/SKILL.md`
@@ -301,11 +301,11 @@ EOF
 - Create: `skills/go-development/go-code-style/references/logging.md`
 - Delete: `skills/go-development/go-code-style/references/*-conventions.md`
 
-**Interfaces:**
+Interfaces:
 - Consumes: 原 `go-code-style`、`go-comment-style`、`go-logging` 下全部 md
 - Produces: 单一可安装 `go-code-style`，三份中文 reference
 
-- [ ] **Step 1: 写入 `SKILL.md`**
+- [ ] Step 1: 写入 `SKILL.md`
 
 ```markdown
 ---
@@ -341,7 +341,7 @@ description: "用于编写、重构、评审、排查或解释 Go 通用代码�
 - 已 `goimport`；能测则已测试。
 ```
 
-- [ ] **Step 2: 写入 `agents/openai.yaml`**
+- [ ] Step 2: 写入 `agents/openai.yaml`
 
 ```yaml
 interface:
@@ -350,7 +350,7 @@ interface:
   default_prompt: "使用 $go-code-style，按任务读取 code-style / comment-style / logging reference，严格执行禁止清单。"
 ```
 
-- [ ] **Step 3: 重写三份 reference**
+- [ ] Step 3: 重写三份 reference
 
 从以下源合并为中文严厉版（覆盖源中每条硬规则，删除重复与软句）：
 
@@ -366,14 +366,14 @@ interface:
 
 `logging.md` 必须含：谁拥有 logger、Msg 英文、级别、错误日志、敏感信息、各层日志边界、recover、禁止噪音。
 
-- [ ] **Step 4: 删除旧叶子与 conventions**
+- [ ] Step 4: 删除旧叶子与 conventions
 
 ```bash
 rm -rf skills/go-development/go-comment-style skills/go-development/go-logging
 rm -f skills/go-development/go-code-style/references/*-conventions.md
 ```
 
-- [ ] **Step 5: 验收**
+- [ ] Step 5: 验收
 
 ```bash
 test -f skills/go-development/go-code-style/references/code-style.md
@@ -384,7 +384,7 @@ test ! -e skills/go-development/go-logging
 rg -n '建议|尽量|最好|可以考虑|推荐' skills/go-development/go-code-style && exit 1 || true
 ```
 
-- [ ] **Step 6: Commit**
+- [ ] Step 6: Commit
 
 ```bash
 git add -A skills/go-development/go-code-style skills/go-development/go-comment-style skills/go-development/go-logging
@@ -399,17 +399,17 @@ EOF
 
 ### Task 5: 收敛 `go-api-layer`
 
-**Files:**
+Files:
 - Modify: `skills/go-development/go-api-layer/SKILL.md`
 - Modify: `skills/go-development/go-api-layer/agents/openai.yaml`
 - Modify: `skills/go-development/go-api-layer/references/api-layer.md`
 - Delete: `skills/go-development/go-api-layer/references/api-layer-conventions.md`
 
-**Interfaces:**
+Interfaces:
 - Consumes: 原 api-layer 双文件
 - Produces: 单 reference + 严厉 SKILL；跨层点名 `go-service-layer` / `go-model-hierarchy` / `go-code-style`
 
-- [ ] **Step 1: 写入 `SKILL.md`**
+- [ ] Step 1: 写入 `SKILL.md`
 
 ```markdown
 ---
@@ -443,7 +443,7 @@ API 层只做 HTTP 适配。禁止在 handler 内写复杂业务、聚合、DB/G
 - 已 `goimport`；能测则已测。
 ```
 
-- [ ] **Step 2: yaml**
+- [ ] Step 2: yaml
 
 ```yaml
 interface:
@@ -452,11 +452,11 @@ interface:
   default_prompt: "先经 $go，再使用 $go-api-layer 并严格执行 api-layer reference。"
 ```
 
-- [ ] **Step 3: 合并重写 `references/api-layer.md`（中文严厉）**
+- [ ] Step 3: 合并重写 `references/api-layer.md`（中文严厉）
 
 必须覆盖原 conventions 全部章节：职责、结构、请求解析、HTTP 方法约定、更新模式、响应模式、handler 复杂度、类型规则、格式化与测试。删除英文正文与 soft 措辞。删除 `api-layer-conventions.md`。
 
-- [ ] **Step 4: 验收 + Commit**
+- [ ] Step 4: 验收 + Commit
 
 ```bash
 test ! -f skills/go-development/go-api-layer/references/api-layer-conventions.md
@@ -473,13 +473,13 @@ EOF
 
 ### Task 6: 收敛 `go-service-layer`
 
-**Files:**
+Files:
 - Modify: `skills/go-development/go-service-layer/SKILL.md`
 - Modify: `skills/go-development/go-service-layer/agents/openai.yaml`
 - Modify: `skills/go-development/go-service-layer/references/service-layer.md`
 - Delete: `skills/go-development/go-service-layer/references/service-layer-conventions.md`
 
-- [ ] **Step 1: `SKILL.md`**
+- [ ] Step 1: `SKILL.md`
 
 ```markdown
 ---
@@ -512,23 +512,23 @@ Service 负责业务编排。禁止直接访问 DB、GORM、SQL。禁止把 DAL/
 - 已 `goimport`；能测则已测。
 ```
 
-- [ ] **Step 2: yaml 中文严厉；合并重写 `service-layer.md`；删除 conventions**
+- [ ] Step 2: yaml 中文严厉；合并重写 `service-layer.md`；删除 conventions
 
 覆盖原章节：职责、结构与注入顺序、方法签名、编排、错误包装、与 DAL/Model 边界、测试门禁。
 
-- [ ] **Step 3: 验收 + Commit**（同 Task 5 命令模式，路径换成 `go-service-layer`，commit message：`Consolidate go-service-layer into a single Chinese hard-rule reference.`）
+- [ ] Step 3: 验收 + Commit（同 Task 5 命令模式，路径换成 `go-service-layer`，commit message：`Consolidate go-service-layer into a single Chinese hard-rule reference.`）
 
 ---
 
 ### Task 7: 收敛 `go-query-dal`
 
-**Files:**
+Files:
 - `skills/go-development/go-query-dal/SKILL.md`
 - `skills/go-development/go-query-dal/agents/openai.yaml`
 - `skills/go-development/go-query-dal/references/query-dal.md`
 - Delete conventions
 
-- [ ] **Step 1: `SKILL.md`**
+- [ ] Step 1: `SKILL.md`
 
 ```markdown
 ---
@@ -561,20 +561,20 @@ DAL 只编排持久化。禁止承载业务规则。一个 DAL 方法围绕一�
 - 已 `goimport`；能测则已测。
 ```
 
-- [ ] **Step 2: 合并重写 `query-dal.md`（覆盖原 conventions 全部硬规则）+ 删 conventions + 验收 + Commit**  
+- [ ] Step 2: 合并重写 `query-dal.md`（覆盖原 conventions 全部硬规则）+ 删 conventions + 验收 + Commit  
   message: `Consolidate go-query-dal into a single Chinese hard-rule reference.`
 
 ---
 
 ### Task 8: 收敛 `go-model-hierarchy`
 
-**Files:**
+Files:
 - `skills/go-development/go-model-hierarchy/SKILL.md`
 - `agents/openai.yaml`
 - `references/model-hierarchy.md`
 - Delete conventions
 
-- [ ] **Step 1: `SKILL.md`**
+- [ ] Step 1: `SKILL.md`
 
 ```markdown
 ---
@@ -607,20 +607,20 @@ Model 层拥有字段契约与生命周期。禁止把 HTTP 适配或 DB 会话�
 - 已 `goimport`；能测则已测。
 ```
 
-- [ ] **Step 2: 合并重写 + 删 conventions + 验收 + Commit**  
+- [ ] Step 2: 合并重写 + 删 conventions + 验收 + Commit  
   message: `Consolidate go-model-hierarchy into a single Chinese hard-rule reference.`
 
 ---
 
 ### Task 9: 收敛 `go-test-writer`
 
-**Files:**
+Files:
 - `skills/go-development/go-test-writer/SKILL.md`
 - `agents/openai.yaml`
 - `references/test-writer.md`
 - Delete conventions
 
-- [ ] **Step 1: `SKILL.md`**
+- [ ] Step 1: `SKILL.md`
 
 ```markdown
 ---
@@ -652,14 +652,14 @@ description: "用于创建、补全、评审、排查或解释 Go _test.go、表
 - 相关 `go test` 已通过，或无法运行时已说明原因。
 ```
 
-- [ ] **Step 2: 合并重写（源已是中文为主，仍须去掉软措辞并删 conventions）+ 验收 + Commit**  
+- [ ] Step 2: 合并重写（源已是中文为主，仍须去掉软措辞并删 conventions）+ 验收 + Commit  
   message: `Consolidate go-test-writer into a single Chinese hard-rule reference.`
 
 ---
 
 ### Task 10: 收敛 `go-gin-openapi-json` 为单接口唯一 OpenAPI Skill
 
-**Files:**
+Files:
 - Modify: `skills/go-development/go-gin-openapi-json/SKILL.md`
 - Modify: `skills/go-development/go-gin-openapi-json/agents/openai.yaml`
 - Modify: `skills/go-development/go-gin-openapi-json/references/gin-openapi-json.md`
@@ -670,11 +670,11 @@ description: "用于创建、补全、评审、排查或解释 Go _test.go、表
 - Ensure: `skills/go-development/go-gin-openapi-json/assets/openapi.json`
 - Delete: `skills/gin-openapi-json/`（整个目录）
 
-**Interfaces:**
-- Consumes: `skills/gin-openapi-json/**` 单接口铁律与脚本；废弃多接口 conventions
+Interfaces:
+- Consumes: `skills/gin-openapi-json/` 单接口铁律与脚本；废弃多接口 conventions
 - Produces: 唯一 OpenAPI Skill；需要对齐 handler 时点名 `go-api-layer`（不拷贝其 reference）
 
-- [ ] **Step 1: 写入 `SKILL.md`（吸收原 gin-openapi-json checklist，全文中文严厉）**
+- [ ] Step 1: 写入 `SKILL.md`（吸收原 gin-openapi-json checklist，全文中文严厉）
 
 必须包含：
 
@@ -687,7 +687,7 @@ description: "用于创建、补全、评审、排查或解释 Go _test.go、表
 - 需要对齐 API 形态时必须加载 `go-api-layer`，禁止在本目录保留 api-layer 拷贝。
 - 交付：写出文件、校验 JSON/`$ref`/path 参数，报告路径；未完成校验禁止宣称成功。
 
-- [ ] **Step 2: 迁入脚本与资产**
+- [ ] Step 2: 迁入脚本与资产
 
 ```bash
 mkdir -p skills/go-development/go-gin-openapi-json/scripts
@@ -700,19 +700,19 @@ test -f skills/go-development/go-gin-openapi-json/assets/openapi.json || \
 
 将 `generate.sh` 用户可见 echo/注释改为中文；保持 CLI 行为：校验 selector、向上找 `go.mod`、默认输出名、`mkdir -p`、打印 JSON `{selector,output,project_root}`。
 
-- [ ] **Step 3: 重写唯一 `references/gin-openapi-json.md`**
+- [ ] Step 3: 重写唯一 `references/gin-openapi-json.md`
 
 以 `skills/gin-openapi-json/references/gin-openapi-json-conventions.md` 与单接口 SKILL 为准翻译/重写为中文严厉版。  
-**删除**一切多接口、路由组、模块批量出文档表述。  
+删除一切多接口、路由组、模块批量出文档表述。  
 删除本 Skill 内 `*-conventions.md` 与任何 `api-layer*` 拷贝。
 
-- [ ] **Step 4: 删除独立 Skill**
+- [ ] Step 4: 删除独立 Skill
 
 ```bash
 rm -rf skills/gin-openapi-json
 ```
 
-- [ ] **Step 5: 验收**
+- [ ] Step 5: 验收
 
 ```bash
 test ! -e skills/gin-openapi-json
@@ -724,7 +724,7 @@ rg -n '多个接口|路由组|整库|建议|尽量|最好|可以考虑|推荐' s
 rg -n '为多个接口生成|批量生成|路由组的.*文档' skills/go-development/go-gin-openapi-json && exit 1 || true
 ```
 
-- [ ] **Step 6: Commit**
+- [ ] Step 6: Commit
 
 ```bash
 git add -A skills/go-development/go-gin-openapi-json skills/gin-openapi-json
@@ -739,15 +739,15 @@ EOF
 
 ### Task 11: 全量结构验收与重装核对
 
-**Files:**
+Files:
 - Verify only: `scripts/check.sh`、安装结果
 
-- [ ] **Step 1: 跑仓库校验**
+- [ ] Step 1: 跑仓库校验
 
 Run: `./scripts/check.sh`  
 Expected: `check passed`
 
-- [ ] **Step 2: 结构抽查**
+- [ ] Step 2: 结构抽查
 
 ```bash
 ls skills/go-development
@@ -759,7 +759,7 @@ rg -n '建议|尽量|最好|可以考虑|推荐' skills/go-development --glob '*
 rg -n 'go/references/' skills/go-development && exit 1 || true
 ```
 
-- [ ] **Step 3: 重装并核对安装名**
+- [ ] Step 3: 重装并核对安装名
 
 Run: `./scripts/install-operations.sh`（若只需 Go 相关且该脚本会清安装目录，按 README 使用；否则 `./scripts/install.sh`）
 
@@ -769,9 +769,9 @@ Run: `./scripts/install-operations.sh`（若只需 Go 相关且该脚本会清�
 ls ~/.agents/skills | rg '^(go|go-|gin-openapi)'
 ```
 
-Expected：出现 `go`、`go-api-layer`、`go-code-style`、`go-gin-openapi-json`、`go-model-hierarchy`、`go-query-dal`、`go-service-layer`、`go-test-writer`；**不出现** `go-comment-style`、`go-logging`、`gin-openapi-json`。
+Expected：出现 `go`、`go-api-layer`、`go-code-style`、`go-gin-openapi-json`、`go-model-hierarchy`、`go-query-dal`、`go-service-layer`、`go-test-writer`；不出现 `go-comment-style`、`go-logging`、`gin-openapi-json`。
 
-- [ ] **Step 4: 若有修复，单独 commit；否则记录验证通过**
+- [ ] Step 4: 若有修复，单独 commit；否则记录验证通过
 
 ```bash
 git status

@@ -2,9 +2,9 @@
 
 通过 MCP 协议管理 Docker 容器、镜像、网络和数据卷。
 
-- **npm**: `mcp-docker-server`
-- **GitHub**: https://github.com/ofershap/mcp-server-docker
-- **运行方式**: `npx`
+- npm: `mcp-docker-server`
+- GitHub: https://github.com/ofershap/mcp-server-docker
+- 运行方式: `npx`
 
 > 另有一个 Python 版本 `mcp-server-docker`（PyPI/uvx），功能更丰富但需要 Python 环境。本目录以 npm 版为准。
 
@@ -95,7 +95,7 @@ OrbStack 内置 Docker 支持，MCP server 直接通过本地 socket 连接，�
 
 ## 安全注意事项
 
-- **生产环境慎用 `remove_container` / `remove_image`**：误删可能导致服务中断
+- 生产环境慎用 `remove_container` / `remove_image`：误删可能导致服务中断
 - 如不需要变更操作，可使用 Python 版 (`ckreiling/mcp-server-docker`) 并限制为只读模式
 - Docker socket 就是 root 权限，连接远程 daemon 时务必走 SSH 加密通道
 - 建议在生产环境配置命令白名单（配合 commands-mcp），不允许 AI 直接操作 `docker rm -f`

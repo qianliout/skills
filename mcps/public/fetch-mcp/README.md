@@ -2,10 +2,10 @@
 
 通过 MCP 协议抓取网页内容，自动将 HTML 转换为 Markdown 供 AI 阅读。
 
-- **PyPI**: `mcp-server-fetch`
-- **GitHub**: https://github.com/modelcontextprotocol/servers（官方参考服务器）
-- **运行方式**: `uvx`
-- **状态**: ✅ 官方维护中，活跃
+- PyPI: `mcp-server-fetch`
+- GitHub: https://github.com/modelcontextprotocol/servers（官方参考服务器）
+- 运行方式: `uvx`
+- 状态: ✅ 官方维护中，活跃
 
 ---
 
@@ -16,11 +16,11 @@
 | `fetch` | 抓取 URL 内容，返回干净的 Markdown |
 
 特性：
-- **HTML → Markdown 自动转换**：剥离样式和脚本，只保留文本内容
-- **分块读取**：通过 `start_index` / `max_length` 参数分批获取大页面
-- **自定义 User-Agent**：防止被目标网站拦截
-- **代理支持**：通过 `--proxy-url` 走 HTTP 代理
-- **robots.txt** 默认遵守，可跳过
+- HTML → Markdown 自动转换：剥离样式和脚本，只保留文本内容
+- 分块读取：通过 `start_index` / `max_length` 参数分批获取大页面
+- 自定义 User-Agent：防止被目标网站拦截
+- 代理支持：通过 `--proxy-url` 走 HTTP 代理
+- robots.txt 默认遵守，可跳过
 
 ---
 
@@ -79,19 +79,19 @@
 
 ## 使用场景
 
-- **抓取内部运维平台状态页面**：监控面板 HTML → Markdown → AI 分析
-- **读取 API 文档**：离线文档站点的 https 页面一键转为文本
-- **查看 GitHub Release Notes**：抓取变更日志，AI 总结版本变化
-- **抓取第三方服务状态页**：AWS/GCP Status Dashboard → AI 判断是否影响业务
+- 抓取内部运维平台状态页面：监控面板 HTML → Markdown → AI 分析
+- 读取 API 文档：离线文档站点的 https 页面一键转为文本
+- 查看 GitHub Release Notes：抓取变更日志，AI 总结版本变化
+- 抓取第三方服务状态页：AWS/GCP Status Dashboard → AI 判断是否影响业务
 
 ---
 
 ## 安全注意事项
 
-- **仅抓取可信 URL**：fetch 会下载完整内容到内存，恶意页面可能消耗大量资源
+- 仅抓取可信 URL：fetch 会下载完整内容到内存，恶意页面可能消耗大量资源
 - 默认 `max_length=5000` 限制了返回内容大小，可通过工具参数调整
 - 通过 `--proxy-url` 强制走内网代理，避免直接访问公网
-- 该工具**只能 GET**，不能 POST/PUT/DELETE，相对安全
+- 该工具只能 GET，不能 POST/PUT/DELETE，相对安全
 - 内网站点建议加 `--ignore-robots-txt` 和自定义 `--user-agent`
 
 ---

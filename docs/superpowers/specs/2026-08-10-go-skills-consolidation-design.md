@@ -7,19 +7,19 @@
 
 当前 Go 相关 Skill 存在三类结构性缺陷：
 
-1. **双轨物理拷贝**：`go/references/*` 与各 `go-* /references/*` 各维护一份相同正文；同步脚本与校验未落地，仓库与安装目录已出现漂移。
-2. **发现与语义冲突**：同时安装总入口、分层叶子、以及两套 OpenAPI Skill（`gin-openapi-json` 单接口 vs `go-gin-openapi-json` 多接口）。
-3. **语言与语气不一致**：入口/概览偏中文，多数 `*-conventions.md` 偏英文；大量「建议/尽量」软措辞，约束力不足。
+1. 双轨物理拷贝：`go/references/*` 与各 `go-* /references/*` 各维护一份相同正文；同步脚本与校验未落地，仓库与安装目录已出现漂移。
+2. 发现与语义冲突：同时安装总入口、分层叶子、以及两套 OpenAPI Skill（`gin-openapi-json` 单接口 vs `go-gin-openapi-json` 多接口）。
+3. 语言与语气不一致：入口/概览偏中文，多数 `*-conventions.md` 偏英文；大量「建议/尽量」软措辞，约束力不足。
 
 ## 2. 目标（验收即定义）
 
-1. **分层多 Skill**：按层保留独立可安装 Skill；注释与日志并入代码风格 Skill。
-2. **`go` 仅薄路由**：总入口只做强制路由、层边界与全局门禁；**不得**再持有各层细则正文或拷贝。
-3. **单一事实源**：每个领域规则只存在于对应 `go-*` 目录内；零物理拷贝、零双份同步表。
-4. **全文中文**：所有 `SKILL.md`、reference、`agents/openai.yaml`、脚本注释与用户可见说明均为中文。
-5. **OpenAPI 单接口**：只保留一个 OpenAPI Skill；一次只生成一个 operation。
-6. **措辞严厉**：必须 / 禁止 / 不得 / 违规即停；禁止「建议」「尽量」「可以考虑」等软性逃避句。
-7. **安装与校验**：manifest、README、`check.sh` 与重装结果与上述结构一致。
+1. 分层多 Skill：按层保留独立可安装 Skill；注释与日志并入代码风格 Skill。
+2. `go` 仅薄路由：总入口只做强制路由、层边界与全局门禁；不得再持有各层细则正文或拷贝。
+3. 单一事实源：每个领域规则只存在于对应 `go-*` 目录内；零物理拷贝、零双份同步表。
+4. 全文中文：所有 `SKILL.md`、reference、`agents/openai.yaml`、脚本注释与用户可见说明均为中文。
+5. OpenAPI 单接口：只保留一个 OpenAPI Skill；一次只生成一个 operation。
+6. 措辞严厉：必须 / 禁止 / 不得 / 违规即停；禁止「建议」「尽量」「可以考虑」等软性逃避句。
+7. 安装与校验：manifest、README、`check.sh` 与重装结果与上述结构一致。
 
 ## 3. 非目标
 
@@ -32,13 +32,13 @@
 | 安装名 | 职责 |
 |--------|------|
 | `go` | 薄路由总入口：识别任务 → 强制加载对应 `go-*`；层边界；全局交付门禁 |
-| `go-code-style` | 通用代码风格 + **注释** + **日志** |
+| `go-code-style` | 通用代码风格 + 注释 + 日志 |
 | `go-api-layer` | Gin/HTTP handler、请求绑定、响应 |
 | `go-service-layer` | Service 编排与边界 |
 | `go-query-dal` | DAL/DAO/GORM |
 | `go-model-hierarchy` | Model/Param/Response 与字段生命周期 |
 | `go-test-writer` | `_test.go`、testify、table-driven |
-| `go-gin-openapi-json` | 从 Gin 代码生成 OpenAPI 3.1.0 JSON；**单接口** |
+| `go-gin-openapi-json` | 从 Gin 代码生成 OpenAPI 3.1.0 JSON；单接口 |
 
 ### 4.1 必须删除的安装入口
 
@@ -74,19 +74,19 @@ go/
 
 ## 5. 路由与加载铁律
 
-1. 任何 Go 相关任务：**必须先加载 `go`**，再按路由加载对应 `go-*`。跳过总入口直接开写 = 违规。
-2. `go` **禁止**粘贴各层细则；只允许：任务识别、Skill 路由表、层边界、全局门禁（如改 Go 文件后必须 `goimport`、能跑则跑最小范围 `go test`）。
-3. 跨层任务：只加载**实际修改、评审或解释到的层**。禁止因调用链存在某层就加载该层。
+1. 任何 Go 相关任务：必须先加载 `go`，再按路由加载对应 `go-*`。跳过总入口直接开写 = 违规。
+2. `go` 禁止粘贴各层细则；只允许：任务识别、Skill 路由表、层边界、全局门禁（如改 Go 文件后必须 `goimport`、能跑则跑最小范围 `go test`）。
+3. 跨层任务：只加载实际修改、评审或解释到的层。禁止因调用链存在某层就加载该层。
 4. 注释、日志、通用风格、命名、错误处理、控制流：一律路由到 `go-code-style`。
 5. OpenAPI / Apifox / `openapi.json`：一律路由到 `go-gin-openapi-json`；生成前若需对齐 handler 形态，可再加载 `go-api-layer`，不得再加载已删除的独立 OpenAPI Skill。
-6. 叶子 Skill **禁止**指引去读 `go/references/...`。需要其它层时：点名 Skill（例如「必须同时加载 `go-model-hierarchy`」），禁止复制对方正文。
+6. 叶子 Skill 禁止指引去读 `go/references/...`。需要其它层时：点名 Skill（例如「必须同时加载 `go-model-hierarchy`」），禁止复制对方正文。
 7. 叶子之间禁止互相拷贝 reference 文件。
 
 ## 6. OpenAPI 语义（单接口）
 
 以现有 `gin-openapi-json` 为准，收敛进 `go-gin-openapi-json`：
 
-- **铁律**：每次只生成一个接口（一个 path + 一个 HTTP method）。扫描到相邻路由、同组其它方法、同 handler 其它接口时一律忽略。
+- 铁律：每次只生成一个接口（一个 path + 一个 HTTP method）。扫描到相邻路由、同组其它方法、同 handler 其它接口时一律忽略。
 - 每次生成都是对当前代码的全量重建目标文件内容；禁止为「兼容旧 JSON」而合并、保留已删除字段或路由。
 - 范围缺失或选择器歧义：必须停下来向用户索取可唯一确定的 method+path 或 handler 名；禁止擅自扩大范围。
 - 废弃并删除一切「多接口、路由组、模块批量出文档」表述（含原 `go-gin-openapi-json` / `go` 内多接口 conventions）。
@@ -94,7 +94,7 @@ go/
 
 ## 7. 内容合并与语言
 
-1. 每个领域将原 `references/<x>.md` 与 `references/<x>-conventions.md` **合并为一份**中文 `references/<x>.md`，然后删除 `*-conventions.md`。
+1. 每个领域将原 `references/<x>.md` 与 `references/<x>-conventions.md` 合并为一份中文 `references/<x>.md`，然后删除 `*-conventions.md`。
 2. `go-code-style` 在本 Skill 的 `references/` 下维护三份中文细则（禁止再拆成独立可安装 Skill）：
    - `code-style.md` — 通用代码风格
    - `comment-style.md` — 注释规范
@@ -115,8 +115,8 @@ go/
 
 每个叶子 Skill 必须包含：
 
-- **禁止清单**（违规即停）
-- **交付门禁**（未满足不得宣称完成）
+- 禁止清单（违规即停）
+- 交付门禁（未满足不得宣称完成）
 
 ## 9. 仓库与安装变更清单
 
@@ -138,7 +138,7 @@ go/
 
 - 已习惯 `$go-logging` / `$go-comment-style` / `$gin-openapi-json` 的调用方必须改用 `$go-code-style` / `$go-gin-openapi-json`。
 - 合并 reference 时禁止「只翻译标题、正文仍英文」；禁止两份 conventions 机械拼接导致重复矛盾——合并时以严厉中文重写为一份权威文本。
-- 原 `go` 与叶子若有漂移，以**更完整且不与单接口铁律冲突**的内容为素材，最终以本设计为准重写，不搞双文件 diff 式长期共存。
+- 原 `go` 与叶子若有漂移，以更完整且不与单接口铁律冲突的内容为素材，最终以本设计为准重写，不搞双文件 diff 式长期共存。
 
 ## 11. 实现顺序（供后续 plan 拆解）
 

@@ -85,7 +85,7 @@ Then verify everything works:
 
 ### Bold
 
-Bold (`**text**`) is reserved for high-priority warnings only:
+Bold (`text`) is reserved for high-priority warnings only:
 
 - Security vulnerabilities or data loss risks.
 - Breaking changes in changelogs.
@@ -219,7 +219,7 @@ Rules:
 
 ## Horizontal Rules
 
-Horizontal rules (`---`) are used sparingly to separate major document sections. Do not use `***` or `___`.
+Horizontal rules (`---`) are used sparingly to separate major document sections. Do not use `*` or `___`.
 
 ## HTML in Markdown
 
