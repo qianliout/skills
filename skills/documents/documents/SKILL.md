@@ -25,6 +25,7 @@ description: "文档类任务唯一入口和按需规则路由。Use whenever wr
 
 - 不默认读取任何 reference；只在任务匹配时读取。
 - 不把 `resources/` 中跟踪的上游仓库当作直接可调用 Skill。
+- 任何我们撰写的 Markdown 都不使用 `**` 加粗表示强调，这条不依赖是否读取了 `references/md-style.md`。
 - 不因为目标文件是 `.md` 就自动读取全部文档 reference。
 - 飞书 Markdown 与 Obsidian Markdown 的规则互不替代，只有任务明确跨场景时才组合读取。
 
@@ -40,4 +41,5 @@ description: "文档类任务唯一入口和按需规则路由。Use whenever wr
 - 只读取了任务需要的文档 reference。
 - 没有把飞书、Obsidian、通用 Markdown 的规则混用到无关场景。
 - 保持了原文档语义，未无故扩写或改写无关内容。
+- 交付的 Markdown 中没有用于强调的 `**` 加粗。
 - 如需追溯上游规则，已从 `resources/` 读取原始 Skill，而不是直接安装叶子 Skill。

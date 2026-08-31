@@ -85,20 +85,20 @@ Then verify everything works:
 
 ### Bold
 
-Bold (`text`) is reserved for high-priority warnings only:
+Bold (`**text**`) is never used for emphasis. Do not wrap text in `**` to add weight, anywhere, for any reason.
 
-- Security vulnerabilities or data loss risks.
-- Breaking changes in changelogs.
-- Critical prerequisites that block further steps.
+This rule has no exceptions:
 
-Do not use bold for:
+- Not for security vulnerabilities or data loss risks.
+- Not for breaking changes in changelogs.
+- Not for critical prerequisites that block further steps.
+- Not for opinions, recommendations, or conclusions.
+- Not for key terms inside paragraphs.
+- Not for making headings or list items stand out.
 
-- Adding weight to opinions or recommendations.
-- Highlighting key terms in paragraphs.
-- Emphasizing conclusions.
-- Making headings or list items stand out.
+When a point matters, carry it with structure instead of markers: lead the paragraph with it, give it its own short paragraph, or promote it to a heading with its own flat list. A line that needs `**` to be noticed is usually a line in the wrong place.
 
-When tempted to use bold, consider whether the surrounding text can be restructured so the important point leads the paragraph or becomes its own short paragraph.
+The only place a literal `**` may appear is inside backticks or a code block when the Markdown syntax itself is the subject, as in this reference.
 
 ### Italic
 
@@ -236,7 +236,7 @@ Avoid raw HTML in Markdown. Use native Markdown constructs.
 - [x] All lists are flat and single-level — no indented sub-items anywhere.
 - [x] Hierarchical information expressed with headings, not nested bullets.
 - [x] All unordered lists use `-` bullets.
-- [x] Bold used only for critical warnings, not for general emphasis.
+- [x] No bold markers (`**text**`) anywhere outside code samples about Markdown syntax.
 - [x] No italic markers (`*text*` or `_text_`).
 - [x] All fenced code blocks specify a language.
 - [x] Heading hierarchy is continuous with no skipped levels.

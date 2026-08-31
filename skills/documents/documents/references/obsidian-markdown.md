@@ -34,6 +34,7 @@
 - 这里只覆盖 Obsidian 扩展语法，不重复定义标准 Markdown 基础规则。
 - 如果任务同时要求通用 Markdown 风格统一，需要额外加载 `md-style.md`。
 - 示例中的嵌套任务列表来自上游说明，但在当前仓库内写 Markdown 时仍要遵循扁平列表规则。
+- 正文一律不使用 `**` 加粗表示强调；需要提示时用 callout、标题或改写句子，不用加粗标记。
 
 ## Upstream Tracking
 
