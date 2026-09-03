@@ -1,0 +1,24 @@
+{
+  "_comment": "把 permissions.allow 合并进 .claude/settings.local.json。本 skill 用本机 jcli 和 ssh，不调用 zymix-deploy/scripts。",
+  "permissions": {
+    "allow": [
+      "Bash(ssh test-jenkins *)",
+      "Bash(ssh prod-jenkins *)",
+      "Bash(jcli get-job *)",
+      "Bash(jcli update-job *)",
+      "Bash(jcli who-am-i)",
+      "Bash(jcli build test-*)",
+      "Bash(jcli build stage-*)",
+      "Bash(bash */deploy/zymix-deploy-im/scripts/im-*.sh *)",
+      "Bash(python3 */deploy/zymix-deploy-im/scripts/*.py *)"
+    ],
+    "deny": [
+      "Bash(jcli build prod-*)",
+      "Bash(java -jar * build prod-*)",
+      "Bash(git push * master)",
+      "Bash(git push * HEAD:master)",
+      "Edit(/Users/liuqianli/work/golang/src/zymix-app/zymix-im-go-cloud/**)",
+      "Write(/Users/liuqianli/work/golang/src/zymix-app/zymix-im-go-cloud/**)"
+    ]
+  }
+}

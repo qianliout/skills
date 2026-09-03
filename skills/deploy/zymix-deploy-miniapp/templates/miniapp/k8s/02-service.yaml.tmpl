@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{RESOURCE_NAME}}
+  namespace: {{NAMESPACE}}
+  labels:
+    app: {{RESOURCE_NAME}}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{RESOURCE_NAME}}
+  ports:
+    - name: http
+      port: 9010
+      targetPort: {{CONTAINER_PORT}}
+      protocol: TCP

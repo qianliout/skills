@@ -1,0 +1,177 @@
+pipeline {
+    agent { label '{{JENKINS_AGENT}}' }
+
+    parameters {
+        string(
+            name: 'BRANCH',
+            defaultValue: '{{BRANCH}}',
+            description: '要构建的分支名称（仅手动构建时生效）'
+        )
+    }
+
+    triggers {
+        GenericTrigger(
+            genericVariables: [
+                [key: 'ref', value: '$.ref']
+            ],
+            token: '{{WEBHOOK_TOKEN}}',
+            regexpFilterText: '$ref',
+            regexpFilterExpression: '^refs/heads/{{BRANCH}}$',
+            printPostContent: true,
+            printContributedVariables: true
+        )
+    }
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
+        skipDefaultCheckout()
+    }
+
+    environment {
+        AWS_DEFAULT_REGION = '{{AWS_REGION}}'
+        ECR_REGISTRY       = '{{ECR_REGISTRY}}'
+        ECR_REPO           = '{{ECR_REPO}}'
+        DEPLOY_NAME        = '{{RESOURCE_NAME}}'
+        CONTAINER_NAME     = '{{RESOURCE_NAME}}'
+        DEPLOY_ENV         = '{{NAMESPACE}}'
+        BINARY_NAME        = '{{BINARY_NAME}}'
+    }
+
+    stages {
+        stage('Prepare') {
+            steps {
+                script {
+                    def branch = getBranch()
+                    echo "使用的分支: ${branch}"
+                    env.BUILD_BRANCH = branch
+                }
+            }
+        }
+        stage('Checkout') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: env.BUILD_BRANCH]],
+                    userRemoteConfigs: [[
+                        url: '{{GIT_URL}}',
+                        credentialsId: '{{GIT_CREDENTIALS_ID}}'
+                    ]],
+                    extensions: []
+                ])
+            }
+        }
+        stage('Resolve Environment') {
+            steps {
+                script {
+                    env.IMAGE_TAG = sh(script: "echo \$(date +%Y%m%d%H%M%S)-\$(git rev-parse --short HEAD)", returnStdout: true).trim()
+                    sh """#!/bin/bash
+                        python3.12 /opt/jenkins-scripts/notificationdingtalk.py \
+                            --event start \
+                            --project-name ${env.JOB_BASE_NAME} \
+                            --branch ${env.BUILD_BRANCH} \
+                            --deploy-env "${DEPLOY_ENV}" \
+                            --image-tag ${IMAGE_TAG} \
+                            --build-url ${BUILD_URL}
+                    """
+                }
+            }
+        }
+        stage('Build image') {
+            steps {
+                // host 编译。项目自带的 Dockerfile 通常依赖 gf 产物 temp/linux_amd64/main，与此处对不上，不要用。
+                sh '''#!/bin/bash
+                set -e
+                cd {{SRC_SUBDIR}}
+                export GOMODCACHE="$GOPATH/pkg/mod"
+                export GOCACHE="$GOPATH/pkg/go-build"
+                export GOTOOLCHAIN=auto
+                export CGO_ENABLED=0
+                /opt/tools/go/bin/go mod tidy
+                /opt/tools/go/bin/go build -o {{BINARY_NAME}} .
+                '''
+
+                // 后台 UI 若已 embed 进二进制，就不要 COPY resource/。以 Probe 结论为准。
+                writeFile(file: 'Dockerfile', text: '''FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates tzdata
+ENV TZ=Asia/Hong_Kong
+
+RUN addgroup -g 1000 siu && adduser -D -u 1000 -G siu siu
+
+WORKDIR /app
+
+COPY ./{{SRC_SUBDIR}}/{{BINARY_NAME}} /app/{{BINARY_NAME}}
+RUN chmod +x /app/{{BINARY_NAME}} && chown -R siu:siu /app
+
+USER siu
+
+EXPOSE {{CONTAINER_PORT}}
+
+ENTRYPOINT ["/app/{{BINARY_NAME}}"]
+''')
+
+                sh """#!/bin/bash
+                docker build -t ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG} .
+                """
+            }
+        }
+        stage('Push to ECR') {
+            steps {
+                sh """#!/bin/bash
+                docker push ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}
+                """
+            }
+        }
+        stage('Update {{NAMESPACE}}') {
+            steps {
+                script {
+                    def kube = "kubectl --kubeconfig={{KUBECONFIG}}"
+                    sh """#!/bin/bash
+                    ${kube} set image deployment/${DEPLOY_NAME} -n ${DEPLOY_ENV} ${CONTAINER_NAME}=${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always { echo 'All stages completed' }
+        success {
+            sh """#!/bin/bash
+                python3.12 /opt/jenkins-scripts/notificationdingtalk.py \
+                    --event success --project-name ${env.JOB_BASE_NAME} --branch ${env.BUILD_BRANCH} \
+                    --deploy-env ${DEPLOY_ENV} --image-tag ${IMAGE_TAG} \
+                    --duration ${currentBuild.duration.toInteger()} --build-url ${BUILD_URL}
+            """
+        }
+        failure {
+            sh """#!/bin/bash
+                python3.12 /opt/jenkins-scripts/notificationdingtalk.py \
+                    --event failure --project-name ${env.JOB_BASE_NAME} --branch ${env.BUILD_BRANCH} \
+                    --deploy-env ${DEPLOY_ENV} --image-tag ${IMAGE_TAG} --console-url ${BUILD_URL}console
+            """
+        }
+        aborted {
+            sh """#!/bin/bash
+                python3.12 /opt/jenkins-scripts/notificationdingtalk.py \
+                    --event aborted --project-name ${env.JOB_BASE_NAME} --branch ${env.BUILD_BRANCH} \
+                    --deploy-env ${DEPLOY_ENV} --image-tag ${IMAGE_TAG} --build-url ${BUILD_URL}
+            """
+        }
+    }
+}
+
+def getBranch() {
+    if (binding.hasVariable('ref') && ref != null && ref.trim() != "") {
+        def branchName = ref.replace('refs/heads/', '')
+        echo "Webhook 触发 | 分支: ${branchName}"
+        return branchName
+    }
+    if (params.BRANCH && params.BRANCH.trim() != "") {
+        echo "手动触发（参数指定） | 分支: ${params.BRANCH}"
+        return params.BRANCH
+    }
+    echo "手动触发（默认） | 分支: {{BRANCH}}"
+    return "{{BRANCH}}"
+}

@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{RESOURCE_NAME}}
+  namespace: {{NAMESPACE}}
+  labels:
+    app: {{RESOURCE_NAME}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{RESOURCE_NAME}}
+  strategy:
+    type: Recreate          # 1 副本时 RollingUpdate 的 maxUnavailable 25% 会算成 0，旧 Pod 不退，rollout 卡死
+  template:
+    metadata:
+      labels:
+        app: {{RESOURCE_NAME}}
+    spec:
+      imagePullSecrets:
+        - name: aws-ecr
+      containers:
+        - name: {{RESOURCE_NAME}}
+          image: {{ECR_REGISTRY}}/{{ECR_REPO}}:{{IMAGE_TAG}}   # 真实 tag，禁止 latest
+          imagePullPolicy: IfNotPresent
+          args: [{{CONFIG_ARG}}]
+          ports:
+            - containerPort: {{CONTAINER_PORT}}
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: config
+              mountPath: {{CONFIG_MOUNT}}
+              readOnly: true
+          # 探针：只有真 /healthz 才配。没有就整段删掉，
+          # 别拿 /admin/ 之类的路由冒充——那只能证明进程在听，起不到探活作用。
+      volumes:
+        - name: config
+          configMap:
+            name: {{RESOURCE_NAME}}-configmap
+            defaultMode: 420
+      terminationGracePeriodSeconds: 30

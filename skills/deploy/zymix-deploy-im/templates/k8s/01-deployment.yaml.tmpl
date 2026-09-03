@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloud-{{SVC_NAME}}
+  namespace: {{NAMESPACE}}
+  labels:
+    app: cloud-{{SVC_NAME}}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: cloud-{{SVC_NAME}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9100"
+        prometheus.io/scrape: "true"
+      labels:
+        app: cloud-{{SVC_NAME}}
+    spec:
+{{IMAGE_PULL_SECRETS}}{{SERVICE_ACCOUNT}}      containers:
+        - name: {{SVC_NAME}}
+          image: {{ECR_REGISTRY}}/{{IMAGE_NS}}/{{SVC_NAME}}:init
+          imagePullPolicy: IfNotPresent
+          args: ["-conf", "/etc/config"]
+          env:
+            - name: APP_ENV
+              value: {{APP_ENV}}
+          envFrom:
+            - secretRef:
+                name: cloud-{{SVC_NAME}}-secret
+          ports:
+            - containerPort: {{PORT}}
+              name: rpc
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/config
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: cloud-config-{{SVC_NAME}}
+            defaultMode: 420
+      terminationGracePeriodSeconds: 30

@@ -1,0 +1,55 @@
+# miniapp 类填充参数。复制成 <project>/<env>/params.local.yaml 后填，不要改本文件。
+# 含真值的 params.local.yaml 已被 .gitignore 忽略。
+
+service:
+  SVC: ""                    # 短名，如 rent-rewards。资源名 = zymix-<SVC>
+  RESOURCE_NAME: ""          # zymix-<SVC>
+  CONTAINER_PORT: ""         # GoFrame 18080 / 普通 Go 8080，以 Probe 结论为准
+  BINARY_NAME: ""            # 编出的二进制名
+  SRC_SUBDIR: ""             # 源码在仓库里的子目录，如 server；仓库根则填 .
+  CONFIG_MOUNT: "/app/config"
+  CONFIG_ARG: ""             # GoFrame: -gf.gcfg.file /app/config/config.yaml；其它: -conf /app/config/config.yaml
+  HEALTH_PATH: ""            # 有真 healthz 才填，否则留空 -> 不生成探针
+
+repo:
+  GIT_URL: ""                # https://codeup.aliyun.com/.../<repo>.git
+  GIT_CREDENTIALS_ID: "6fe66442-6059-46ed-bf55-cde9561b7f80"
+  BRANCH: ""                 # test 环境通常 dev；prod 用 prod。**必须先 git ls-remote 确认该分支有真实提交**
+
+# 环境矩阵：按目标环境取一列
+env_matrix:
+  test:
+    NAMESPACE: "zymix-dev"          # 注意不叫 zymix-test
+    KUBECONFIG: "/opt/jenkins-scripts/config/miniapp_config"
+    JUMP_HOST: "test-jenkins"
+    AWS_REGION: "ap-east-1"
+    ECR_REGISTRY: "483898562971.dkr.ecr.ap-east-1.amazonaws.com"
+    INGRESS_HOST: ""                # <svc>-test.zymix.io
+    JENKINS_AGENT: "dev"
+    JENKINS_JOB: ""                 # test-<svc>
+  prod:
+    NAMESPACE: "zymix-prod"
+    KUBECONFIG: "/opt/jenkins-scripts/config/miniapp_config"
+    JUMP_HOST: "prod-jenkins"
+    AWS_REGION: "ap-east-1"         # Probe 时用 aws ecr describe-repositories 实测确认
+    ECR_REGISTRY: "483898562971.dkr.ecr.ap-east-1.amazonaws.com"
+    INGRESS_HOST: ""                # <svc>.zymix.io
+    JENKINS_AGENT: "built-in"
+    JENKINS_JOB: ""                 # prod-<svc>
+
+image:
+  ECR_REPO: ""               # zymix_mini_app/<repo>
+  IMAGE_TAG: ""              # 首张真实 tag，由流水线产出后回填；禁止 latest
+
+jenkins:
+  WEBHOOK_TOKEN: ""          # zymix-<svc>，test/prod 共用，regexp 各滤分支
+  VIEW: "app-game"
+
+# 敏感值：只写进真值 CM（不入库）。example 版一律 REPLACE_ME_*
+secrets:
+  PG_DSN: ""                 # 从 Pod 内可达的**内网**地址，不要写公网 IP
+  REDIS_ADDR: ""
+  REDIS_PASS: ""             # 含 # : 空格 必须在 YAML 里加引号
+  REDIS_DB: "0"
+  JWT_KEY: ""                # 你自己生成，≥24 字符，各环境不同
+  EXTERNAL: {}               # 只有这一类问用户：tcsas appSecret / partnerFeed token / S3

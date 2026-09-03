@@ -1,0 +1,33 @@
+# 渲染成两份：
+#   00-configmap.local.yaml    含真值，被 .gitignore 忽略，只 apply 不提交
+#   00-configmap.example.yaml  敏感值全换成 REPLACE_ME_*，入库
+# 不要生成裸的 00-configmap.yaml —— 那个名字是 IM 类占位符 CM 用的，会入库。
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{RESOURCE_NAME}}-configmap
+  namespace: {{NAMESPACE}}
+  labels:
+    app: {{RESOURCE_NAME}}
+data:
+  config.yaml: |
+    server:
+      address: ":{{CONTAINER_PORT}}"
+
+    database:
+      default:
+        link: "{{PG_DSN}}"
+        timezone: "Asia/Shanghai"
+        debug: false
+
+    redis:
+      address: "{{REDIS_ADDR}}"
+      db: {{REDIS_DB}}
+      pass: "{{REDIS_PASS}}"
+
+    # 含 # : 或空格的值必须加引号，否则 YAML 会把 # 之后当注释吃掉
+    auth:
+      jwtKey: "{{JWT_KEY}}"
+
+    # 其余业务配置按源码 manifest/config/config.yaml 的结构补全。
+    # 镜像里不带配置文件，这份 CM 必须是**完整**的一份 config.yaml，不能只写差异项。

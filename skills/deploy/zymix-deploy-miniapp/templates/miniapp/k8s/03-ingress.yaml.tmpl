@@ -1,0 +1,26 @@
+# 目标 namespace 里必须已有 zymix-io-tls，否则 TLS 会失败。
+# miniapp 的 zymix-stage 曾经就缺这份（本 profile 无 stage，若将来加回要先确认）。
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{RESOURCE_NAME}}
+  namespace: {{NAMESPACE}}
+  labels:
+    app: {{RESOURCE_NAME}}
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - {{INGRESS_HOST}}
+      secretName: zymix-io-tls
+  rules:
+    - host: {{INGRESS_HOST}}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{RESOURCE_NAME}}
+                port:
+                  number: 9010
