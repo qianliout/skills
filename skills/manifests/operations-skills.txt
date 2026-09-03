@@ -21,6 +21,7 @@ go-query-dal
 go-service-layer
 go-test-writer
 code-quality
+commit-review
 requesting-code-review
 receiving-code-review
 test-driven-development

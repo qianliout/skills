@@ -2,7 +2,7 @@
 
 这个仓库同时维护 Skill 和 MCP。目标不是把所有能力都手写一遍，而是把可复用的公共 Skill 整理成稳定的本地入口，再统一安装到 `~/.agents/skills`。
 
-当前仓库一共管理 32 个可安装 Skill：14 个本地入口 Skill，18 个通过 manifest 跟踪的公共 Skill；另外还有 7 个仅作为分类资源镜像保留的上游 Skill，不会直接安装。
+当前仓库一共管理 33 个可安装 Skill：15 个本地入口 Skill，18 个通过 manifest 跟踪的公共 Skill；另外还有 7 个仅作为分类资源镜像保留的上游 Skill，不会直接安装。
 
 ## 这仓库在管什么
 
@@ -54,7 +54,7 @@ skills/
 | ---- | ----- |
 | `operations` | `alibabacloud-sysom-diagnosis` |
 | `architecture-planning` | `architecture-planning` |
-| `code-quality` | `code-quality` |
+| `code-quality` | `code-quality`、`commit-review` |
 | `documents` | `documents` |
 | `go-development` | `go`、`go-api-layer`、`go-code-style`、`go-gin-openapi-json`、`go-model-hierarchy`、`go-query-dal`、`go-service-layer`、`go-test-writer` |
 | `productivity` | `grilling`、`ops-daily-report` |
@@ -101,7 +101,7 @@ skills/
 | 变更规划 | `brainstorming`、`writing-plans`、`architecture-planning` |
 | 并行执行 | `dispatching-parallel-agents`、`subagent-driven-development` |
 | Go 平台开发 | `go`、`go-api-layer`、`go-code-style`、`go-gin-openapi-json`、`go-model-hierarchy`、`go-query-dal`、`go-service-layer`、`go-test-writer` |
-| 质量与交付 | `code-quality`、`requesting-code-review`、`receiving-code-review`、`test-driven-development`、`verification-before-completion`、`finishing-a-development-branch` |
+| 质量与交付 | `code-quality`、`commit-review`、`requesting-code-review`、`receiving-code-review`、`test-driven-development`、`verification-before-completion`、`finishing-a-development-branch` |
 | 文档与知识 | `documents`、`find-skills`、`writing-skills`、`sigma`、`ops-daily-report` |
 
 ## 安装与更新
@@ -134,6 +134,9 @@ skills/
 - 只同步真正需要的上游 Skill 子目录，不提交完整上游仓库，不使用 git submodule。
 - 公共 Skill 必须保留 `README.md` 说明来源和用途。
 - `skill-creator` 只使用工具内置版本，本仓库不再维护公共版本。
+- Skill 安装名不得与 Claude Code 内置命令、bundled Skill 及其别名冲突（例如 `code-review` / `review` / `simplify` / `verify`）。
+- 显式调用型 Skill 必须在 frontmatter 写 `disable-model-invocation: true`，并在 description 首句声明只在用户显式调用时使用。
+- 审查类 Skill 统一用 `<scope>-review` 后缀命名，例如 `commit-review`。
 
 ## 开发工具约定
 
