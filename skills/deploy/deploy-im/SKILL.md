@@ -23,7 +23,7 @@ description: Use when deploying a new IM cloud-*-svc to zymix test/stage/prod, a
 <out>/<env>/<svc>-svc/
   k8s/
   jenkins-piplines/
-  secret/
+  secret/             # <svc>.secret.env —— 真值原样，产物即完整方案（审批后删除）
   doc/
 ```
 
@@ -32,7 +32,7 @@ description: Use when deploying a new IM cloud-*-svc to zymix test/stage/prod, a
 ## 流程
 
 1. 读 `app/<svc>-svc/configs/config.yaml`，取出端口、`${VAR}`、是否 Kafka、rpc 依赖。环境相关地址从同环境已有 CM 抄，不编。
-2. 写 ConfigMap：骨架用源码配置，敏感位只留 `${VAR}`。不建表。Secret 先跑 `im-fill-secret.sh` 从同 ns 现网 `cloud-*-secret` 回填（同名 key，或 `*_DATABASE_DSN` / `*_REDIS_PASSWORD` / `INTERNAL_AUTH_SECRET`）。只把 MISSING 的 key 问人，补进 `secret.env` 后再 `im-create-secret.sh`。值不打到终端。
+2. 写 ConfigMap：骨架用源码配置，敏感位只留 `${VAR}`（真值放 Secret，不进 CM）。不建表。Secret 先跑 `im-fill-secret.sh` 从同 ns 现网 `cloud-*-secret` 回填（同名 key，或 `*_DATABASE_DSN` / `*_REDIS_PASSWORD` / `INTERNAL_AUTH_SECRET`），真值原样写进 `secret/<svc>.secret.env` 并可回显。只把 MISSING 的 key 问人，补进 `secret.env` 后再 `im-create-secret.sh`。
 3. 跑脚本（先 scaffold / pull / add / fill-secret，确认后再 rollout）：
 
 ```bash
@@ -74,7 +74,7 @@ test / stage 的 Job 由 `im-run-jenkins.sh` 跑。prod 不要调用该脚本，
 ## 硬规则
 
 - Deployment 的 pod template 必须带这四条 annotation（三个环境一样）：`kubectl.kubernetes.io/restartedAt=2026-09-01T23:53:36+08:00`、`prometheus.io/path=/metrics`、`prometheus.io/port=9100`、`prometheus.io/scrape=true`。`im-scaffold.sh` 已写进模板。
-- 敏感信息不进 ConfigMap。Secret 真值不进 git、不打到终端。
+- 敏感信息不进 ConfigMap（真值放 Secret）。`secret/<svc>.secret.env` 里的真值原样保留、可回显、可提交——产物即完整方案，主要用于审批、审批后删除。
 - 镜像 tag 不用 `latest`。首发 tag 是 `init`，真正 tag 由 Jenkins `set image` 写。
 - 不改已上线服务。不覆盖别人的 Jenkins 行。
 - prod 不得由本 skill 触发 Job：不 `jcli build prod-*`，不 replay，不点 Build，不推会命中 prod `master` webhook 的分支。人说「手动跑一下」也拒绝。

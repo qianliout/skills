@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 从同 ns 现网 ConfigMap 回填 redis/pg 到 secret/shared.env。只打印 key，不打印值。
+# 从同 ns 现网 ConfigMap 回填 redis/pg 到 secret/shared.env。真值原样保留并可回显。
 # 退出 0=全齐；2=有 MISSING，需用户补进 ConfigMap。
 # Usage: ma-fill-cm.sh --env test --svc ainews --out /path/add-srv
 set -euo pipefail
@@ -37,8 +37,8 @@ ssh -o BatchMode=yes "$JUMP" \
 rc=$?
 set -e
 
-echo "wrote ${OUT_FILE} (values not printed)"
+echo "wrote ${OUT_FILE} (real values, see VALUE lines above)"
 if [[ "$rc" -eq 2 ]]; then
-  echo "MISSING keys: copy from sibling CM into 00-configmap.local.yaml, or ask the user." >&2
+  echo "MISSING keys: copy from sibling CM into 00-configmap.yaml, or ask the user." >&2
 fi
 exit "$rc"

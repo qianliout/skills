@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 从同 namespace 现网 cloud-*-secret 回填 secret.env。只打印 key 名和来源，不打印值。
+# 从同 namespace 现网 cloud-*-secret 回填 secret.env。真值原样保留并回显。
 # 退出 0=全齐；2=有 MISSING，需用户补。
 # Usage: im-fill-secret.sh --env test --svc activity --out /path/add-srv
 set -euo pipefail
@@ -33,7 +33,7 @@ SECRET="cloud-${SVC}-secret"
 
 [[ -f "$CM" ]] || { echo "missing ${CM}" >&2; exit 1; }
 
-# 值不经过终端：ssh 的 json 只进 python stdin，stdout 只有 key 状态。
+# 回填：ssh 的 json 进 python stdin，fill_secret.py 把真值写文件并回显。
 set +e
 ssh -o BatchMode=yes "$JUMP" \
   "kubectl --kubeconfig=${KUBECONFIG_PATH} -n ${NS} get secret -o json" \
@@ -42,7 +42,7 @@ ssh -o BatchMode=yes "$JUMP" \
 rc=$?
 set -e
 
-echo "wrote ${ENV_FILE} (values not printed)"
+echo "wrote ${ENV_FILE} (real values, see VALUE lines above)"
 if [[ "$rc" -eq 2 ]]; then
   echo "MISSING keys need user values. Re-run create after they are in ${ENV_FILE}." >&2
 fi

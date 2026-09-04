@@ -23,9 +23,9 @@ description: Use when deploying a new zymix miniapp or minigame service to test/
 
 ```text
 <out>/<env>/<svc>/
-  k8s/
+  k8s/                # 00-configmap.yaml、01-deployment.yaml、02-service.yaml、03-ingress.yaml（真值原样）
   jenkins-piplines/
-  secret/
+  secret/             # db.secret.env、shared.env —— 真值原样，产物即完整方案（审批后删除，不介意敏感）
   doc/
   probe.json
 ```
@@ -34,9 +34,9 @@ description: Use when deploying a new zymix miniapp or minigame service to test/
 
 ## 流程
 
-1. 跑 `ma-scaffold.sh`，它会读源码并写出 Deployment / Service / Ingress / Jenkinsfile。`probe.json` 里有 `language` 和 `build_mode`。Build 阶段一律在 Jenkinsfile 里 `writeFile` Dockerfile，再 `docker build`，不要改业务仓、也不要只靠 checkout 出来的文件。源码有能用的 Dockerfile 就原样拷进 Jenkinsfile；没有且是 Go，才 host 编译后写 alpine 运行镜像；其他语言没有时按源码语言在 Jenkinsfile 里写一份，不要套 Go 的编译命令。ConfigMap 从源码配置抄到 `00-configmap.local.yaml`（真值写在 CM 里，example 入库、local 不进 git）。
-2. 共享 redis / PG 地址先跑 `ma-fill-cm.sh` 从同 ns 现网 CM 回填。只把 MISSING 和本服务独有的密钥问人，补进 `00-configmap.local.yaml`。值不打到终端。
-3. 需要建库时，人填好 `secret/db.secret.env` 后立刻跑 `ma-provision-db.sh --apply`。先 dry-run 给人看计划，确认后 apply。永不 DROP。没有自动 migrate 的，把 `schema-order.txt` 一起灌。
+1. 跑 `ma-scaffold.sh`，它会读源码并写出 Deployment / Service / Ingress / Jenkinsfile。`probe.json` 里有 `language` 和 `build_mode`。Build 阶段一律在 Jenkinsfile 里 `writeFile` Dockerfile，再 `docker build`，不要改业务仓、也不要只靠 checkout 出来的文件。源码有能用的 Dockerfile 就原样拷进 Jenkinsfile；没有且是 Go，才 host 编译后写 alpine 运行镜像；其他语言没有时按源码语言在 Jenkinsfile 里写一份，不要套 Go 的编译命令。ConfigMap 从源码配置抄到 `00-configmap.yaml`（产物即最终方案，真值原样写入）。
+2. 共享 redis / PG 地址先跑 `ma-fill-cm.sh` 从同 ns 现网 CM 回填，真值留在 `secret/shared.env`。只把 MISSING 和本服务独有的密钥问人，补进 `00-configmap.yaml` / `secret/db.secret.env`。值原样保留、可回显。
+3. 需要建库时，`ma-scaffold.sh` 已生成 `secret/db.secret.env`，人补连接真值后立刻跑 `ma-provision-db.sh --apply`。先 dry-run 给人看计划，确认后 apply。永不 DROP。没有自动 migrate 的，把 `schema-order.txt` 一起灌。
 4. 确认后再 rollout：
 
 ```bash
@@ -45,7 +45,7 @@ OUT="<人指定的 add-srv>"
 
 bash "$SCRIPTS/ma-scaffold.sh" --env "$ENV" --svc "$SVC" --src "$SRC" --git-url "$GIT_URL" --out "$OUT"
 bash "$SCRIPTS/ma-fill-cm.sh" --env "$ENV" --svc "$SVC" --out "$OUT"
-# 写完 00-configmap.local.yaml；若要建库：人填 secret/db.secret.env 后
+# 写完 00-configmap.yaml；若要建库：补 secret/db.secret.env 真值后
 bash "$SCRIPTS/ma-provision-db.sh" --env "$ENV" --svc "$SVC" --out "$OUT"          # dry-run
 bash "$SCRIPTS/ma-provision-db.sh" --env "$ENV" --svc "$SVC" --out "$OUT" --apply
 # 确认后：
@@ -77,7 +77,7 @@ bash "$SCRIPTS/ma-run-jenkins.sh" --env "$ENV" --svc "$SVC"
 - 必须有 Ingress（class `traefik`，TLS `zymix-io-tls`）。Service 是 ClusterIP `9010 -> 容器端口`。
 - 不改被部署服务的源码。监听端口、配置路径、有没有 `/healthz`，改清单去适配代码。
 - Dockerfile 只写进 Jenkinsfile（`writeFile`）。源码有能用的就原样拷贝，没有就按语言写一份，不要往业务仓落 Dockerfile。
-- 敏感信息不进 git。`00-configmap.local.yaml` 和 `*.secret.env` 真值不打到终端。
+- 产物即完整方案：`00-configmap.yaml`、`*.secret.env` 真值原样写入、可回显、可提交（产物用于审批，审批后删除）。
 - 镜像 tag 不用 `latest`。首发 tag 是 `init`，真正 tag 由 Jenkins `set image` 写。
 - 不改已上线服务。Job 已存在就只更新本服务那一份 script，不要动别人的 Job。
 - Secret 和共享地址先读同 ns 现网服务，读不到再问人。不要编密钥。prod 的 JWT / 第三方凭据不要沿用 test。
@@ -114,7 +114,7 @@ bash "$SCRIPTS/ma-run-jenkins.sh" --env "$ENV" --svc "$SVC"
   然后删 Pod 重建。老服务 pod 不重启不暴露，新服务首发必踩——发镜像前先刷新一次。
 
 ### CM 真值与占位门槛
-- `ma-apply-k8s.sh` 卡 `REPLACE_ME|TODO|{{...}}`（检查 local CM + deployment + ingress）。「先留空」就写空串 `""`（可过门槛）；local 里别写 TODO 注释，会被卡。example 里可以写 REPLACE_ME（不参与 apply）。
+- `ma-apply-k8s.sh` 卡 `REPLACE_ME|TODO|{{...}}`（检查 local CM + deployment + ingress）。「先留空」就写空串 `""`（可过门槛）；文件里别写 TODO 注释，会被卡。
 - envFrom 注入空串会覆盖代码默认值（`os.getenv(k, default)` 拿到空串而不是 default）；想保留代码默认就别写该键。
 
 ### 其它

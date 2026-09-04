@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 从 secret.env 建 Secret。不打印值。已存在则拒绝，除非 --force。
+# 从 secret.env 建 Secret（secret.env 内为真值，审批产物）。已存在则拒绝，除非 --force。
 # Usage: im-create-secret.sh --env test --svc activity --out /path/add-srv [--force]
 set -euo pipefail
 
@@ -70,4 +70,4 @@ if [[ "$exists" == "yes" && "$FORCE" -ne 1 ]]; then
 fi
 
 printf '%s\n' "$yaml" | ssh -o BatchMode=yes "$JUMP" "kubectl --kubeconfig=${KUBECONFIG_PATH} apply -f -"
-echo "secret ${SECRET} applied in ${NS} (values not printed)"
+echo "secret ${SECRET} applied in ${NS}"

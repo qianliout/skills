@@ -29,11 +29,8 @@ ADD="$(ma_add_root "$OUT" "$ENVNAME" "$SVC")"
 K8S="${ADD}/k8s"
 RESOURCE="$(ma_resource "$SVC")"
 
-CM="${K8S}/00-configmap.local.yaml"
-if [[ ! -f "$CM" ]]; then
-  CM="${K8S}/00-configmap.yaml"
-fi
-[[ -f "$CM" ]] || { echo "missing configmap (want 00-configmap.local.yaml)" >&2; exit 1; }
+CM="${K8S}/00-configmap.yaml"
+[[ -f "$CM" ]] || { echo "missing configmap (want 00-configmap.yaml)" >&2; exit 1; }
 
 for f in 01-deployment.yaml 02-service.yaml 03-ingress.yaml; do
   [[ -f "${K8S}/${f}" ]] || { echo "missing ${K8S}/${f}" >&2; exit 1; }

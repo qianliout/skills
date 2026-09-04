@@ -32,7 +32,7 @@ ma_load_env "$ENVNAME"
 SVC="$(ma_normalize_svc "$SVC_IN")"
 ADD="$(ma_add_root "$OUT" "$ENVNAME" "$SVC")"
 CONN="${ADD}/secret/db.secret.env"
-[[ -f "$CONN" ]] || { echo "missing ${CONN}; copy secret/db.secret.env.example and ask the user for connection" >&2; exit 1; }
+[[ -f "$CONN" ]] || { echo "missing ${CONN}; scaffold 应已生成 secret/db.secret.env，向用户要连接后填入" >&2; exit 1; }
 
 if [[ -z "$DB" ]]; then
   DB="${SVC//-/_}"

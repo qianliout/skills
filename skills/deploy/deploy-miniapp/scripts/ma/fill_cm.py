@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy shared redis/pg values from sibling ConfigMaps. Never print values."""
+"""Copy shared redis/pg values from sibling ConfigMaps. Print real values (approval artifact)."""
 from __future__ import annotations
 
 import argparse
@@ -94,13 +94,14 @@ def main() -> int:
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    lines = ["# shared values from sibling ConfigMaps. do not commit."]
+    lines = ["# shared redis/pg values from sibling ConfigMaps (approval artifact)."]
     missing = []
     for key in needed:
         if key in picked:
             src, val = picked[key]
             lines.append(f"{key}={val}")
             print(f"FOUND\t{key}\t{src}")
+            print(f"VALUE\t{key}={val}")
         else:
             missing.append(key)
             print(f"MISSING\t{key}")

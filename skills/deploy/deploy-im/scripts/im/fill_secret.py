@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fill secret.env from sibling Secret JSON. Never print values."""
+"""Fill secret.env from sibling Secret JSON. Real values are written and echoed."""
 from __future__ import annotations
 
 import argparse
@@ -116,7 +116,11 @@ def main() -> int:
     dest.chmod(0o600)
 
     for key, status, src in report:
-        print(f"{status}\t{key}\t{src}")
+        if status == "FOUND":
+            print(f"FOUND\t{key}\t{src}")
+            print(f"VALUE\t{key}={found[key]}")
+        else:
+            print(f"MISSING\t{key}")
     return 2 if missing else 0
 
 

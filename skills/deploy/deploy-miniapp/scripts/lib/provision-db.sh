@@ -6,7 +6,7 @@
 #   ssh-docker  ssh 到主机再 docker exec psql   （miniapp test 的 dev-postgres17）
 #   jump-psql   ssh 跳板机后在跳板机上跑 psql   （只有跳板机能连到库时）
 #
-# 连接参数不写在脚本里，从连接文件读（文件名必须 *.secret.env，已被 .gitignore 挡住）：
+# 连接参数不写在脚本里，从连接文件读（文件名必须 *.secret.env，审批产物约定命名）：
 #   MODE=psql|ssh-docker|jump-psql
 #   PGHOST= PGPORT= PGUSER= PGPASSWORD= ADMIN_DB=postgres
 #   SSH_HOST= SSH_USER= SSH_KEY= PG_CONTAINER=      # ssh-docker 用
@@ -43,7 +43,7 @@ done
 
 [[ -n "$CONN" && -n "$CLASS" && -n "$ENV_NAME" && -n "$DB" ]] || { sed -n '2,25p' "$0" >&2; exit 2; }
 [[ -f "$CONN" ]] || { echo "ERROR: 连接文件不存在: $CONN" >&2; exit 2; }
-[[ "$CONN" == *.secret.env ]] || { echo "ERROR: 连接文件名必须以 .secret.env 结尾（否则会入库）" >&2; exit 3; }
+[[ "$CONN" == *.secret.env ]] || { echo "ERROR: 连接文件名必须以 .secret.env 结尾（审批产物命名约定）" >&2; exit 3; }
 
 # shellcheck source=/dev/null
 set -a; source "$CONN"; set +a

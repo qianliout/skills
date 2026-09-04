@@ -37,9 +37,9 @@ python3 "${SCRIPT_DIR}/im/render_k8s.py" \
   ${KAFKA:+--kafka} \
   --out "$ADD/k8s"
 
-if [[ ! -f "$ADD/secret/${SVC}.secret.env.example" ]]; then
-  printf '%s\n' "# 真值文件：${SVC}.secret.env（不进 git）" "# KEY=VALUE" \
-    > "$ADD/secret/${SVC}.secret.env.example"
+if [[ ! -f "$ADD/secret/${SVC}.secret.env" ]]; then
+  printf '%s\n' "# 真值文件：${SVC}.secret.env（审批产物，真值原样保留）" "# KEY=VALUE" \
+    > "$ADD/secret/${SVC}.secret.env"
 fi
 
 if [[ ! -f "$ADD/k8s/00-configmap.yaml" ]]; then

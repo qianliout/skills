@@ -119,9 +119,8 @@ data:
     server:
       address: ":{port}"
 """
-(out / "00-configmap.local.yaml").write_text(body)
-(out / "00-configmap.example.yaml").write_text(body)
-print(out / "00-configmap.local.yaml")
+(out / "00-configmap.yaml").write_text(body)
+print(out / "00-configmap.yaml")
 PY
 fi
 
@@ -147,8 +146,30 @@ python3 "${SCRIPT_DIR}/lib/job_xml.py" inject \
   "$ADD/jenkins-piplines/Jenkinsfile" \
   -o "$ADD/jenkins-piplines/config.xml"
 
-if [[ ! -f "$ADD/secret/db.secret.env.example" ]]; then
-  cp "${SCRIPT_DIR}/../templates/db/db.secret.env.example" "$ADD/secret/db.secret.env.example"
+if [[ ! -f "$ADD/secret/db.secret.env" ]]; then
+  cat > "$ADD/secret/db.secret.env" <<'ENVEOF'
+# 真值连接文件（建库由 ma-provision-db.sh 自动做，永不 DROP）。文件名必须 *.secret.env。
+
+# psql        本机能直连
+# ssh-docker  ssh 到主机再 docker exec psql（test 常见：43.129.216.91 / dev-postgres17）
+# jump-psql   ssh 跳板机后在跳板机上跑 psql（prod 常见：prod-jenkins 连腾讯云 CDB）
+MODE=psql
+
+PGHOST=
+PGPORT=5432
+PGUSER=
+PGPASSWORD=
+ADMIN_DB=postgres
+
+# MODE=ssh-docker
+#SSH_HOST=43.129.216.91
+#SSH_USER=ubuntu
+#SSH_KEY=~/.ssh/dev_zz.pem
+#PG_CONTAINER=dev-postgres17
+
+# MODE=jump-psql
+#JUMP_HOST=prod-jenkins
+ENVEOF
 fi
 
 python3 - "$ADD/probe.json" "$ADD/schema-order.txt" <<'PY'
