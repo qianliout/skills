@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# apply ConfigMap / Deployment / Service。Secret 走 im-create-secret.sh。
+# apply ConfigMap / Deployment / Service；存在 03-ingress.yaml 时一并 apply。
+# Secret 走 im-create-secret.sh。
 # Usage: im-apply-k8s.sh --env test --svc activity --out /path/add-srv
 set -euo pipefail
 
@@ -28,6 +29,9 @@ SVC="$(im_normalize_svc "$SVC_IN")"
 ADD="$(im_add_root "$OUT" "$ENVNAME" "$SVC")"
 K8S="${ADD}/k8s"
 
+FILES="00-configmap.yaml 01-deployment.yaml 02-service.yaml"
+[[ -f "${K8S}/03-ingress.yaml" ]] && FILES="${FILES} 03-ingress.yaml"
+
 for f in 00-configmap.yaml 01-deployment.yaml 02-service.yaml; do
   [[ -f "${K8S}/${f}" ]] || { echo "missing ${K8S}/${f}" >&2; exit 1; }
 done
@@ -39,7 +43,7 @@ fi
 
 ssh -o BatchMode=yes "$JUMP" "kubectl --kubeconfig=${KUBECONFIG_PATH} -n ${NS} get deploy,svc,cm,secret | grep -w cloud-${SVC} && echo EXISTS || echo NEW"
 
-for f in 00-configmap.yaml 01-deployment.yaml 02-service.yaml; do
+for f in $FILES; do
   echo "apply ${f}"
   ssh -o BatchMode=yes "$JUMP" "kubectl --kubeconfig=${KUBECONFIG_PATH} apply -f -" < "${K8S}/${f}"
 done

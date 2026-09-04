@@ -272,7 +272,7 @@ Use these rules when deciding aggregate boundaries:
 | Does removing the root make the child meaningless? | Child belongs inside the aggregate. |
 | Are you loading thousands of objects to change one? | Aggregate is too large — split it. |
 
-Practical example — Order vs. Customer:
+**Practical example — Order vs. Customer:**
 
 ```python
 # Bad: Customer aggregate holds full Order objects

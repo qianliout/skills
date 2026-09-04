@@ -1,6 +1,6 @@
 # markdown +patch
 
-> 前置条件： 先阅读 [`../lark-shared/SKILL.md`](../../lark-shared/SKILL.md) 了解认证、全局参数和安全规则。
+> **前置条件：** 先阅读 [`../lark-shared/SKILL.md`](../../lark-shared/SKILL.md) 了解认证、全局参数和安全规则。
 
 对 Drive 中已有的原生 Markdown 文件做局部文本替换，并返回是否实际写入了新版本。
 
@@ -65,7 +65,7 @@ lark-cli markdown +patch \
 
 ## 关键约束
 
-- 当前只支持单组 `--pattern` / `--content`
+- 当前只支持**单组** `--pattern` / `--content`
 - `--pattern` 必须显式传入且不能为空字符串
 - `--content` 必须显式传入，但允许为空字符串
 - 未加 `--regex` 时，行为等价于对整份 Markdown 文本执行 `strings.ReplaceAll`
@@ -93,7 +93,7 @@ lark-cli markdown +patch \
 
 ## 实现边界
 
-- 该命令的内部语义是：download -> local replace -> overwrite upload
+- 该命令的内部语义是：**download -> local replace -> overwrite upload**
 - 它不是服务端原子 patch；如果有人在你下载后、上传前更新了同一文件，本次 patch 仍可能覆盖那次中间修改
 - 它不会返回详细匹配位置，只返回命中数量
 - `--dry-run` 会同时展示两种可能的上传路径：`upload_all`（小文件）和 `upload_prepare/upload_part/upload_finish`（大文件分片上传）

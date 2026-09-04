@@ -19,6 +19,8 @@ spec:
   template:
     metadata:
       annotations:
+        # 硬规则：三条环境统一（2026-09-01 定版值）。曾缺此行导致违反硬规则。
+        kubectl.kubernetes.io/restartedAt: "2026-09-01T23:53:36+08:00"
         prometheus.io/path: /metrics
         prometheus.io/port: "9100"
         prometheus.io/scrape: "true"

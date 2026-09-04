@@ -2,11 +2,11 @@
 
 ## Input/Output Safety
 
-- XSS: Unsafe HTML injection, `dangerouslySetInnerHTML`, unescaped templates, innerHTML assignments
-- Injection: SQL/NoSQL/command/GraphQL injection via string concatenation or template literals
-- SSRF: User-controlled URLs reaching internal services without allowlist validation
-- Path traversal: User input in file paths without sanitization (`../` attacks)
-- Prototype pollution: Unsafe object merging in JavaScript (`Object.assign`, spread with user input)
+- **XSS**: Unsafe HTML injection, `dangerouslySetInnerHTML`, unescaped templates, innerHTML assignments
+- **Injection**: SQL/NoSQL/command/GraphQL injection via string concatenation or template literals
+- **SSRF**: User-controlled URLs reaching internal services without allowlist validation
+- **Path traversal**: User input in file paths without sanitization (`../` attacks)
+- **Prototype pollution**: Unsafe object merging in JavaScript (`Object.assign`, spread with user input)
 
 ## AuthN/AuthZ
 
