@@ -85,6 +85,8 @@ pipeline {
         stage('Push to ECR') {
             steps {
                 sh """#!/bin/bash
+                # built-in / dev agent 都可能没有预登录 ECR：每次 push 前显式 login（令牌 12h 过期）
+                aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
                 docker push ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}
                 """
             }
@@ -115,14 +117,14 @@ pipeline {
             sh """#!/bin/bash
                 python3.12 /opt/jenkins-scripts/notificationdingtalk.py \\
                     --event failure --project-name ${env.JOB_BASE_NAME} --branch ${env.BUILD_BRANCH} \\
-                    --deploy-env ${DEPLOY_ENV} --image-tag ${IMAGE_TAG} --console-url ${BUILD_URL}console
+                    --deploy-env ${DEPLOY_ENV} --image-tag ${env.IMAGE_TAG ?: 'N/A'} --console-url ${BUILD_URL}console
             """
         }
         aborted {
             sh """#!/bin/bash
                 python3.12 /opt/jenkins-scripts/notificationdingtalk.py \\
                     --event aborted --project-name ${env.JOB_BASE_NAME} --branch ${env.BUILD_BRANCH} \\
-                    --deploy-env ${DEPLOY_ENV} --image-tag ${IMAGE_TAG} --build-url ${BUILD_URL}
+                    --deploy-env ${DEPLOY_ENV} --image-tag ${env.IMAGE_TAG ?: 'N/A'} --build-url ${BUILD_URL}
             """
         }
     }
