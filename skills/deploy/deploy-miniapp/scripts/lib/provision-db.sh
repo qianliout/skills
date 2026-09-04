@@ -2,7 +2,7 @@
 # 建库 / 灌 schema：幂等、默认 dry-run、永不 DROP。
 #
 # 三种连接拓扑（--mode）：
-#   psql        本机或跳板机能直连 PG           （miniapp prod 腾讯云 CDB、IM RDS）
+#   psql        本机或跳板机能直连 PG           （prod 腾讯云 CDB）
 #   ssh-docker  ssh 到主机再 docker exec psql   （miniapp test 的 dev-postgres17）
 #   jump-psql   ssh 跳板机后在跳板机上跑 psql   （只有跳板机能连到库时）
 #
@@ -54,18 +54,6 @@ OWNER="${OWNER:-${PGUSER:-}}"
 # ---- 安全规则 ----------------------------------------------------------
 if [[ "$ENV_NAME" == "prod" && "$APPLY" -eq 1 && "$PROD_CONFIRM" -eq 0 ]]; then
   echo "ERROR: prod 写操作必须同时带 --prod-confirm" >&2; exit 3
-fi
-
-# IM 类：三个环境各只有一个共享库，新服务是在共享库里建表，不是建新库。
-IM_SHARED="db_zymix_${ENV_NAME}"
-if [[ "$CLASS" == "im" && "$DB" != "$IM_SHARED" && "$ALLOW_NEW_DB" -eq 0 ]]; then
-  cat >&2 <<MSG
-ERROR: IM 类 ${ENV_NAME} 环境的共享库是 ${IM_SHARED}，全部 cloud-*-svc 共用它。
-       你要建的 '${DB}' 不是它。新 IM 服务通常只需要在共享库里建表，
-       DSN 直接复用同环境任一 cloud-*-svc 的 *_DATABASE_DSN。
-       确实要开独立库，加 --allow-new-database。
-MSG
-  exit 3
 fi
 
 # ---- 连接封装 ----------------------------------------------------------

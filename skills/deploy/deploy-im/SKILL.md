@@ -1,5 +1,5 @@
 ---
-name: zymix-deploy-im
+name: deploy-im
 description: Use when deploying a new IM cloud-*-svc to zymix test/stage/prod, adding a service to cloud-im-go-server, or first-time rollout of a zymix-im-go-cloud service. Not for miniapp.
 ---
 

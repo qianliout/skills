@@ -66,12 +66,12 @@ pipeline {
                 script {
                     env.IMAGE_TAG = sh(script: "echo \$(date +%Y%m%d%H%M%S)-\$(git rev-parse --short HEAD)", returnStdout: true).trim()
                     sh """#!/bin/bash
-                        python3.12 /opt/jenkins-scripts/notificationdingtalk.py \
-                            --event start \
-                            --project-name ${env.JOB_BASE_NAME} \
-                            --branch ${env.BUILD_BRANCH} \
-                            --deploy-env "${DEPLOY_ENV}" \
-                            --image-tag ${IMAGE_TAG} \
+                        python3.12 /opt/jenkins-scripts/notificationdingtalk.py \\
+                            --event start \\
+                            --project-name ${env.JOB_BASE_NAME} \\
+                            --branch ${env.BUILD_BRANCH} \\
+                            --deploy-env "${DEPLOY_ENV}" \\
+                            --image-tag ${IMAGE_TAG} \\
                             --build-url ${BUILD_URL}
                     """
                 }
@@ -79,41 +79,7 @@ pipeline {
         }
         stage('Build image') {
             steps {
-                // host 编译。项目自带的 Dockerfile 通常依赖 gf 产物 temp/linux_amd64/main，与此处对不上，不要用。
-                sh '''#!/bin/bash
-                set -e
-                cd {{SRC_SUBDIR}}
-                export GOMODCACHE="$GOPATH/pkg/mod"
-                export GOCACHE="$GOPATH/pkg/go-build"
-                export GOTOOLCHAIN=auto
-                export CGO_ENABLED=0
-                /opt/tools/go/bin/go mod tidy
-                /opt/tools/go/bin/go build -o {{BINARY_NAME}} .
-                '''
-
-                // 后台 UI 若已 embed 进二进制，就不要 COPY resource/。以 Probe 结论为准。
-                writeFile(file: 'Dockerfile', text: '''FROM alpine:latest
-
-RUN apk --no-cache add ca-certificates tzdata
-ENV TZ=Asia/Hong_Kong
-
-RUN addgroup -g 1000 siu && adduser -D -u 1000 -G siu siu
-
-WORKDIR /app
-
-COPY ./{{SRC_SUBDIR}}/{{BINARY_NAME}} /app/{{BINARY_NAME}}
-RUN chmod +x /app/{{BINARY_NAME}} && chown -R siu:siu /app
-
-USER siu
-
-EXPOSE {{CONTAINER_PORT}}
-
-ENTRYPOINT ["/app/{{BINARY_NAME}}"]
-''')
-
-                sh """#!/bin/bash
-                docker build -t ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG} .
-                """
+{{BUILD_STEPS}}
             }
         }
         stage('Push to ECR') {
@@ -139,23 +105,23 @@ ENTRYPOINT ["/app/{{BINARY_NAME}}"]
         always { echo 'All stages completed' }
         success {
             sh """#!/bin/bash
-                python3.12 /opt/jenkins-scripts/notificationdingtalk.py \
-                    --event success --project-name ${env.JOB_BASE_NAME} --branch ${env.BUILD_BRANCH} \
-                    --deploy-env ${DEPLOY_ENV} --image-tag ${IMAGE_TAG} \
+                python3.12 /opt/jenkins-scripts/notificationdingtalk.py \\
+                    --event success --project-name ${env.JOB_BASE_NAME} --branch ${env.BUILD_BRANCH} \\
+                    --deploy-env ${DEPLOY_ENV} --image-tag ${IMAGE_TAG} \\
                     --duration ${currentBuild.duration.toInteger()} --build-url ${BUILD_URL}
             """
         }
         failure {
             sh """#!/bin/bash
-                python3.12 /opt/jenkins-scripts/notificationdingtalk.py \
-                    --event failure --project-name ${env.JOB_BASE_NAME} --branch ${env.BUILD_BRANCH} \
+                python3.12 /opt/jenkins-scripts/notificationdingtalk.py \\
+                    --event failure --project-name ${env.JOB_BASE_NAME} --branch ${env.BUILD_BRANCH} \\
                     --deploy-env ${DEPLOY_ENV} --image-tag ${IMAGE_TAG} --console-url ${BUILD_URL}console
             """
         }
         aborted {
             sh """#!/bin/bash
-                python3.12 /opt/jenkins-scripts/notificationdingtalk.py \
-                    --event aborted --project-name ${env.JOB_BASE_NAME} --branch ${env.BUILD_BRANCH} \
+                python3.12 /opt/jenkins-scripts/notificationdingtalk.py \\
+                    --event aborted --project-name ${env.JOB_BASE_NAME} --branch ${env.BUILD_BRANCH} \\
                     --deploy-env ${DEPLOY_ENV} --image-tag ${IMAGE_TAG} --build-url ${BUILD_URL}
             """
         }

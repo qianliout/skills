@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{RESOURCE_NAME}}-configmap
+  namespace: {{NAMESPACE}}
+  labels:
+    app: {{RESOURCE_NAME}}
+data:
+  config.yaml: |
+    # 从源码配置改写成此环境。镜像里未必带配置，必须是完整一份。
+    # apply 的是 00-configmap.local.yaml 真值文件。
+    server:
+      address: ":{{CONTAINER_PORT}}"

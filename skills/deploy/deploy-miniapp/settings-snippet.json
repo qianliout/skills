@@ -1,0 +1,23 @@
+{
+  "_comment": "把 permissions.allow 合并进 .claude/settings.local.json。本 skill 用本机 jcli 和 ssh，不调用 zymix-deploy/scripts。miniapp 的 test 和 prod 都可以 jcli build。",
+  "permissions": {
+    "allow": [
+      "Bash(ssh test-jenkins *)",
+      "Bash(ssh prod-jenkins *)",
+      "Bash(jcli get-job *)",
+      "Bash(jcli update-job *)",
+      "Bash(jcli create-job *)",
+      "Bash(jcli view add-job *)",
+      "Bash(jcli who-am-i)",
+      "Bash(jcli build test-*)",
+      "Bash(jcli build prod-*)",
+      "Bash(bash */deploy/deploy-miniapp/scripts/ma-*.sh *)",
+      "Bash(python3 */deploy/deploy-miniapp/scripts/*.py *)",
+      "Bash(python3 */deploy/deploy-miniapp/scripts/ma/*.py *)"
+    ],
+    "deny": [
+      "Bash(git push * master)",
+      "Bash(git push * HEAD:master)"
+    ]
+  }
+}

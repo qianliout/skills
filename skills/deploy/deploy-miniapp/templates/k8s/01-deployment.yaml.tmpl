@@ -7,11 +7,12 @@ metadata:
     app: {{RESOURCE_NAME}}
 spec:
   replicas: 1
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
       app: {{RESOURCE_NAME}}
   strategy:
-    type: Recreate          # 1 副本时 RollingUpdate 的 maxUnavailable 25% 会算成 0，旧 Pod 不退，rollout 卡死
+    type: Recreate
   template:
     metadata:
       labels:
@@ -21,11 +22,11 @@ spec:
         - name: aws-ecr
       containers:
         - name: {{RESOURCE_NAME}}
-          image: {{ECR_REGISTRY}}/{{ECR_REPO}}:{{IMAGE_TAG}}   # 真实 tag，禁止 latest
+          image: {{ECR_REGISTRY}}/{{ECR_REPO}}:init
           imagePullPolicy: IfNotPresent
-          args: [{{CONFIG_ARG}}]
-          ports:
+{{ARGS_LINE}}          ports:
             - containerPort: {{CONTAINER_PORT}}
+              name: http
               protocol: TCP
           resources:
             requests:
@@ -38,9 +39,7 @@ spec:
             - name: config
               mountPath: {{CONFIG_MOUNT}}
               readOnly: true
-          # 探针：只有真 /healthz 才配。没有就整段删掉，
-          # 别拿 /admin/ 之类的路由冒充——那只能证明进程在听，起不到探活作用。
-      volumes:
+{{PROBES}}      volumes:
         - name: config
           configMap:
             name: {{RESOURCE_NAME}}-configmap
