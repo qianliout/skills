@@ -42,13 +42,13 @@ skills/documents/resources/README.md
 
 ## 更新和安装
 
-只更新公共源码：
+只更新公共源码（拉取远端到 `.sources/`）：
 
 ```bash
 ./scripts/update-public.sh
 ```
 
-更新公共源码并全量安装：
+公共源码更新完后，全量安装本地 Skill（install.sh 不拉远端，`.sources/` 已同步时顺带安装公共 Skill）：
 
 ```bash
 ./scripts/install.sh

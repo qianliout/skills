@@ -18,13 +18,6 @@ install_mcps() {
   done
 }
 
-"$ROOT/scripts/update-public.sh"
-"$ROOT/scripts/check.sh"
-
-while IFS='|' read -r category name repository source_path; do
-  test -f "$ROOT/.sources/$repository/$source_path/SKILL.md"
-done < "$ROOT/skills/manifests/public-skills.txt"
-
 "$ROOT/scripts/clean.sh"
 
 find "$ROOT/skills" -type f -name SKILL.md \
@@ -36,15 +29,21 @@ while IFS= read -r skill_file; do
   cp -R "$skill_dir" "$SKILLS_TARGET/${skill_dir##*/}"
 done
 
-while IFS='|' read -r category name repository source_path; do
-  case "$category" in
-    '' | '#'*)
-      continue
-      ;;
-  esac
+# 公共 skill：本机先跑过 update-public.sh（.sources 已同步）才随 install 一起复制；
+# .sources 缺失/未同步时跳过，不阻塞本地安装。远端拉取请单独跑 update-public.sh。
+if [ -d "$ROOT/.sources" ]; then
+  while IFS='|' read -r category name repository source_path; do
+    case "$category" in
+      '' | '#'*)
+        continue
+        ;;
+    esac
 
-  cp -R "$ROOT/.sources/$repository/$source_path" "$SKILLS_TARGET/$name"
-done < "$ROOT/skills/manifests/public-skills.txt"
+    if [ -d "$ROOT/.sources/$repository/$source_path" ]; then
+      cp -R "$ROOT/.sources/$repository/$source_path" "$SKILLS_TARGET/$name"
+    fi
+  done < "$ROOT/skills/manifests/public-skills.txt"
+fi
 
 install_mcps
 link_agent_skills

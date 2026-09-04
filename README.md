@@ -108,18 +108,17 @@ skills/
 
 | 命令 | 作用 |
 | ---- | ---- |
-| `./scripts/install.sh` | 更新公共来源、校验仓库、清空并重装全部 Skill 和 MCP |
+| `./scripts/install.sh` | 本地全量安装：清空并重装全部本地 Skill 和 MCP；`.sources` 已同步时顺带安装 manifest 公共 Skill（不拉远端、不校验远端） |
 | `./scripts/install-operations.sh` | 只安装 `skills/manifests/operations-skills.txt` 中列出的运维相关 Skill，并同步 MCP |
-| `./scripts/update-public.sh` | 只更新公共 Skill 源码和分类资源镜像，不执行安装 |
+| `./scripts/update-public.sh` | 拉取/更新远端公共 Skill 源码（`.sources/`）和分类资源镜像，不执行安装 |
 | `./scripts/check.sh` | 只读校验仓库状态，不修改任何文件 |
 | `./scripts/clean.sh` | 清空 `~/.agents/skills` / `~/.agents/mcps`，并拆除 Claude / Cursor / Trae / Reasonix / Codex 的 Skill 链接 |
 
 安装流程说明：
 
-1. `install.sh` 先执行 `update-public.sh`。
-1. 然后执行 `check.sh`，确保 manifest、资源目录和安装名都合法。
-1. 校验通过后清空 `~/.agents/skills`，并拆除各客户端 Skill 链接。
-1. 再复制本地入口 Skill 和 manifest 公共 Skill 到扁平安装目录。
+1. 远端来源由 `update-public.sh` 单独维护：先跑它把公共 Skill 同步到 `.sources/`。
+1. `install.sh` 只做本地安装，不拉远端、不校验远端：清空 `~/.agents/skills`，并拆除各客户端 Skill 链接。
+1. 复制本地入口 Skill 到扁平安装目录；`.sources` 已同步时再复制 manifest 公共 Skill，未同步则跳过（不阻塞本地安装）。
 1. 复制 `mcps/` 到 `~/.agents/mcps`。
 1. 最后把安装结果链接到 Claude Code、Cursor、Trae、Reasonix、Codex。
 

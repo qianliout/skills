@@ -12,5 +12,5 @@
 
 上游安装：`npx skills add vercel-labs/agent-skills@web-design-guidelines -y -g`。
 
-本仓库统一安装：在仓库根目录运行 `./scripts/install.sh`，脚本完成公共源码更新后，将该 Skill 复制到 `~/.agents/skills/web-design-guidelines`。
+本仓库统一安装：先在仓库根目录运行 `./scripts/update-public.sh` 同步公共源码到 `./.sources/`，再运行 `./scripts/install.sh`，即可将该 Skill 复制到 `~/.agents/skills/web-design-guidelines`。
 
